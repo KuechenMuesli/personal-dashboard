@@ -37,28 +37,38 @@
     const trimmed = query.trim();
     if (!trimmed) return;
 
-    const words = trimmed.split(/\s+/); // Split by any whitespace
     const engineMap = Object.fromEntries(engines.map(e => [e.key, e.url]));
     const defaultEngine = engines.find(e => e.isDefault) || INITIAL_ENGINES[0];
 
-    // Find the first word that exists in our engine map (excluding 'DEFAULT')
-    const shortcutIndex = words.findIndex(word =>
-      word !== "DEFAULT" && engineMap[word]
-    );
+    // Get all shortcut keys (excluding DEFAULT), sorted by length descending
+    // Sorting prevents "!g" matching inside "!gsc"
+    const shortcutKeys = Object.keys(engineMap)
+      .filter(k => k !== "DEFAULT")
+      .sort((a, b) => b.length - a.length);
 
     let targetUrl = "";
+    let foundShortcut = null;
 
-    if (shortcutIndex !== -1) {
-      // 1. Identify the shortcut
-      const shortcut = words[shortcutIndex];
-      // 2. Remove the shortcut from the word list
-      const remainingWords = [...words];
-      remainingWords.splice(shortcutIndex, 1);
-      // 3. Rejoin the remaining words to form the query
-      const searchTerms = remainingWords.join(" ");
-      targetUrl = engineMap[shortcut].replace("{query}", encodeURIComponent(searchTerms));
+    // Search for the shortcut anywhere in the string
+    for (const key of shortcutKeys) {
+      if (trimmed.includes(key)) {
+        foundShortcut = key;
+        break;
+      }
+    }
+
+    if (foundShortcut) {
+      // Replace only the FIRST occurrence of the shortcut with a space
+      // Then clean up extra whitespace
+      const searchTerms = trimmed
+        .replace(foundShortcut, " ")
+        .split(/\s+/)
+        .filter(Boolean)
+        .join(" ");
+
+      targetUrl = engineMap[foundShortcut].replace("{query}", encodeURIComponent(searchTerms));
     } else {
-      // No shortcut found anywhere, use DEFAULT
+      // Fallback to DEFAULT
       targetUrl = defaultEngine.url.replace("{query}", encodeURIComponent(trimmed));
     }
 

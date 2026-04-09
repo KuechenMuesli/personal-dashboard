@@ -24,7 +24,6 @@
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Ensure every widget has the showSettings property initialized
         dashboardLayout = parsed.map((w: any) => ({
           ...w,
           showSettings: false
@@ -36,7 +35,6 @@
   });
 
   function save() {
-    // Strip temporary UI state like showSettings before saving
     const toSave = dashboardLayout.map(({ showSettings, ...rest }) => rest);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   }
@@ -148,16 +146,17 @@
 	{/if}
 
 	{#each dashboardLayout as sw (sw.id)}
-		{@const config = widgets[sw.type]}
+		{@const Widget = widgets[sw.type].component}
+
 		<div
 				class="widget-wrapper"
 				class:dragging={draggingId === sw.id || resizingId === sw.id}
 				class:editable={isEditing}
 				style="
-        width: {(sw.width / columns) * 100}%;
-        height: {sw.height * ROW_HEIGHT}px;
-        transform: translate3d({(sw.x / columns) * containerWidth}px, {sw.y * ROW_HEIGHT}px, 0);
-      "
+      width: {(sw.width / columns) * 100}%;
+      height: {sw.height * ROW_HEIGHT}px;
+      transform: translate3d({(sw.x / columns) * containerWidth}px, {sw.y * ROW_HEIGHT}px, 0);
+    "
 		>
 			<div class="widget-content">
 				{#if isEditing}
@@ -168,9 +167,9 @@
 					</div>
 					<div class="resize-handle" onmousedown={(e) => startInteraction(e, sw.id, 'resize')} role="presentation"></div>
 				{/if}
+
 				<div class="inner-content">
-					<svelte:component
-							this={config.component}
+					<Widget
 							id={sw.id}
 							isEditing={isEditing}
 							bind:showSettings={sw.showSettings}
@@ -192,14 +191,18 @@
 
 <dialog bind:this={pickerDialog} class="widget-picker">
 	<div class="picker-content">
-		<header>
+		<header class="picker-header">
 			<h3>Add Widget</h3>
-			<button class="close-x" onclick={() => pickerDialog.close()}>&times;</button>
+			<button class="close-x" onclick={() => pickerDialog.close()} aria-label="Close">
+				&times;
+			</button>
 		</header>
 		<div class="selection-grid">
 			{#each Object.entries(widgets) as [type, config]}
 				<button class="option-card" onclick={() => addWidget(type)}>
-					<div class="preview-box" style="width: {config.defaultSize.width * 20}px; height: {config.defaultSize.height * 20}px;"></div>
+					<div class="preview-box">
+						<div class="mini-rect" style="width: {config.defaultSize.width * 10}px; height: {config.defaultSize.height * 10}px;"></div>
+					</div>
 					<span class="type-label">{type}</span>
 				</button>
 			{/each}
@@ -210,14 +213,13 @@
 <style>
   :global(body, html) {
     margin: 0; padding: 0; height: 100%;
-    background: rgb(29, 30, 28); /* Dein Hintergrund */
+    background: rgb(29, 30, 28);
     font-family: sans-serif; overflow: hidden;
     color: #e2e8f0;
   }
 
   .grid-container { position: relative; width: 100vw; height: 100vh; overflow-y: auto; overflow-x: hidden; }
 
-  /* Das Gitter im Hintergrund etwas dezenter für Dark Mode */
   .grid-overlay { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--cols), 1fr); pointer-events: none; }
   .grid-line { border-right: 1px solid rgba(255, 255, 255, 0.05); height: 100%; }
 
@@ -226,8 +228,6 @@
     will-change: transform, width, height; transition: transform 0.2s, width 0.2s, height 0.2s;
   }
   .widget-wrapper.dragging { z-index: 100; transition: none; }
-
-  /* Blaue Umrandung im Editiermodus etwas leuchtender */
   .widget-wrapper.editable .widget-content { border: 1px dashed #3b82f6; }
 
   .widget-content {
@@ -236,20 +236,12 @@
     overflow: hidden;
   }
 
-  /* TOOL LEISTE ANPASSUNG */
   .widget-header {
-    display: flex; align-items: center;
-    background: #1a1a1a; /* Sehr dunkles Grau für die Leiste */
-    padding: 2px 8px;
-    border-bottom: 1px solid #333;
-    gap: 4px;
+    display: flex; align-items: center; background: #1a1a1a; padding: 2px 8px;
+    border-bottom: 1px solid #333; gap: 4px;
   }
 
-  .drag-handle {
-    cursor: grab;
-    color: #525252; /* Dunklerer Griff */
-    flex-grow: 1; text-align: center; user-select: none; font-size: 14px;
-  }
+  .drag-handle { cursor: grab; color: #525252; flex-grow: 1; text-align: center; user-select: none; font-size: 14px; }
 
   .settings-btn, .delete-btn {
     background: none; border: none; color: #737373; font-size: 16px; cursor: pointer;
@@ -262,42 +254,56 @@
 
   .inner-content { flex: 1; overflow: hidden; }
 
-  /* RESIZE HANDLE ANPASSUNG */
   .resize-handle {
     position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; cursor: nwse-resize;
     background: linear-gradient(135deg, transparent 50%, #404040 50%);
     border-radius: 0 0 12px 0;
   }
 
-  /* FAB & DIALOG ANPASSUNGEN */
   .fab-container { position: fixed; bottom: 2rem; right: 2rem; display: flex; flex-direction: column; gap: 1rem; z-index: 1000; }
   .fab { width: 56px; height: 56px; border-radius: 28px; border: none; color: white; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); transition: transform 0.2s; }
   .fab:hover { transform: scale(1.05); }
 
-  .edit-btn { background: #3f3f46; } /* Dunkleres Zinc für den Edit-Button */
+  .edit-btn { background: #3f3f46; }
   .edit-btn.active { background: #059669; }
   .add-btn { background: #2563eb; }
 
   .widget-picker {
     border: 1px solid #3f3f3f;
-    border-radius: 16px; padding: 0; max-width: 450px;
+    border-radius: 16px; padding: 0; width: 90vw; max-width: 450px;
     background: #1a1a1a; color: white;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0;
   }
   .widget-picker::backdrop { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
 
-  .picker-content { padding: 1.5rem; }
-  .selection-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; }
+  .picker-content { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  .picker-header { display: flex; justify-content: space-between; align-items: center; }
+  .picker-header h3 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+
+  .close-x {
+    background: #2d2d2d; border: none; font-size: 1.5rem; cursor: pointer; color: #737373;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; transition: all 0.2s;
+  }
+  .close-x:hover { color: white; background: #404040; }
+
+  .selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem; }
 
   .option-card {
-    background: #262626;
-    border: 1px solid #3f3f3f;
-    border-radius: 8px; padding: 1rem; cursor: pointer; color: #d4d4d8;
-    transition: all 0.2s;
+    background: #262626; border: 1px solid #3f3f3f; border-radius: 12px; padding: 1rem;
+    cursor: pointer; color: #d4d4d8; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    height: 140px; width: 100%;
   }
-  .option-card:hover { border-color: #3b82f6; background: #2d2d2d; color: white; }
+  .option-card:hover { border-color: #3b82f6; background: #2d2d2d; color: white; transform: translateY(-2px); }
 
-  .preview-box { background: #404040; border-radius: 2px; margin: 0 auto 8px; }
-  .close-x { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #737373; }
-  .close-x:hover { color: white; }
+  .preview-box {
+    background: #404040; width: 60px; height: 40px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mini-rect { background: #525252; border-radius: 2px; }
+
+  .type-label { font-size: 0.9rem; font-weight: 500; text-transform: capitalize; }
 </style>

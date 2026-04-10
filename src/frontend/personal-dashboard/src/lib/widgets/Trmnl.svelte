@@ -96,9 +96,9 @@
   });
 </script>
 
-<div class="relative h-full w-full overflow-hidden rounded-xl bg-neutral-900 font-sans group border border-neutral-800">
+<div class="relative h-full w-full overflow-hidden rounded-xl group bg-transparent">
 	{#if !accessToken}
-		<div class="flex h-full flex-col items-center justify-center p-4 text-center">
+		<div class="flex h-full flex-col items-center justify-center p-4 text-center bg-neutral-900">
 			<p class="text-[11px] text-neutral-500 mb-2 text-balance">Access Token Required</p>
 			<button
 					onclick={() => showSettings = true}
@@ -106,20 +106,20 @@
 			>Configure Device</button>
 		</div>
 	{:else if isLoading && !screenshotUrl}
-		<div class="flex h-full items-center justify-center text-[10px] text-neutral-600 font-bold tracking-[0.2em] animate-pulse">
+		<div class="flex h-full items-center justify-center text-[10px] text-neutral-600 font-bold tracking-[0.2em] animate-pulse bg-neutral-900">
 			SYNCING...
 		</div>
 	{:else if error && !screenshotUrl}
-		<div class="flex h-full items-center justify-center p-4 text-center text-[10px] text-red-500 uppercase font-bold">
+		<div class="flex h-full items-center justify-center p-4 text-center text-[10px] text-red-500 uppercase font-bold bg-neutral-900">
 			Sync Error
 		</div>
 	{:else}
 		{#if screenshotUrl}
-			<div class="flex h-full w-full items-center justify-center bg-black">
+			<div class="flex h-full w-full items-center justify-center overflow-hidden">
 				<img
 						src={screenshotUrl}
 						alt="TRMNL Content"
-						class="max-h-full max-w-full object-contain grayscale brightness-95 contrast-125 {isLoading ? 'opacity-50' : 'opacity-100'}"
+						class="max-h-full max-w-full object-contain rounded-lg grayscale brightness-95 contrast-125 transition-opacity duration-300 {isLoading ? 'opacity-50' : 'opacity-100'}"
 				/>
 			</div>
 		{/if}

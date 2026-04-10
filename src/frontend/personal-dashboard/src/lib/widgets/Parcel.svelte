@@ -1,11 +1,21 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  let { id, isEditing, showSettings = $bindable(false) } = $props<{
-    id: string, isEditing: boolean, showSettings: boolean
+  let {
+    id,
+    isEditing,
+    showSettings = $bindable(false),
+    hidden = $bindable(false)
+  } = $props<{
+    id: string,
+    isEditing: boolean,
+    showSettings: boolean,
+    hidden: boolean
   }>();
 
   const PROXY_URL = "https://raspy-cloud-c6cd.kuechenmuesli.workers.dev";
+  const FETCH_ENDPOINT = `${PROXY_URL}/deliveries/?filter_mode=active`;
+  const ADD_ENDPOINT = `${PROXY_URL}/deliveries/`;
   const COOLDOWN_MS = 5 * 60 * 1000;
 
   const STATUS_MAP: Record<number, { label: string, color: string }> = {
@@ -40,6 +50,14 @@
   let newDescription = $state("");
   let dialogEl = $state<HTMLDialogElement | null>(null);
 
+  $effect(() => {
+    if (isEditing) {
+      hidden = false;
+    } else {
+      hidden = deliveries.length === 0 && !isLoading;
+    }
+  });
+
   onMount(() => {
     const saved = localStorage.getItem(`parcel-settings-${id}`);
     const cachedData = localStorage.getItem(`parcel-cache-${id}`);
@@ -72,7 +90,7 @@
 
     isLoading = true;
     try {
-      const res = await fetch(`${PROXY_URL}/deliveries/?filter_mode=recent`, {
+      const res = await fetch(FETCH_ENDPOINT, {
         headers: { "api-key": apiKey }
       });
       if (res.status === 429) return;
@@ -109,7 +127,7 @@
     if (!apiKey || !newTrackingNum) return;
     isLoading = true;
     try {
-      const res = await fetch(`${PROXY_URL}/deliveries/`, {
+      const res = await fetch(ADD_ENDPOINT, {
         method: "POST",
         headers: { "api-key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({ tracking_number: newTrackingNum, description: newDescription })

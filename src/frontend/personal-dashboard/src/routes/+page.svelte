@@ -10,6 +10,7 @@
   let resizingId = $state<string | null>(null);
   let isEditing = $state(false);
   let pickerDialog: HTMLDialogElement;
+  let widgetStates = $state<Record<string, { hidden: boolean }>>({});
 
   let containerWidth = $state(0);
   let columns = $derived(containerWidth < 640 ? 2 : 9);
@@ -55,6 +56,7 @@
 
   function deleteWidget(id: string) {
     dashboardLayout = dashboardLayout.filter(w => w.id !== id);
+    if (widgetStates[id]) delete widgetStates[id];
     save();
   }
 
@@ -148,13 +150,17 @@
 
 	{#each dashboardLayout as sw (sw.id)}
 		{@const Widget = widgets[sw.type].component}
+		{@const isHidden = widgetStates[sw.id]?.hidden && !isEditing}
+
 		<div
 				class="widget-wrapper absolute p-2 box-border will-change-[transform,width,height]
-             {draggingId === sw.id || resizingId === sw.id ? 'z-[100] transition-none' : 'z-10 transition-[transform,width,height] duration-200'}"
+             {draggingId === sw.id || resizingId === sw.id ? 'z-[100] transition-none' : 'z-10 transition-[transform,width,height] duration-200'}
+             {isHidden ? 'pointer-events-none' : ''}"
 				style="
         width: {(sw.width / columns) * 100}%;
         height: {sw.height * ROW_HEIGHT}px;
         transform: translate3d({(sw.x / columns) * containerWidth}px, {sw.y * ROW_HEIGHT}px, 0);
+        display: {isHidden ? 'none' : 'block'};
       "
 		>
 			<div class="relative flex h-full flex-col overflow-hidden rounded-lg {isEditing ? 'border border-dashed border-blue-500 bg-neutral-900/50' : ''}">
@@ -188,6 +194,10 @@
 							id={sw.id}
 							isEditing={isEditing}
 							bind:showSettings={sw.showSettings}
+							bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
+                if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
+                widgetStates[sw.id].hidden = v;
+              }}
 					/>
 				</div>
 			</div>

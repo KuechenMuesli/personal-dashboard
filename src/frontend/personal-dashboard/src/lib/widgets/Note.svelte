@@ -20,54 +20,18 @@
   }
 </script>
 
-<div class="note-container">
+<div class="h-full w-full overflow-hidden rounded-xl bg-neutral-800">
   <textarea
 			value={content}
 			oninput={handleInput}
 			placeholder="Write something..."
 			spellcheck="false"
+			class="h-full w-full resize-none border-none bg-transparent p-3.5 font-mono text-[13px] leading-relaxed tracking-tight text-slate-200 outline-none placeholder:text-neutral-600
+           scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent"
 	></textarea>
 </div>
 
 <style>
-  .note-container {
-    width: 100%;
-    height: 100%;
-    background: #262626;
-    display: flex;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  textarea {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    resize: none;
-    color: #e2e8f0;
-    padding: 14px;
-    /* Monospaced font stack */
-    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, 'Consolas', 'Courier New', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
-    outline: none;
-    border-radius: 12px;
-  }
-
-  textarea::placeholder {
-    color: #525252;
-  }
-
-  /* Scrollbar styling */
-  textarea::-webkit-scrollbar {
-    width: 6px;
-  }
-  textarea::-webkit-scrollbar-thumb {
-    background: #404040;
-    border-radius: 10px;
-  }
   textarea::-webkit-scrollbar-track {
     margin: 8px 0;
   }

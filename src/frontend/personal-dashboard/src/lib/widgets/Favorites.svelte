@@ -49,116 +49,120 @@
     failedImages.add(url);
   }
 
-  // --- REORDERING LOGIC ---
   function move(index: number, direction: 'up' | 'down') {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= favorites.length) return;
-
-    // Swap the elements
     const item = favorites[index];
     favorites.splice(index, 1);
     favorites.splice(newIndex, 0, item);
   }
 </script>
 
-<div class="favorites-container">
+<div class="flex h-full flex-wrap items-center justify-center gap-4 overflow-y-auto p-2.5 box-border">
 	{#each favorites as fav}
-		<a href={fav.url} class="fav-item" title={fav.name}>
-			<div class="icon-tile" style="background-color: {fav.color}">
+		<a
+				href={fav.url}
+				class="group flex w-[70px] flex-col items-center gap-1.5 no-underline transition-transform duration-100 hover:scale-105"
+				title={fav.name}
+		>
+			<div
+					class="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-[14px] shadow-lg shadow-black/30"
+					style="background-color: {fav.color}"
+			>
 				{#if !failedImages.has(fav.url)}
 					<img
 							src={getIcon(fav.url)}
 							alt=""
+							class="relative z-10 h-8 w-8 object-contain"
 							onerror={() => handleImageError(fav.url)}
 					/>
 				{/if}
-				<span class="initial">{fav.name.charAt(0)}</span>
+				<span class="absolute z-0 text-2xl font-bold uppercase text-white opacity-40 group-hover:opacity-100 transition-opacity">
+          {fav.name.charAt(0)}
+        </span>
 			</div>
-			<span class="label">{fav.name}</span>
+			<span class="w-full truncate text-center text-[11px] text-slate-400">
+        {fav.name}
+      </span>
 		</a>
 	{/each}
 </div>
 
-<dialog bind:this={dialogEl} class="centered-dialog" onclose={() => showSettings = false}>
-	<div class="settings-wrapper">
-		<header>
-			<h3>Edit Favorites</h3>
-			<button class="add-btn" onclick={() => favorites.push({name: '', url: '', color: '#3f3f46'})}>+ Add</button>
+<dialog
+		bind:this={dialogEl}
+		class="fixed left-1/2 top-1/2 m-0 w-[95vw] max-w-[550px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-none bg-neutral-900 p-0 text-white outline-none backdrop:bg-black/85 backdrop:backdrop-blur-sm"
+		onclose={() => showSettings = false}
+>
+	<div class="p-6">
+		<header class="mb-5 flex items-center justify-between">
+			<h3 class="text-lg font-semibold">Edit Favorites</h3>
+			<button
+					class="rounded-md bg-blue-600 px-3.5 py-1.5 text-sm font-medium text-white hover:bg-blue-500 transition-colors"
+					onclick={() => favorites.push({name: '', url: '', color: '#3f3f46'})}
+			>
+				+ Add
+			</button>
 		</header>
 
-		<div class="favorites-scroll">
+		<div class="flex max-h-[350px] flex-col gap-2.5 overflow-y-auto pr-1.5 scrollbar-thin scrollbar-thumb-neutral-700">
 			{#each favorites as fav, i}
-				<div class="edit-row">
-					<div class="order-btns">
-						<button disabled={i === 0} onclick={() => move(i, 'up')}>▴</button>
-						<button disabled={i === favorites.length - 1} onclick={() => move(i, 'down')}>▾</button>
+				<div class="flex items-center gap-2">
+					<div class="flex flex-col">
+						<button
+								disabled={i === 0}
+								onclick={() => move(i, 'up')}
+								class="rounded-t border border-neutral-700 bg-neutral-800 px-1.5 text-[10px] leading-none text-slate-400 hover:not-disabled:bg-neutral-700 hover:not-disabled:text-white disabled:opacity-20"
+						>
+							▴
+						</button>
+						<button
+								disabled={i === favorites.length - 1}
+								onclick={() => move(i, 'down')}
+								class="-mt-px rounded-b border border-neutral-700 bg-neutral-800 px-1.5 text-[10px] leading-none text-slate-400 hover:not-disabled:bg-neutral-700 hover:not-disabled:text-white disabled:opacity-20"
+						>
+							▾
+						</button>
 					</div>
 
-					<input type="color" bind:value={fav.color} class="color-picker" />
-					<input type="text" bind:value={fav.name} placeholder="Name" class="name-in" />
-					<input type="text" bind:value={fav.url} placeholder="URL" class="url-in" />
-					<button class="del-btn" onclick={() => favorites.splice(i, 1)}>×</button>
+					<input type="color" bind:value={fav.color} class="h-8 w-8 shrink-0 cursor-pointer border-none bg-transparent p-0" />
+
+					<input
+							type="text"
+							bind:value={fav.name}
+							placeholder="Name"
+							class="w-[90px] rounded border border-neutral-700 bg-neutral-800 p-1.5 text-sm text-white outline-none focus:border-blue-500"
+					/>
+
+					<input
+							type="text"
+							bind:value={fav.url}
+							placeholder="URL"
+							class="flex-1 rounded border border-neutral-700 bg-neutral-800 p-1.5 text-sm text-white outline-none focus:border-blue-500"
+					/>
+
+					<button
+							class="px-1 text-xl text-red-500 transition-colors hover:text-red-400"
+							onclick={() => favorites.splice(i, 1)}
+					>
+						×
+					</button>
 				</div>
 			{/each}
 		</div>
 
-		<footer class="actions">
-			<button class="cancel" onclick={() => showSettings = false}>Cancel</button>
-			<button class="save" onclick={saveSettings}>Save Changes</button>
+		<footer class="mt-6 flex justify-end gap-3 border-t border-neutral-800 pt-4">
+			<button
+					class="rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-500 hover:bg-neutral-800 transition-colors"
+					onclick={() => showSettings = false}
+			>
+				Cancel
+			</button>
+			<button
+					class="rounded-md bg-emerald-600 px-6 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors"
+					onclick={saveSettings}
+			>
+				Save Changes
+			</button>
 		</footer>
 	</div>
 </dialog>
-
-<style>
-  /* ... existing styles ... */
-  .favorites-container {
-    display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
-    gap: 16px; padding: 10px; height: 100%; overflow-y: auto; box-sizing: border-box;
-  }
-
-  .fav-item {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 6px; text-decoration: none; width: 70px; transition: transform 0.1s; flex-grow: 0;
-  }
-  .fav-item:hover { transform: scale(1.05); }
-
-  .icon-tile {
-    width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center;
-    justify-content: center; position: relative; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  }
-  .icon-tile img { width: 32px; height: 32px; z-index: 2; object-fit: contain; }
-  .initial { position: absolute; color: white; font-size: 24px; font-weight: bold; z-index: 1; text-transform: uppercase; }
-  .label { color: #94a3b8; font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-
-  .centered-dialog {
-    border: none; padding: 0; border-radius: 16px; background: #1a1a1a; color: white;
-    width: 95vw; max-width: 550px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0;
-  }
-  .centered-dialog::backdrop { background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
-  .settings-wrapper { padding: 24px; }
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-
-  .favorites-scroll { max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
-  .edit-row { display: flex; gap: 8px; align-items: center; }
-
-  /* New Reorder Styles */
-  .order-btns { display: flex; flex-direction: column; gap: 0; }
-  .order-btns button {
-    background: #262626; border: 1px solid #3f3f3f; color: #94a3b8;
-    line-height: 1; font-size: 12px; cursor: pointer; padding: 2px 6px;
-  }
-  .order-btns button:first-child { border-radius: 4px 4px 0 0; }
-  .order-btns button:last-child { border-radius: 0 0 4px 4px; border-top: none; }
-  .order-btns button:disabled { opacity: 0.2; cursor: default; }
-  .order-btns button:hover:not(:disabled) { background: #3f3f3f; color: white; }
-
-  .color-picker { width: 30px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; flex-shrink: 0; }
-  .name-in { width: 90px; background: #262626; border: 1px solid #3f3f3f; color: white; border-radius: 4px; padding: 6px; }
-  .url-in { flex: 1; background: #262626; border: 1px solid #3f3f3f; color: white; border-radius: 4px; padding: 6px; }
-
-  .del-btn { background: none; border: none; color: #ef4444; font-size: 20px; cursor: pointer; padding: 0 5px; }
-  .add-btn { background: #3b82f6; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
-  .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; border-top: 1px solid #333; padding-top: 16px; }
-  .cancel { background: transparent; border: 1px solid #333; color: #737373; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-  .save { background: #059669; color: white; border: none; padding: 8px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-</style>

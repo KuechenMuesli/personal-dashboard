@@ -21,6 +21,7 @@
 
   let grabOffset = { x: 0, y: 0 };
   let initialPos = { x: 0, y: 0, w: 0, h: 0 };
+  let lastProcessedTime = 0;
 
   onMount(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -173,8 +174,18 @@
     window.removeEventListener('touchend', stopInteraction);
   }
 
-  function handleAddWidgetMobile(type: string) {
-    addWidget(type);
+  function debounceAction(fn: () => void) {
+    const now = Date.now();
+    if (now - lastProcessedTime < 300) return;
+    lastProcessedTime = now;
+    fn();
+  }
+
+  function toggleSettings(id: string) {
+    const index = dashboardLayout.findIndex(w => w.id === id);
+    if (index !== -1) {
+      dashboardLayout[index].showSettings = !dashboardLayout[index].showSettings;
+    }
   }
 </script>
 
@@ -214,9 +225,9 @@
 				{#if isEditing}
 					<div class="absolute top-0 left-0 right-0 z-50 flex items-center gap-1 border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
 						<button
-								class="flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-neutral-800 hover:text-white"
-								onclick={() => sw.showSettings = true}
-						>⚙</button>
+								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
+								onclick={() => debounceAction(() => toggleSettings(sw.id))}
+						>⋮</button>
 						<div
 								class="flex-grow cursor-grab touch-none text-center text-xs font-bold text-neutral-500 select-none active:cursor-grabbing pointer-events-auto"
 								onmousedown={(e) => startInteraction(e, sw.id, 'drag')}
@@ -224,8 +235,8 @@
 								role="presentation"
 						>⠿</div>
 						<button
-								class="flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400"
-								onclick={() => deleteWidget(sw.id)}
+								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400"
+								onclick={() => debounceAction(() => deleteWidget(sw.id))}
 						>×</button>
 					</div>
 
@@ -262,13 +273,13 @@
 	{#if isEditing}
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
-				onclick={() => pickerDialog.showModal()}
+				onclick={() => debounceAction(() => pickerDialog.showModal())}
 		>+</button>
 	{/if}
 	<button
 			class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
            {isEditing ? 'bg-emerald-600' : 'bg-neutral-700'}"
-			onclick={() => isEditing = !isEditing}
+			onclick={() => debounceAction(() => isEditing = !isEditing)}
 	>
 		{isEditing ? '✓' : '✎'}
 	</button>
@@ -283,8 +294,7 @@
 			<h3 class="text-xl font-semibold">Add Widget</h3>
 			<button
 					class="text-3xl text-neutral-500 hover:text-white px-2"
-					onclick={() => pickerDialog.close()}
-					ontouchstart={() => pickerDialog.close()}
+					onclick={() => debounceAction(() => pickerDialog.close())}
 			>
 				&times;
 			</button>
@@ -294,11 +304,7 @@
 			{#each Object.entries(widgets) as [type, config]}
 				<button
 						class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all active:border-blue-500 active:bg-neutral-800 hover:border-blue-500"
-						onclick={() => addWidget(type)}
-						ontouchstart={(e) => {
-         e.stopPropagation();
-         addWidget(type);
-       }}
+						onclick={() => debounceAction(() => addWidget(type))}
 				>
 					<div class="pointer-events-none flex flex-1 items-center justify-center w-full">
 						<div

@@ -16,6 +16,8 @@
   let columns = $derived(containerWidth < 640 ? 2 : 9);
   let colPixelWidth = $derived(containerWidth / columns);
   const ROW_HEIGHT = 50;
+  const PREVIEW_UNIT_W = 16;
+  const PREVIEW_UNIT_H = 4;
 
   let grabOffset = { x: 0, y: 0 };
   let initialPos = { x: 0, y: 0, w: 0, h: 0 };
@@ -80,12 +82,7 @@
     const widget = dashboardLayout.find(w => w.id === id);
     if (!widget) return;
 
-    initialPos = {
-      x: widget.x,
-      y: widget.y,
-      w: widget.width,
-      h: widget.height
-    };
+    initialPos = { x: widget.x, y: widget.y, w: widget.width, h: widget.height };
 
     if (mode === 'drag') {
       const rect = (e.currentTarget as HTMLElement).closest('.widget-wrapper')?.getBoundingClientRect();
@@ -263,13 +260,16 @@
 		<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
 			{#each Object.entries(widgets) as [type, config]}
 				<button
-						class="flex h-[140px] flex-col items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all hover:border-blue-500 hover:bg-neutral-800"
+						class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all hover:border-blue-500 hover:bg-neutral-800"
 						onclick={() => addWidget(type)}
 				>
-					<div class="flex h-10 w-16 items-center justify-center rounded bg-neutral-700">
-						<div class="rounded-sm bg-neutral-500" style="width: {config.defaultSize.width * 10}px; height: {config.defaultSize.height * 10}px;"></div>
+					<div class="flex flex-1 items-center justify-center w-full">
+						<div
+								class="rounded-md border-2 border-blue-500/50 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
+								style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
+						></div>
 					</div>
-					<span class="text-sm font-medium capitalize">{type}</span>
+					<span class="mt-3 text-sm font-medium capitalize text-neutral-300">{type}</span>
 				</button>
 			{/each}
 		</div>

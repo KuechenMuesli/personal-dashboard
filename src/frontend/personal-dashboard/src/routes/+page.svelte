@@ -80,7 +80,12 @@
     const widget = dashboardLayout.find(w => w.id === id);
     if (!widget) return;
 
-    initialPos = { x: widget.x, y: widget.y, w: widget.width, h: widget.height };
+    initialPos = {
+      x: widget.x,
+      y: widget.y,
+      w: widget.width,
+      h: widget.height
+    };
 
     if (mode === 'drag') {
       const rect = (e.currentTarget as HTMLElement).closest('.widget-wrapper')?.getBoundingClientRect();
@@ -123,6 +128,7 @@
     if (id) {
       const index = dashboardLayout.findIndex(w => w.id === id);
       const widget = dashboardLayout[index];
+
       const snapped = {
         ...widget,
         x: Math.round(widget.x),
@@ -130,12 +136,19 @@
         width: Math.round(widget.width),
         height: Math.round(widget.height)
       };
+
       const hasCollision = dashboardLayout.some(w => w.id !== id && isOverlapping(snapped, w));
 
       if (hasCollision) {
-        Object.assign(dashboardLayout[index], initialPos);
+        dashboardLayout[index].x = initialPos.x;
+        dashboardLayout[index].y = initialPos.y;
+        dashboardLayout[index].width = initialPos.w;
+        dashboardLayout[index].height = initialPos.h;
       } else {
-        Object.assign(dashboardLayout[index], { x: snapped.x, y: snapped.y, width: snapped.width, height: snapped.height });
+        dashboardLayout[index].x = snapped.x;
+        dashboardLayout[index].y = snapped.y;
+        dashboardLayout[index].width = snapped.width;
+        dashboardLayout[index].height = snapped.height;
         save();
       }
     }

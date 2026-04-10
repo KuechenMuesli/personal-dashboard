@@ -28,7 +28,7 @@
     const handleGlobalKey = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') ||
         e.ctrlKey || e.metaKey || e.altKey || isEditing) return;
-			
+
       if (e.key.length === 1) {
         searchInput?.focus();
       }

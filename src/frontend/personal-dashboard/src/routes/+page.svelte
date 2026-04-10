@@ -60,9 +60,7 @@
 
   function startInteraction(e: MouseEvent, id: string, mode: 'drag' | 'resize') {
     if (!isEditing) return;
-    // Critical: Prevent browser from starting a default "drag" or selecting text
     e.preventDefault();
-
     const widget = dashboardLayout.find(w => w.id === id);
     if (!widget) return;
 
@@ -166,22 +164,16 @@
 						<button
 								class="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-neutral-800 hover:text-white"
 								onclick={() => sw.showSettings = true}
-						>
-							⚙
-						</button>
+						>⚙</button>
 						<div
 								class="flex-grow cursor-grab text-center text-sm font-bold text-neutral-600 select-none active:cursor-grabbing pointer-events-auto"
 								onmousedown={(e) => startInteraction(e, sw.id, 'drag')}
 								role="presentation"
-						>
-							⠿
-						</div>
+						>⠿</div>
 						<button
 								class="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-red-900/50 hover:text-red-400"
 								onclick={() => deleteWidget(sw.id)}
-						>
-							×
-						</button>
+						>×</button>
 					</div>
 
 					<div
@@ -208,9 +200,7 @@
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
 				onclick={() => pickerDialog.showModal()}
-		>
-			+
-		</button>
+		>+</button>
 	{/if}
 	<button
 			class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
@@ -250,12 +240,6 @@
 <style>
   :global(body, html) {
     margin: 0; padding: 0; height: 100%;
-    overflow: hidden; /* Prevents whole page scrolling while dragging */
-  }
-
-  /* Prevent text selection during drag interactions */
-  :global(.active-dragging) {
-    user-select: none;
-    -webkit-user-select: none;
+    overflow: hidden;
   }
 </style>

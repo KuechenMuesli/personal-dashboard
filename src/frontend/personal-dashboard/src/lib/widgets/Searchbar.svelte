@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount, tick } from "svelte";
+
   let { id, isEditing, showSettings = $bindable(false) } = $props<{
     id: string, isEditing: boolean, showSettings: boolean
   }>();
@@ -15,6 +17,26 @@
   let query = $state("");
   let engines = $state<Engine[]>([]);
   let dialogEl: HTMLDialogElement;
+  let searchInput = $state<HTMLInputElement | null>(null);
+
+  onMount(async () => {
+    await tick();
+
+    const firstSearch = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+    if (firstSearch) firstSearch.focus();
+
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') ||
+        e.ctrlKey || e.metaKey || e.altKey || isEditing) return;
+			
+      if (e.key.length === 1) {
+        searchInput?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  });
 
   $effect(() => {
     if (!engines.length) {
@@ -72,6 +94,7 @@
 <div class="flex h-full w-full items-center px-2 font-sans">
 	<div class="flex h-10 w-full overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 shadow-xl shadow-black/40 focus-within:ring-1 focus-within:ring-blue-500/50 focus-within:border-blue-500/50">
 		<input
+				bind:this={searchInput}
 				type="text"
 				bind:value={query}
 				placeholder="Search..."
@@ -101,9 +124,7 @@
 			<button
 					class="rounded-md bg-blue-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
 					onclick={() => engines.push({key: '!', url: ''})}
-			>
-				+ Add
-			</button>
+			>+ Add</button>
 		</header>
 
 		<div class="flex flex-col gap-2 overflow-y-auto pr-1">
@@ -116,12 +137,7 @@
 						</div>
 					{:else}
 						<div class="flex w-20 shrink-0 items-center gap-1">
-							<button
-									class="w-5 text-lg text-red-500 hover:text-red-400"
-									onclick={() => engines.splice(i, 1)}
-							>
-								×
-							</button>
+							<button class="w-5 text-lg text-red-500 hover:text-red-400" onclick={() => engines.splice(i, 1)}>×</button>
 							<input
 									type="text"
 									bind:value={engine.key}
@@ -130,7 +146,6 @@
 							/>
 						</div>
 					{/if}
-
 					<input
 							type="text"
 							bind:value={engine.url}
@@ -142,18 +157,8 @@
 		</div>
 
 		<footer class="mt-6 flex justify-end gap-3 border-t border-neutral-800 pt-4">
-			<button
-					class="rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-400 hover:bg-neutral-800"
-					onclick={() => showSettings = false}
-			>
-				Cancel
-			</button>
-			<button
-					class="rounded-md bg-emerald-600 px-6 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
-					onclick={saveSettings}
-			>
-				Save Changes
-			</button>
+			<button class="rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-400 hover:bg-neutral-800" onclick={() => showSettings = false}>Cancel</button>
+			<button class="rounded-md bg-emerald-600 px-6 py-2 text-sm font-semibold text-white hover:bg-emerald-500" onclick={saveSettings}>Save Changes</button>
 		</footer>
 	</div>
 </dialog>

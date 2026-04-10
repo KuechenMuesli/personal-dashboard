@@ -27,15 +27,13 @@
   let unit = $state<"celsius" | "fahrenheit">("celsius");
   let hour12 = $state(false);
 
-  const isSmall = $derived(height === 1);
+  const isHeight1 = $derived(height === 1);
   const isHeight2 = $derived(height === 2);
   const isHeight3 = $derived(height === 3);
   const isLarge = $derived(height >= 4);
-  const isExpanded = $derived(height > 1);
   const isConfigured = $derived(city.trim() !== "" && (lat !== null || !showWeather));
 
   const showingTimeGroup = $derived(showClock || showDate);
-  const showingOnlyOneGroup = $derived((showingTimeGroup && !showWeather) || (!showingTimeGroup && showWeather));
 
   const timeString = $derived(currentTime.toLocaleTimeString([], {
     hour: '2-digit',
@@ -137,40 +135,48 @@
   });
 </script>
 
-<div class="flex h-full w-full bg-neutral-800 font-sans text-white overflow-hidden transition-all {isHeight2 ? 'p-3' : 'p-4'}">
+<div class="flex h-full w-full bg-neutral-800 font-sans text-white overflow-hidden transition-all {isHeight1 ? 'items-center px-4' : 'p-4'}">
 	{#if !isConfigured && showWeather}
 		<button onclick={() => showSettings = true} class="flex w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400">
 			<span>⚙️</span> Configure Location
 		</button>
 	{:else}
-		<div class="flex w-full {isExpanded ? 'flex-col justify-center' : 'flex-row items-center justify-between'} {isHeight2 ? 'gap-1' : 'gap-4'}">
+		<div class="flex w-full
+    {isHeight1 || isHeight2 ? 'flex-row items-center justify-between' : 'flex-col justify-center'}
+    {isHeight1 ? 'gap-0' : 'gap-4'}">
 
 			{#if showingTimeGroup}
-				<div class="flex flex-col {isExpanded ? 'items-start flex-1 justify-center' : 'items-baseline gap-3'}">
+				<div class="flex items-baseline gap-3
+      {!isHeight1 && !isHeight2 ? 'flex-col items-start mb-2' : 'flex-row'}">
+
 					{#if showClock}
-            <span class="font-bold tabular-nums tracking-tight
-              {isLarge ? 'text-5xl mb-1' : isHeight3 ? 'text-3xl' : isHeight2 ? 'text-2xl leading-none' : 'text-xl'}">
-              {timeString}
-            </span>
+        <span class="font-bold tabular-nums tracking-tight
+          {isLarge ? 'text-5xl' : isHeight3 ? 'text-3xl' : isHeight2 ? 'text-2xl' : 'text-xl'}">
+          {timeString}
+        </span>
 					{/if}
+
 					{#if showDate}
-            <span class="font-medium uppercase tracking-wider
-              {isLarge ? 'text-sm text-blue-400' : isHeight3 ? 'text-xs text-blue-400' : isHeight2 ? 'text-[10px] text-blue-400' : 'text-[11px] text-neutral-400'}">
-              {isLarge ? dateStringYear : (isHeight3 || isHeight2) ? dateStringFull : dateStringShort}
-            </span>
+        <span class="font-medium uppercase tracking-wider
+          {isLarge ? 'text-sm text-blue-400' : isHeight3 || isHeight2 ? 'text-xs text-blue-400' : 'text-[11px] text-neutral-400'}">
+          {isLarge ? dateStringYear : (isHeight3 || isHeight2) ? dateStringFull : dateStringShort}
+        </span>
 					{/if}
 				</div>
 			{/if}
 
 			{#if showWeather && weather}
-				<div class="flex {isExpanded ? 'flex-col items-start flex-1 justify-center' : 'items-center gap-2 border-l border-neutral-700 pl-4'} {isExpanded && !showingOnlyOneGroup ? 'mt-1 pt-1 border-t border-neutral-700/50' : ''}">
+				<div class="flex items-center
+      {isHeight1 || isHeight2 ? 'gap-2 border-l border-neutral-700/50 pl-4' : 'flex-col items-start border-t border-neutral-700/50 pt-2'}">
+
 					{#if isLarge}
 						<div class="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">{city}</div>
 					{/if}
+
 					<div class="flex items-center gap-2">
 						<span class="{isLarge ? 'text-3xl' : isHeight3 ? 'text-xl' : 'text-lg'}">{getWeatherIcon(weather.code)}</span>
 						<span class="{isLarge ? 'text-2xl' : isHeight3 ? 'text-lg' : 'text-sm'} font-semibold tabular-nums">{weather.temp}°</span>
-						{#if isExpanded}
+						{#if !isHeight1}
 							<span class="ml-1 text-neutral-400 {isLarge ? 'text-xs' : 'text-[10px]'}">{getWeatherLabel(weather.code)}</span>
 						{/if}
 					</div>

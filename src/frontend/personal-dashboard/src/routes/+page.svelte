@@ -67,7 +67,7 @@
 
     dashboardLayout.push(newWidget);
     save();
-    pickerDialog.close();
+    if (pickerDialog.open) pickerDialog.close();
   }
 
   function deleteWidget(id: string) {
@@ -77,7 +77,6 @@
   }
 
   function startInteraction(e: MouseEvent, id: string, mode: 'drag' | 'resize') {
-    if (!isEditing) return;
     e.preventDefault();
     const widget = dashboardLayout.find(w => w.id === id);
     if (!widget) return;
@@ -85,7 +84,7 @@
     initialPos = { x: widget.x, y: widget.y, w: widget.width, h: widget.height };
 
     if (mode === 'drag') {
-      const rect = (e.currentTarget as HTMLElement).closest('.widget-wrapper')?.getBoundingClientRect();
+      const rect = (e.target as HTMLElement).closest('.widget-wrapper')?.getBoundingClientRect();
       if (!rect) return;
       draggingId = id;
       grabOffset.x = e.clientX - rect.left;
@@ -98,6 +97,14 @@
 
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', stopInteraction);
+  }
+
+  function handleInternalDrag(e: MouseEvent, id: string) {
+    startInteraction(e, id, 'drag');
+  }
+
+  function handleInternalResize(e: MouseEvent, id: string) {
+    startInteraction(e, id, 'resize');
   }
 
   function handleMove(e: MouseEvent) {
@@ -219,6 +226,9 @@
 							isEditing={isEditing}
 							width={sw.width}
 							height={sw.height}
+							onDragStart={(e: MouseEvent) => handleInternalDrag(e, sw.id)}
+							onResizeStart={(e: MouseEvent) => handleInternalResize(e, sw.id)}
+							onAddNote={() => addWidget('note')}
 							bind:showSettings={sw.showSettings}
 							bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
                 if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };

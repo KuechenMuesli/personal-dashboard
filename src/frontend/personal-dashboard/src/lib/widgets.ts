@@ -4,6 +4,7 @@ import Note from "$lib/widgets/Note.svelte";
 import Parcel from "$lib/widgets/Parcel.svelte";
 import Trmnl from "$lib/widgets/Trmnl.svelte";
 import ClockWeatherDate from "$lib/widgets/ClockWeatherDate.svelte";
+import Embed from "$lib/widgets/Embed.svelte";
 
 
 export const widgets  = {
@@ -13,4 +14,5 @@ export const widgets  = {
 	parcel:    { component: Parcel, defaultSize: { width: 1, height: 5 } },
 	trmnl:     { component: Trmnl, defaultSize: { width: 3, height: 7 } },
 	clockWeatherDate: { component: ClockWeatherDate, defaultSize: { width: 2, height: 1 } },
+	embed: { component: Embed, defaultSize: { width: 3, height: 7 } },
 }

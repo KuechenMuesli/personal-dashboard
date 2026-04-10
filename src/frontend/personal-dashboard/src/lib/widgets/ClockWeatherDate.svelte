@@ -33,7 +33,7 @@
   const isLarge = $derived(height >= 4);
   const isExpanded = $derived(height > 1);
   const isConfigured = $derived(city.trim() !== "" && (lat !== null || !showWeather));
-	
+
   const showingTimeGroup = $derived(showClock || showDate);
   const showingOnlyOneGroup = $derived((showingTimeGroup && !showWeather) || (!showingTimeGroup && showWeather));
 

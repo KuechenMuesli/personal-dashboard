@@ -83,7 +83,6 @@
 		{#each favorites as fav}
 			<a
 					href={fav.url}
-					target="_blank"
 					class="group flex items-center no-underline transition-all active:scale-95 w-full overflow-hidden
               {effectiveMode === 'list' ? 'gap-2.5 bg-white/5 p-1 rounded-lg' : 'flex-col gap-1.5 p-1'}"
 					title={fav.name}

@@ -6,6 +6,7 @@ import Trmnl from "$lib/widgets/Trmnl.svelte";
 import ClockWeatherDate from "$lib/widgets/ClockWeatherDate.svelte";
 import Embed from "$lib/widgets/Embed.svelte";
 import TimerStopwatch from "$lib/widgets/TimerStopwatch.svelte";
+import Calendar from "$lib/widgets/Calendar.svelte";
 
 
 export const widgets  = {
@@ -17,4 +18,5 @@ export const widgets  = {
 	clockWeatherDate: { component: ClockWeatherDate, defaultSize: { width: 2, height: 1 } },
 	embed: { component: Embed, defaultSize: { width: 3, height: 7 } },
 	TimerStopwatch: { component: TimerStopwatch, defaultSize: { width: 1, height: 3 } },
+	Calendar: { component: Calendar, defaultSize: { width: 2, height: 4 } },
 }

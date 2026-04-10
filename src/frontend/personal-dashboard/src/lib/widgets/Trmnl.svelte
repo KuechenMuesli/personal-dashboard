@@ -1,8 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  let { id, isEditing, showSettings = $bindable(false) } = $props<{
-    id: string; isEditing: boolean; showSettings: boolean;
+  let {
+    id,
+    isEditing,
+    showSettings = $bindable(false),
+    hidden = $bindable(false)
+  } = $props<{
+    id: string; isEditing: boolean; showSettings: boolean; hidden: boolean;
   }>();
 
   const COOLDOWN_MS = 15 * 60 * 1000;
@@ -15,6 +20,14 @@
   let dialogEl = $state<HTMLDialogElement | null>(null);
 
   let timeUntilNext = $derived(Math.max(0, Math.ceil((COOLDOWN_MS - (Date.now() - lastFetched)) / 1000 / 60)));
+
+  $effect(() => {
+    if (isEditing) {
+      hidden = false;
+    } else {
+      hidden = (error && !screenshotUrl) || (!isLoading && !screenshotUrl);
+    }
+  });
 
   onMount(() => {
     const saved = localStorage.getItem(`trmnl-settings-${id}`);
@@ -33,6 +46,7 @@
         lastFetched = parsed.timestamp || 0;
       } catch (e) { console.error(e); }
     }
+
     if (accessToken) {
       const isStale = Date.now() - lastFetched > COOLDOWN_MS;
       if (!screenshotUrl || isStale) {
@@ -46,7 +60,6 @@
 
     const timeSinceLast = Date.now() - lastFetched;
     if (!force && timeSinceLast < COOLDOWN_MS && screenshotUrl) {
-      console.log(`TRMNL: Using cache. Cooldown active for ${timeUntilNext} more minutes.`);
       return;
     }
 
@@ -58,10 +71,7 @@
         headers: { "access-token": accessToken }
       });
 
-      if (res.status === 429) {
-        throw new Error("Rate limit hit. Try again later.");
-      }
-
+      if (res.status === 429) throw new Error("Rate limit hit");
       if (!res.ok) throw new Error(`API Error: ${res.status}`);
 
       const data = await res.json();
@@ -69,12 +79,12 @@
       if (data.image_url) {
         screenshotUrl = data.image_url;
         lastFetched = Date.now();
-
-        // Update Cache
         localStorage.setItem(`trmnl-cache-${id}`, JSON.stringify({
           url: screenshotUrl,
           timestamp: lastFetched
         }));
+      } else {
+        screenshotUrl = "";
       }
     } catch (e) {
       console.error("TRMNL sync failed", e);

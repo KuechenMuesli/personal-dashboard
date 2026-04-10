@@ -26,7 +26,7 @@
       try {
         const parsed = JSON.parse(saved);
         dashboardLayout = parsed.map((w: any) => ({ ...w, showSettings: false }));
-      } catch (e) { console.error("Failed to parse layout", e); }
+      } catch (e) { console.error(e); }
     }
   });
 
@@ -35,20 +35,34 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   }
 
-  function isOverlapping(w1: StoredWidget, w2: StoredWidget) {
+  function isOverlapping(w1: any, w2: any) {
     return (w1.x < w2.x + w2.width && w1.x + w1.width > w2.x && w1.y < w2.y + w2.height && w1.y + w1.height > w2.y);
+  }
+
+  function findFirstAvailableSpace(width: number, height: number): { x: number, y: number } {
+    let y = 0;
+    while (true) {
+      for (let x = 0; x <= columns - width; x++) {
+        const potential = { x, y, width, height };
+        const hasCollision = dashboardLayout.some(existing => isOverlapping(potential, existing));
+        if (!hasCollision) return { x, y };
+      }
+      y++;
+      if (y > 1000) return { x: 0, y: 0 };
+    }
   }
 
   function addWidget(type: string) {
     const config = widgets[type];
-    const maxY = dashboardLayout.reduce((max, w) => Math.max(max, w.y + w.height), 0);
+    const { width, height } = config.defaultSize;
+    const { x, y } = findFirstAvailableSpace(width, height);
+
     const newWidget = {
       id: crypto.randomUUID() as any,
-      type, x: 0, y: maxY,
-      width: config.defaultSize.width,
-      height: config.defaultSize.height,
+      type, x, y, width, height,
       showSettings: false
     };
+
     dashboardLayout.push(newWidget);
     save();
     pickerDialog.close();

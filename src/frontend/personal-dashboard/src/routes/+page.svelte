@@ -187,33 +187,33 @@
         display: {isHidden ? 'none' : 'block'};
       "
 		>
-			<div class="relative flex h-full flex-col overflow-hidden rounded-lg {isEditing ? 'border border-dashed border-blue-500 bg-neutral-900/50' : ''}">
+			<div class="relative flex h-full flex-col overflow-hidden rounded-lg {isEditing ? 'border border-dashed border-blue-500/40 bg-neutral-900/50' : ''}">
 
 				{#if isEditing}
-					<div class="z-30 flex items-center gap-1 border-b border-neutral-800 bg-neutral-900 px-2 py-0.5">
+					<div class="absolute top-0 left-0 right-0 z-50 flex items-center gap-1 border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
 						<button
-								class="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-neutral-800 hover:text-white"
+								class="flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-neutral-800 hover:text-white"
 								onclick={() => sw.showSettings = true}
 						>⚙</button>
 						<div
-								class="flex-grow cursor-grab text-center text-sm font-bold text-neutral-600 select-none active:cursor-grabbing pointer-events-auto"
+								class="flex-grow cursor-grab text-center text-xs font-bold text-neutral-500 select-none active:cursor-grabbing pointer-events-auto"
 								onmousedown={(e) => startInteraction(e, sw.id, 'drag')}
 								role="presentation"
 						>⠿</div>
 						<button
-								class="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-red-900/50 hover:text-red-400"
+								class="flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400"
 								onclick={() => deleteWidget(sw.id)}
 						>×</button>
 					</div>
 
 					<div
-							class="absolute bottom-0 right-0 z-30 h-4 w-4 cursor-nwse-resize rounded-br-lg bg-gradient-to-br from-transparent from-50% to-neutral-600 to-50%"
+							class="absolute bottom-0 right-0 z-50 h-5 w-5 cursor-nwse-resize rounded-br-lg bg-gradient-to-br from-transparent from-50% to-blue-500/40 to-50%"
 							onmousedown={(e) => startInteraction(e, sw.id, 'resize')}
 							role="presentation"
 					></div>
 				{/if}
 
-				<div class="flex-1 overflow-hidden">
+				<div class="h-full w-full overflow-hidden">
 					<Widget
 							id={sw.id}
 							isEditing={isEditing}

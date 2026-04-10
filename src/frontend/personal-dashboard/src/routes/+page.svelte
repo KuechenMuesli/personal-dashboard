@@ -67,7 +67,7 @@
 
     dashboardLayout.push(newWidget);
     save();
-    if (pickerDialog.open) pickerDialog.close();
+    if (pickerDialog?.open) pickerDialog.close();
   }
 
   function deleteWidget(id: string) {
@@ -76,10 +76,14 @@
     save();
   }
 
-  function startInteraction(e: MouseEvent, id: string, mode: 'drag' | 'resize') {
-    e.preventDefault();
+  function startInteraction(e: MouseEvent | TouchEvent, id: string, mode: 'drag' | 'resize') {
+    if (e.cancelable) e.preventDefault();
+
     const widget = dashboardLayout.find(w => w.id === id);
     if (!widget) return;
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
 
     initialPos = { x: widget.x, y: widget.y, w: widget.width, h: widget.height };
 
@@ -87,41 +91,46 @@
       const rect = (e.target as HTMLElement).closest('.widget-wrapper')?.getBoundingClientRect();
       if (!rect) return;
       draggingId = id;
-      grabOffset.x = e.clientX - rect.left;
-      grabOffset.y = e.clientY - rect.top;
+      grabOffset.x = clientX - rect.left;
+      grabOffset.y = clientY - rect.top;
     } else {
       resizingId = id;
-      grabOffset.x = e.clientX;
-      grabOffset.y = e.clientY;
+      grabOffset.x = clientX;
+      grabOffset.y = clientY;
     }
 
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', stopInteraction);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', stopInteraction);
   }
 
-  function handleInternalDrag(e: MouseEvent, id: string) {
+  function handleInternalDrag(e: MouseEvent | TouchEvent, id: string) {
     startInteraction(e, id, 'drag');
   }
 
-  function handleInternalResize(e: MouseEvent, id: string) {
+  function handleInternalResize(e: MouseEvent | TouchEvent, id: string) {
     startInteraction(e, id, 'resize');
   }
 
-  function handleMove(e: MouseEvent) {
+  function handleMove(e: MouseEvent | TouchEvent) {
     const container = document.getElementById('grid-container');
     if (!container) return;
     const rect = container.getBoundingClientRect();
     const index = dashboardLayout.findIndex(w => w.id === (draggingId || resizingId));
     if (index === -1) return;
 
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
     if (draggingId) {
-      let targetX = (e.clientX - rect.left - grabOffset.x) / colPixelWidth;
-      let targetY = (e.clientY - rect.top - grabOffset.y) / ROW_HEIGHT;
+      let targetX = (clientX - rect.left - grabOffset.x) / colPixelWidth;
+      let targetY = (clientY - rect.top - grabOffset.y) / ROW_HEIGHT;
       dashboardLayout[index].x = Math.max(0, Math.min(targetX, columns - dashboardLayout[index].width));
       dashboardLayout[index].y = Math.max(0, targetY);
     } else if (resizingId) {
-      const deltaX = (e.clientX - grabOffset.x) / colPixelWidth;
-      const deltaY = (e.clientY - grabOffset.y) / ROW_HEIGHT;
+      const deltaX = (clientX - grabOffset.x) / colPixelWidth;
+      const deltaY = (clientY - grabOffset.y) / ROW_HEIGHT;
       dashboardLayout[index].width = Math.max(1, Math.min(initialPos.w + deltaX, columns - dashboardLayout[index].x));
       dashboardLayout[index].height = Math.max(1, initialPos.h + deltaY);
     }
@@ -160,6 +169,12 @@
     resizingId = null;
     window.removeEventListener('mousemove', handleMove);
     window.removeEventListener('mouseup', stopInteraction);
+    window.removeEventListener('touchmove', handleMove);
+    window.removeEventListener('touchend', stopInteraction);
+  }
+
+  function handleAddWidgetMobile(type: string) {
+    addWidget(type);
   }
 </script>
 
@@ -203,8 +218,9 @@
 								onclick={() => sw.showSettings = true}
 						>⚙</button>
 						<div
-								class="flex-grow cursor-grab text-center text-xs font-bold text-neutral-500 select-none active:cursor-grabbing pointer-events-auto"
+								class="flex-grow cursor-grab touch-none text-center text-xs font-bold text-neutral-500 select-none active:cursor-grabbing pointer-events-auto"
 								onmousedown={(e) => startInteraction(e, sw.id, 'drag')}
+								ontouchstart={(e) => startInteraction(e, sw.id, 'drag')}
 								role="presentation"
 						>⠿</div>
 						<button
@@ -214,8 +230,9 @@
 					</div>
 
 					<div
-							class="absolute bottom-0 right-0 z-50 h-5 w-5 cursor-nwse-resize rounded-br-lg bg-gradient-to-br from-transparent from-50% to-blue-500/40 to-50%"
+							class="absolute bottom-0 right-0 z-50 h-5 w-5 cursor-nwse-resize touch-none rounded-br-lg bg-gradient-to-br from-transparent from-50% to-blue-500/40 to-50%"
 							onmousedown={(e) => startInteraction(e, sw.id, 'resize')}
+							ontouchstart={(e) => startInteraction(e, sw.id, 'resize')}
 							role="presentation"
 					></div>
 				{/if}
@@ -226,8 +243,8 @@
 							isEditing={isEditing}
 							width={sw.width}
 							height={sw.height}
-							onDragStart={(e: MouseEvent) => handleInternalDrag(e, sw.id)}
-							onResizeStart={(e: MouseEvent) => handleInternalResize(e, sw.id)}
+							onDragStart={(e) => handleInternalDrag(e, sw.id)}
+							onResizeStart={(e) => handleInternalResize(e, sw.id)}
 							onAddNote={() => addWidget('note')}
 							bind:showSettings={sw.showSettings}
 							bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
@@ -264,31 +281,34 @@
 	<div class="flex flex-col gap-4 p-6">
 		<header class="flex items-center justify-between">
 			<h3 class="text-xl font-semibold">Add Widget</h3>
-			<button class="text-2xl text-neutral-500 hover:text-white" onclick={() => pickerDialog.close()}>&times;</button>
+			<button
+					class="text-3xl text-neutral-500 hover:text-white px-2"
+					onclick={() => pickerDialog.close()}
+					ontouchstart={() => pickerDialog.close()}
+			>
+				&times;
+			</button>
 		</header>
 
 		<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
 			{#each Object.entries(widgets) as [type, config]}
 				<button
-						class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all hover:border-blue-500 hover:bg-neutral-800"
+						class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all active:border-blue-500 active:bg-neutral-800 hover:border-blue-500"
 						onclick={() => addWidget(type)}
+						ontouchstart={(e) => {
+         e.stopPropagation();
+         addWidget(type);
+       }}
 				>
-					<div class="flex flex-1 items-center justify-center w-full">
+					<div class="pointer-events-none flex flex-1 items-center justify-center w-full">
 						<div
 								class="rounded-md border-2 border-blue-500/50 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
 								style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
 						></div>
 					</div>
-					<span class="mt-3 text-sm font-medium capitalize text-neutral-300">{type}</span>
+					<span class="pointer-events-none mt-3 text-sm font-medium capitalize text-neutral-300">{type}</span>
 				</button>
 			{/each}
 		</div>
 	</div>
 </dialog>
-
-<style>
-  :global(body, html) {
-    margin: 0; padding: 0; height: 100%;
-    overflow: hidden;
-  }
-</style>

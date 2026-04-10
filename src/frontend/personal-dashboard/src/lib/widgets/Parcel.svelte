@@ -14,8 +14,6 @@
   }>();
 
   const PROXY_URL = "https://raspy-cloud-c6cd.kuechenmuesli.workers.dev";
-  const FETCH_ENDPOINT = `${PROXY_URL}/deliveries/?filter_mode=active`;
-  const ADD_ENDPOINT = `${PROXY_URL}/deliveries/`;
   const COOLDOWN_MS = 5 * 60 * 1000;
 
   const STATUS_MAP: Record<number, { label: string, color: string }> = {
@@ -43,12 +41,14 @@
   }
 
   let apiKey = $state("");
+  let filterMode = $state<"active" | "recent">("active");
   let deliveries = $state<Delivery[]>([]);
   let isLoading = $state(false);
   let lastFetched = $state<number>(0);
   let newTrackingNum = $state("");
   let newDescription = $state("");
   let dialogEl = $state<HTMLDialogElement | null>(null);
+  const fetchEndpoint = $derived(`${PROXY_URL}/deliveries/?filter_mode=${filterMode}`);
 
   $effect(() => {
     if (isEditing) {
@@ -66,6 +66,7 @@
       try {
         const parsed = JSON.parse(saved);
         apiKey = parsed.apiKey || "";
+        filterMode = parsed.filterMode || "recent";
       } catch (e) { console.error(e); }
     }
 
@@ -90,7 +91,7 @@
 
     isLoading = true;
     try {
-      const res = await fetch(FETCH_ENDPOINT, {
+      const res = await fetch(fetchEndpoint, {
         headers: { "api-key": apiKey }
       });
       if (res.status === 429) return;
@@ -127,7 +128,7 @@
     if (!apiKey || !newTrackingNum) return;
     isLoading = true;
     try {
-      const res = await fetch(ADD_ENDPOINT, {
+      const res = await fetch(`${PROXY_URL}/deliveries/`, {
         method: "POST",
         headers: { "api-key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({ tracking_number: newTrackingNum, description: newDescription })
@@ -145,7 +146,7 @@
   }
 
   function saveSettings() {
-    localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ apiKey }));
+    localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ apiKey, filterMode }));
     showSettings = false;
     fetchDeliveries(true);
   }
@@ -186,7 +187,7 @@
 		{#if isLoading && !deliveries.length}
 			<div class="py-5 text-center text-xs text-neutral-500">Updating...</div>
 		{:else if deliveries.length === 0}
-			<div class="py-5 text-center text-xs text-neutral-500">No recent parcels.</div>
+			<div class="py-5 text-center text-xs text-neutral-500">No {filterMode} parcels.</div>
 		{:else}
 			{#each deliveries as item (item.uuid)}
 				<div class="rounded-lg border border-neutral-700 bg-neutral-900 p-3">
@@ -237,15 +238,30 @@
 			</button>
 		</header>
 
-		<div class="space-y-1">
-			<label for="api-key-input" class="block text-xs text-slate-400">API Key</label>
-			<input
-					id="api-key-input"
-					type="password"
-					bind:value={apiKey}
-					class="w-full rounded-md border border-neutral-700 bg-neutral-800 p-2 text-white outline-none focus:border-emerald-500"
-					onkeydown={(e) => e.stopPropagation()}
-			/>
+		<div class="space-y-4">
+			<div class="space-y-1">
+				<label for="api-key-input" class="block text-xs text-slate-400">API Key</label>
+				<input
+						id="api-key-input"
+						type="password"
+						bind:value={apiKey}
+						class="w-full rounded-md border border-neutral-700 bg-neutral-800 p-2 text-white outline-none focus:border-emerald-500"
+						onkeydown={(e) => e.stopPropagation()}
+				/>
+			</div>
+
+			<div class="space-y-1">
+				<label for="filter-mode-select" class="block text-xs text-slate-400">Display Filter</label>
+				<select
+						id="filter-mode-select"
+						bind:value={filterMode}
+						class="w-full rounded-md border border-neutral-700 bg-neutral-800 p-2 text-sm text-white outline-none focus:border-emerald-500"
+				>
+					<option value="active">Active Packages</option>
+					<option value="recent">Recent History</option>
+				</select>
+				<p class="text-[10px] text-neutral-500">"Active" hides delivered packages. "Recent" shows everything from the last 30 days.</p>
+			</div>
 		</div>
 
 		<footer class="flex justify-end gap-2 mt-2">

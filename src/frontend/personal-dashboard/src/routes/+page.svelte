@@ -220,6 +220,8 @@
 					<Widget
 							id={sw.id}
 							isEditing={isEditing}
+							width={sw.width}
+							height={sw.height}
 							bind:showSettings={sw.showSettings}
 							bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
                 if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };

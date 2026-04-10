@@ -100,7 +100,7 @@
     console.error("TRMNL: Image failed to load from URL:", screenshotUrl);
     imageError = true;
     error = true;
-		
+
     localStorage.setItem(`trmnl-cache-${id}`, JSON.stringify({
       url: "",
       timestamp: lastFetched

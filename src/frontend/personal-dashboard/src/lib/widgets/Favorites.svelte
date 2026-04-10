@@ -13,10 +13,10 @@
     color: string;
   }
 
-  const DEFAULT_FAVORITES: Favorite[] = [               // neutral-600 color
-    { name: "Reddit", url: "https://reddit.com", color: "rgb(255, 255, 255, 0.05)" },
-    { name: "GitHub", url: "https://github.com", color: "rgb(255, 255, 255, 0.05)" },
-    { name: "YouTube", url: "https://youtube.com", color: "rgb(255, 255, 255, 0.05)" }
+  const DEFAULT_FAVORITES: Favorite[] = [
+    { name: "Reddit", url: "https://reddit.com", color: "rgb(35, 35, 35)" },
+    { name: "GitHub", url: "https://github.com", color: "rgb(35, 35, 35)" },
+    { name: "YouTube", url: "https://youtube.com", color: "rgb(35, 35, 35)" }
   ];
 
   let favorites = $state<Favorite[]>([]);
@@ -142,7 +142,7 @@
 			</div>
 			<button
 					class="rounded-lg bg-neutral-800 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-700 transition-colors"
-					onclick={() => favorites.push({name: '', url: '', color: '#3f3f46'})}
+					onclick={() => favorites.push({name: '', url: '', color: 'rgb(35, 35, 35)'})}
 			>
 				+ ADD SITE
 			</button>

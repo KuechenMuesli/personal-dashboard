@@ -10,7 +10,7 @@
   }>();
 
   let content = $state("");
-  let isMarkdownMode = $state(false);
+  let isMarkdownMode = $state(true); // Defaulting to true so we "view" first
   let saveTimeout: ReturnType<typeof setTimeout>;
 
   $effect(() => {
@@ -31,30 +31,28 @@
 </script>
 
 <div class="flex h-full w-full flex-col overflow-hidden rounded-xl bg-neutral-800 ring-1 ring-white/5">
-	<div class="flex h-8 items-center justify-between border-b border-white/5 bg-neutral-900/50 px-2">
-		<div class="flex items-center gap-2">
-			<button
-					onclick={() => isMarkdownMode = !isMarkdownMode}
-					class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors
-               {isMarkdownMode ? 'bg-blue-600 text-white' : 'bg-neutral-700 text-neutral-400 hover:text-white'}"
-			>
-				{isMarkdownMode ? 'View' : 'Edit'}
-			</button>
+	<div class="flex h-8 items-center border-b border-white/5 bg-neutral-900/50 px-2">
+		<button
+				onclick={() => isMarkdownMode = !isMarkdownMode}
+				class="h-5 flex items-center rounded px-2 text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0
+               {!isMarkdownMode ? 'bg-neutral-600 text-white' : 'bg-neutral-700/50 text-neutral-400 hover:text-white'}"
+		>
+			{isMarkdownMode ? 'Edit' : 'View'}
+		</button>
 
-			<div
-					onmousedown={onDragStart}
-					role="presentation"
-					class="cursor-grab text-neutral-600 hover:text-neutral-400 active:cursor-grabbing px-2 py-1 text-xs transition-colors"
-			>
-				⠿
-			</div>
+		<div
+				onmousedown={onDragStart}
+				role="presentation"
+				class="flex h-5 flex-grow cursor-grab items-center justify-center text-neutral-600 transition-colors hover:text-neutral-400 active:cursor-grabbing"
+		>
+			<span class="text-xs">⠿</span>
 		</div>
 
 		<button
 				onclick={onAddNote}
-				class="flex h-5 w-5 items-center justify-center rounded bg-neutral-700 text-lg text-neutral-300 hover:bg-neutral-600 hover:text-white"
+				class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-700 text-lg leading-none text-neutral-300 transition-colors hover:bg-neutral-600 hover:text-white"
 		>
-			+
+			<span class="mb-0.5">+</span>
 		</button>
 	</div>
 
@@ -78,7 +76,7 @@
 		<div
 				onmousedown={onResizeStart}
 				role="presentation"
-				class="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-gradient-to-br from-transparent from-50% to-white/10 to-50% hover:to-white/30"
+				class="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-gradient-to-br from-transparent from-50% to-white/5 to-50% transition-colors hover:to-white/20"
 		></div>
 	</div>
 </div>
@@ -87,6 +85,7 @@
   textarea::-webkit-scrollbar-track {
     margin: 8px 0;
   }
-  :global(.prose h1) { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
+  :global(.prose h1) { font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; color: #fff; }
   :global(.prose p) { margin-bottom: 0.75rem; }
+  :global(.prose ul) { margin-bottom: 0.75rem; list-style-type: disc; padding-left: 1rem; }
 </style>

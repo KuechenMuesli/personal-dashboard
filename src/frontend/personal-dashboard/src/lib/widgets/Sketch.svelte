@@ -143,6 +143,7 @@
 
     const w = maxWidth + 4;
     const h = lines.length * lineHeight + 4;
+
     const temp = document.createElement('canvas');
     temp.width = w * dpr;
     temp.height = h * dpr;
@@ -351,6 +352,15 @@
       if (e.key === '2') { if(activeCanvas && selection?.buffer) finalizeMove(activeCanvas); mode = 'text'; selection = null; }
       if (e.key === '3') { if(activeCanvas && selection?.buffer) finalizeMove(activeCanvas); mode = 'erase'; selection = null; }
       if (e.key === '4') { mode = 'select'; }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        toolSize = Math.min(50, toolSize + 2);
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        toolSize = Math.max(1, toolSize - 2);
+      }
     }
 
     if (isMod && e.key.toLowerCase() === 'z') {

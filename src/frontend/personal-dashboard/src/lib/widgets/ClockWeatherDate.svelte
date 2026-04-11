@@ -142,11 +142,11 @@
 		</button>
 	{:else}
 		<div class="flex w-full
-    {isHeight1 || isHeight2 ? 'flex-row items-center justify-between' : 'flex-col justify-center'}
+    {isHeight1 || isHeight2 ? 'flex-row justify-between' : 'flex-col justify-center'}
     {isHeight1 ? 'gap-0' : 'gap-4'}">
 
 			{#if showingTimeGroup}
-				<div class="flex items-baseline gap-3
+				<div class="flex items-center gap-3
       {!isHeight1 && !isHeight2 ? 'flex-col items-start mb-2' : 'flex-row'}">
 
 					{#if showClock}

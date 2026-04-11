@@ -23,6 +23,47 @@
   let initialPos = { x: 0, y: 0, w: 0, h: 0 };
   let lastProcessedTime = 0;
 
+
+  let activeLayout = $derived.by(() => {
+    if (columns >= 9) return dashboardLayout;
+
+    let packedLayout: (typeof dashboardLayout[0])[] = [];
+
+    const sorted = [...dashboardLayout].sort((a, b) => a.y - b.y || a.x - b.x);
+
+    for (const w of sorted) {
+      const mobileWidget = { ...w, width: Math.min(w.width, columns) };
+
+      let y = 0;
+      let placed = false;
+
+      while (!placed) {
+        for (let x = 0; x <= columns - mobileWidget.width; x++) {
+          const potential = { ...mobileWidget, x, y };
+          const hasCollision = packedLayout.some(existing => isOverlapping(potential, existing));
+
+          if (!hasCollision) {
+            mobileWidget.x = x;
+            mobileWidget.y = y;
+            packedLayout.push(mobileWidget);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) y++;
+      }
+    }
+
+    return packedLayout;
+  });
+
+  $effect(() => {
+    if (containerWidth > 0 && containerWidth < 640 && isEditing) {
+      isEditing = false;
+      if (pickerDialog?.open) pickerDialog.close();
+    }
+  });
+
   onMount(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -79,6 +120,7 @@
 
   function startInteraction(e: MouseEvent | TouchEvent, id: string, mode: 'drag' | 'resize') {
     if (e.cancelable) e.preventDefault();
+    if (containerWidth < 640) return; // Prevent drag/resize on mobile
 
     const widget = dashboardLayout.find(w => w.id === id);
     if (!widget) return;
@@ -205,7 +247,7 @@
 		</div>
 	{/if}
 
-	{#each dashboardLayout as sw (sw.id)}
+	{#each activeLayout as sw (sw.id)}
 		{@const Widget = widgets[sw.type].component}
 		{@const isHidden = widgetStates[sw.id]?.hidden && !isEditing}
 
@@ -269,21 +311,23 @@
 	{/each}
 </div>
 
-<div class="fixed bottom-8 right-8 z-[1000] flex flex-col gap-4">
-	{#if isEditing}
+{#if containerWidth >= 640}
+	<div class="fixed bottom-8 right-8 z-[1000] flex flex-col gap-4">
+		{#if isEditing}
+			<button
+					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
+					onclick={() => debounceAction(() => pickerDialog.showModal())}
+			>+</button>
+		{/if}
 		<button
-				class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
-				onclick={() => debounceAction(() => pickerDialog.showModal())}
-		>+</button>
-	{/if}
-	<button
-			class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
-           {isEditing ? 'bg-emerald-600' : 'bg-neutral-700'}"
-			onclick={() => debounceAction(() => isEditing = !isEditing)}
-	>
-		{isEditing ? '✓' : '✎'}
-	</button>
-</div>
+				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
+             {isEditing ? 'bg-emerald-600' : 'bg-neutral-700'}"
+				onclick={() => debounceAction(() => isEditing = !isEditing)}
+		>
+			{isEditing ? '✓' : '✎'}
+		</button>
+	</div>
+{/if}
 
 <dialog
 		bind:this={pickerDialog}

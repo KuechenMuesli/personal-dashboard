@@ -19,7 +19,8 @@
     { label: '5m', ms: 300000 },
     { label: '1h', ms: 3600000 }
   ];
-  const currentStep = $derived(steps[stepIndex]);
+
+  const currentStep = $derived(steps[stepIndex] ?? steps[0]);
 
   let interval: ReturnType<typeof setInterval>;
 
@@ -38,7 +39,7 @@
         startTimestamp = parsed.startTimestamp || null;
         elapsedBeforePause = parsed.elapsedBeforePause || 0;
         inputMs = parsed.inputMs || (5 * 60 * 1000);
-        stepIndex = parsed.stepIndex || 1;
+        stepIndex = parsed.stepIndex ?? 1;
         if (isRunning) startLogic();
         else updateDisplay();
       } catch (e) { console.error(e); }
@@ -92,13 +93,11 @@
   }
 
   function toggle() {
-    const wasFinished = isFinished;
     isRunning = !isRunning;
     const now = Date.now();
 
     if (isRunning) {
       if (mode === "timer") {
-        // If it was finished, we are essentially starting a fresh timer
         targetTimestamp = now + inputMs;
       } else {
         startTimestamp = now - elapsedBeforePause;
@@ -138,7 +137,7 @@
 			{#if mode === 'timer' && !isRunning}
 				<div class="flex items-center gap-1.5 bg-black/20 rounded px-1.5 py-0.5 border border-white/10">
 					<button onclick={() => adjustTime(1)} class="text-[10px] font-bold hover:text-blue-400 leading-none">+</button>
-					<button onclick={cycleStep} class="text-[8px] font-black text-blue-400 uppercase tracking-tight">{currentStep.label}</button>
+					<button onclick={cycleStep} class="text-[8px] font-black text-blue-400 uppercase tracking-tight">{currentStep?.label ?? ''}</button>
 					<button onclick={() => adjustTime(-1)} class="text-[10px] font-bold hover:text-blue-400 leading-none">-</button>
 				</div>
 			{/if}
@@ -160,7 +159,7 @@
 			{#if mode === 'timer' && !isRunning && isCompact}
 				<div class="ml-2 flex flex-col items-center bg-black/20 rounded p-0.5 border border-white/5">
 					<button onclick={() => adjustTime(1)} class="text-[8px] p-0.5 leading-none hover:text-blue-400">+</button>
-					<button onclick={cycleStep} class="text-[7px] font-black text-blue-400 uppercase px-1 leading-none">{currentStep.label}</button>
+					<button onclick={cycleStep} class="text-[7px] font-black text-blue-400 uppercase px-1 leading-none">{currentStep?.label ?? ''}</button>
 					<button onclick={() => adjustTime(-1)} class="text-[8px] p-0.5 leading-none hover:text-blue-400">-</button>
 				</div>
 			{/if}

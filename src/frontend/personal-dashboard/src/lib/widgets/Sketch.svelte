@@ -363,7 +363,35 @@
       }
     }
 
-    if (isMod && e.key.toLowerCase() === 'z') {
+    if (isMod && e.key.toLowerCase() === 'a') {
+      e.preventDefault();
+      if (!activeCanvas) return;
+      if (selection?.buffer) finalizeMove(activeCanvas);
+
+      const rect = activeCanvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      const temp = document.createElement('canvas');
+      temp.width = activeCanvas.width;
+      temp.height = activeCanvas.height;
+      const tCtx = temp.getContext('2d')!;
+      tCtx.drawImage(activeCanvas, 0, 0);
+
+      const ctx = activeCanvas.getContext("2d")!;
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      mode = 'select';
+      selection = {
+        x: 0,
+        y: 0,
+        w: rect.width,
+        h: rect.height,
+        active: true,
+        dragging: false,
+        resizing: false,
+        buffer: temp
+      };
+    } else if (isMod && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       if (e.shiftKey) redo(); else undo();
     } else if (isMod && e.key.toLowerCase() === 'y') {

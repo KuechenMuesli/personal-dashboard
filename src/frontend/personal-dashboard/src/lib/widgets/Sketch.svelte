@@ -21,15 +21,24 @@
 
   let selection = $state<{
     x: number, y: number, w: number, h: number,
-    active: boolean, dragging: boolean,
+    active: boolean, dragging: boolean, resizing: boolean,
     buffer: HTMLCanvasElement | null
   } | null>(null);
+
+  let textInput = $state<{ x: number, y: number, active: boolean } | null>(null);
+  let textInputRef = $state<HTMLDivElement>();
 
   let startX = 0;
   let startY = 0;
 
   let isCompact = $derived(width < 3 || height < 3);
   const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+
+  $effect(() => {
+    if (textInput?.active && textInputRef) {
+      setTimeout(() => textInputRef?.focus(), 10);
+    }
+  });
 
   function initCanvas(c: HTMLCanvasElement) {
     if (!c) return;
@@ -107,30 +116,91 @@
     }, 50);
   }
 
+  function finalizeTextInput() {
+    if (!textInput?.active || !textInputRef) return;
+
+    const text = textInputRef.innerText || '';
+    if (!text.trim()) {
+      textInput = null;
+      return;
+    }
+
+    const activeCanvas = isFullscreen ? dialogCanvas : canvas;
+    if (!activeCanvas) return;
+
+    const fontSize = toolSize * 5;
+    const lines = text.split('\n');
+    const dpr = window.devicePixelRatio || 1;
+
+    const tempCtx = activeCanvas.getContext('2d')!;
+    tempCtx.font = `${fontSize}px sans-serif`;
+
+    let maxWidth = 0;
+    const lineHeight = fontSize * 1.2;
+    for (const line of lines) {
+      maxWidth = Math.max(maxWidth, tempCtx.measureText(line).width);
+    }
+
+    const w = maxWidth + 4;
+    const h = lines.length * lineHeight + 4;
+    const temp = document.createElement('canvas');
+    temp.width = w * dpr;
+    temp.height = h * dpr;
+    const tCtx = temp.getContext('2d')!;
+    tCtx.scale(dpr, dpr);
+    tCtx.font = `${fontSize}px sans-serif`;
+    tCtx.fillStyle = color;
+    tCtx.textBaseline = 'top';
+
+    lines.forEach((line, i) => {
+      tCtx.fillText(line, 2, i * lineHeight + 2);
+    });
+
+    mode = 'select';
+    selection = {
+      x: textInput.x,
+      y: textInput.y,
+      w, h,
+      active: true,
+      dragging: false,
+      resizing: false,
+      buffer: temp
+    };
+
+    textInput = null;
+  }
+
   function handleInteractionStart(e: MouseEvent | TouchEvent, targetCanvas: HTMLCanvasElement) {
     if (isEditing || !targetCanvas) return;
+
     const rect = targetCanvas.getBoundingClientRect();
     const x = ('touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX) - rect.left;
     const y = ('touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY) - rect.top;
 
     if (mode === 'text') {
-      const text = prompt("Enter text:");
-      if (text) {
-        const ctx = targetCanvas.getContext("2d")!;
-        ctx.fillStyle = color;
-        ctx.font = `${toolSize * 5}px sans-serif`;
-        ctx.fillText(text, x, y);
-        saveState(targetCanvas);
+      if (textInput?.active) {
+        finalizeTextInput();
+        return;
       }
+      textInput = { x, y, active: true };
       return;
     }
 
     if (mode === 'select') {
+      const handleSize = 20;
+      const isOnResizeHandle = selection?.active &&
+        x > (selection.x + selection.w - handleSize) && x < (selection.x + selection.w + handleSize) &&
+        y > (selection.y + selection.h - handleSize) && y < (selection.y + selection.h + handleSize);
+
       const isInside = selection?.active &&
         x > selection.x && x < selection.x + selection.w &&
         y > selection.y && y < selection.y + selection.h;
 
-      if (isInside) {
+      if (isOnResizeHandle) {
+        selection!.resizing = true;
+        startX = x;
+        startY = y;
+      } else if (isInside) {
         selection!.dragging = true;
         startX = x - selection!.x;
         startY = y - selection!.y;
@@ -149,7 +219,7 @@
         }
       } else {
         if (selection?.buffer) finalizeMove(targetCanvas);
-        selection = { x, y, w: 0, h: 0, active: true, dragging: true, buffer: null };
+        selection = { x, y, w: 0, h: 0, active: true, dragging: true, resizing: false, buffer: null };
         startX = x;
         startY = y;
       }
@@ -170,17 +240,30 @@
 
   function handleInteractionMove(e: MouseEvent | TouchEvent, targetCanvas: HTMLCanvasElement) {
     if (isEditing || !targetCanvas) return;
+
+    if (e instanceof MouseEvent && e.buttons !== 1) {
+      if (isDrawing || selection?.dragging || selection?.resizing) {
+        handleInteractionEnd(targetCanvas);
+      }
+      return;
+    }
+
     const rect = targetCanvas.getBoundingClientRect();
     const x = ('touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX) - rect.left;
     const y = ('touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY) - rect.top;
 
-    if (mode === 'select' && selection?.active && selection.dragging) {
-      if (!selection.buffer) {
-        selection.w = x - startX;
-        selection.h = y - startY;
-      } else {
-        selection.x = x - startX;
-        selection.y = y - startY;
+    if (mode === 'select' && selection?.active) {
+      if (selection.resizing) {
+        selection.w = Math.max(10, x - selection.x);
+        selection.h = Math.max(10, y - selection.y);
+      } else if (selection.dragging) {
+        if (!selection.buffer) {
+          selection.w = x - startX;
+          selection.h = y - startY;
+        } else {
+          selection.x = x - startX;
+          selection.y = y - startY;
+        }
       }
     } else if (isDrawing) {
       const ctx = targetCanvas.getContext("2d")!;
@@ -199,6 +282,7 @@
     }
     if (selection?.active) {
       selection.dragging = false;
+      selection.resizing = false;
       if (!selection.buffer) {
         if (selection.w < 0) { selection.x += selection.w; selection.w = Math.abs(selection.w); }
         if (selection.h < 0) { selection.y += selection.h; selection.h = Math.abs(selection.h); }
@@ -217,7 +301,9 @@
   }
 
   async function handleCopy(e?: ClipboardEvent) {
+    if (textInput?.active) return;
     if (e) e.preventDefault();
+
     const activeCanvas = isFullscreen ? dialogCanvas : canvas;
     if (!activeCanvas) return;
 
@@ -255,6 +341,8 @@
   }
 
   function handleKeyDown(e: KeyboardEvent) {
+    if (textInput?.active) return;
+
     const isMod = isMac ? e.metaKey : e.ctrlKey;
     const activeCanvas = isFullscreen ? dialogCanvas : canvas;
 
@@ -283,8 +371,12 @@
   }
 
   function handlePaste(e: ClipboardEvent) {
+    if (textInput?.active) return;
+
     const items = e.clipboardData?.items;
-    if (!items) return;
+    const activeCanvas = isFullscreen ? dialogCanvas : canvas;
+    if (!items || !activeCanvas) return;
+
     for (const item of items) {
       if (item.type.includes("image")) {
         const blob = item.getAsFile();
@@ -293,13 +385,28 @@
         reader.onload = (event) => {
           const img = new Image();
           img.onload = () => {
-            const activeCanvas = isFullscreen ? dialogCanvas : canvas;
-            if (!activeCanvas) return;
-            const ctx = activeCanvas.getContext("2d")!;
             const rect = activeCanvas.getBoundingClientRect();
-            const ratio = Math.min(rect.width / img.width, rect.height / img.height);
-            ctx.drawImage(img, 0, 0, img.width * ratio, img.height * ratio);
-            saveState(activeCanvas);
+            const ratio = Math.min((rect.width * 0.8) / img.width, (rect.height * 0.8) / img.height);
+            const w = img.width * ratio;
+            const h = img.height * ratio;
+
+            const dpr = window.devicePixelRatio || 1;
+            const temp = document.createElement('canvas');
+            temp.width = w * dpr;
+            temp.height = h * dpr;
+            const tCtx = temp.getContext('2d')!;
+            tCtx.drawImage(img, 0, 0, w * dpr, h * dpr);
+
+            mode = 'select';
+            selection = {
+              x: (rect.width - w) / 2,
+              y: (rect.height - h) / 2,
+              w, h,
+              active: true,
+              dragging: false,
+              resizing: false,
+              buffer: temp
+            };
           };
           img.src = event.target?.result as string;
         };
@@ -312,7 +419,7 @@
 </script>
 
 <div
-		class="group relative flex h-full w-full flex-col bg-neutral-800 outline-none focus-within:ring-1 focus-within:ring-blue-500/50"
+		class="group relative flex h-full w-full flex-col bg-neutral-800 outline-none select-none focus-within:ring-1 focus-within:ring-blue-500/50"
 		tabindex="0"
 		onpaste={handlePaste}
 		oncopy={handleCopy}
@@ -350,20 +457,35 @@
 				<button onclick={openExpanded} class="p-1 text-neutral-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
 			</div>
 		</div>
+
 		<div class="relative flex-grow overflow-hidden bg-neutral-800">
 			<canvas
 					bind:this={canvas}
 					onmousedown={(e) => handleInteractionStart(e, canvas!)}
 					onmousemove={(e) => handleInteractionMove(e, canvas!)}
 					onmouseup={() => handleInteractionEnd(canvas!)}
-					class="h-full w-full touch-none {mode === 'select' ? (selection?.dragging ? 'cursor-grabbing' : 'cursor-cell') : mode === 'text' ? 'cursor-text' : 'cursor-crosshair'}"
+					onmouseleave={() => handleInteractionEnd(canvas!)}
+					class="h-full w-full touch-none select-none {mode === 'select' ? (selection?.resizing ? 'cursor-nwse-resize' : selection?.dragging ? 'cursor-grabbing' : 'cursor-cell') : mode === 'text' ? 'cursor-text' : 'cursor-crosshair'}"
 			></canvas>
+
 			{#if selection?.active}
-				<div class="absolute border border-dashed border-blue-400 bg-blue-400/10 pointer-events-none overflow-hidden" style="left: {selection.x}px; top: {selection.y}px; width: {selection.w}px; height: {selection.h}px;">
+				<div class="absolute border border-dashed border-blue-400 bg-blue-400/10 pointer-events-none select-none" style="left: {selection.x}px; top: {selection.y}px; width: {selection.w}px; height: {selection.h}px;">
 					{#if selection.buffer}
-						<img src={selection.buffer.toDataURL()} alt="" class="h-full w-full object-fill opacity-80" />
+						<img src={selection.buffer.toDataURL()} alt="" draggable="false" class="h-full w-full object-fill opacity-90 select-none pointer-events-none" />
 					{/if}
+					<div class="absolute -bottom-1.5 -right-1.5 h-3 w-3 bg-blue-500 border border-white pointer-events-none"></div>
 				</div>
+			{/if}
+
+			{#if textInput?.active && !isFullscreen}
+				<div
+						bind:this={textInputRef}
+						contenteditable="true"
+						onblur={finalizeTextInput}
+						onmousedown={(e) => e.stopPropagation()}
+						style="position: absolute; left: {textInput.x}px; top: {textInput.y}px; color: {color}; font-size: {toolSize * 5}px; font-family: sans-serif; line-height: 1.2; min-width: 20px; outline: none; white-space: pre-wrap; word-break: break-word;"
+						class="border border-dashed border-blue-400 bg-blue-500/10 z-50 cursor-text min-h-[1.2em]"
+				></div>
 			{/if}
 		</div>
 	{/if}
@@ -371,7 +493,7 @@
 
 <dialog
 		bind:this={sketchDialog}
-		class="m-0 h-[85vh] w-[90vw] max-w-5xl rounded-2xl border border-neutral-700 bg-neutral-900 p-0 text-white shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 outline-none"
+		class="m-0 h-[85vh] w-[90vw] max-w-5xl rounded-2xl border border-neutral-700 bg-neutral-900 p-0 text-white shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 outline-none select-none"
 		onclose={closeExpanded}
 >
 	<div class="flex h-full flex-col" onpaste={handlePaste} oncopy={handleCopy} onkeydown={handleKeyDown} tabindex="-1">
@@ -412,14 +534,28 @@
 						onmousedown={(e) => handleInteractionStart(e, dialogCanvas!)}
 						onmousemove={(e) => handleInteractionMove(e, dialogCanvas!)}
 						onmouseup={() => handleInteractionEnd(dialogCanvas!)}
-						class="h-full w-full touch-none {mode === 'select' ? (selection?.dragging ? 'cursor-grabbing' : 'cursor-cell') : mode === 'text' ? 'cursor-text' : 'cursor-crosshair'}"
+						onmouseleave={() => handleInteractionEnd(dialogCanvas!)}
+						class="h-full w-full touch-none select-none {mode === 'select' ? (selection?.resizing ? 'cursor-nwse-resize' : selection?.dragging ? 'cursor-grabbing' : 'cursor-cell') : mode === 'text' ? 'cursor-text' : 'cursor-crosshair'}"
 				></canvas>
+
 				{#if selection?.active}
-					<div class="absolute border-2 border-dashed border-blue-500 bg-blue-500/5 pointer-events-none overflow-hidden" style="left: {selection.x}px; top: {selection.y}px; width: {selection.w}px; height: {selection.h}px;">
+					<div class="absolute border-2 border-dashed border-blue-500 bg-blue-500/5 pointer-events-none select-none" style="left: {selection.x}px; top: {selection.y}px; width: {selection.w}px; height: {selection.h}px;">
 						{#if selection.buffer}
-							<img src={selection.buffer.toDataURL()} alt="" class="h-full w-full object-fill opacity-80" />
+							<img src={selection.buffer.toDataURL()} alt="" draggable="false" class="h-full w-full object-fill opacity-90 select-none pointer-events-none" />
 						{/if}
+						<div class="absolute -bottom-2 -right-2 h-4 w-4 bg-blue-500 border-2 border-white pointer-events-none"></div>
 					</div>
+				{/if}
+
+				{#if textInput?.active && isFullscreen}
+					<div
+							bind:this={textInputRef}
+							contenteditable="true"
+							onblur={finalizeTextInput}
+							onmousedown={(e) => e.stopPropagation()}
+							style="position: absolute; left: {textInput.x}px; top: {textInput.y}px; color: {color}; font-size: {toolSize * 5}px; font-family: sans-serif; line-height: 1.2; min-width: 20px; outline: none; white-space: pre-wrap; word-break: break-word;"
+							class="border border-dashed border-blue-400 bg-blue-500/10 z-50 cursor-text min-h-[1.2em]"
+					></div>
 				{/if}
 			</div>
 		</div>

@@ -355,11 +355,11 @@
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        toolSize = Math.min(50, toolSize + 2);
+        toolSize = Math.min(50, toolSize + 1);
       }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        toolSize = Math.max(1, toolSize - 2);
+        toolSize = Math.max(1, toolSize - 1);
       }
     }
 
@@ -479,7 +479,7 @@
 			></canvas>
 
 			{#if selection?.active}
-				<div class="absolute border border-dashed border-blue-400 bg-blue-400/10 pointer-events-none select-none" style="left: {selection.x}px; top: {selection.y}px; width: {selection.w}px; height: {selection.h}px;">
+				<div class="absolute border border-dashed border-blue-400 bg-blue-400/10 pointer-events-none select-none" style="left: {selection.w < 0 ? selection.x + selection.w : selection.x}px; top: {selection.h < 0 ? selection.y + selection.h : selection.y}px; width: {Math.abs(selection.w)}px; height: {Math.abs(selection.h)}px;">
 					{#if selection.buffer}
 						<img src={selection.buffer.toDataURL()} alt="" draggable="false" class="h-full w-full object-fill opacity-90 select-none pointer-events-none" />
 					{/if}
@@ -549,7 +549,7 @@
 				></canvas>
 
 				{#if selection?.active}
-					<div class="absolute border-2 border-dashed border-blue-500 bg-blue-500/5 pointer-events-none select-none" style="left: {selection.x}px; top: {selection.y}px; width: {selection.w}px; height: {selection.h}px;">
+					<div class="absolute border-2 border-dashed border-blue-500 bg-blue-500/5 pointer-events-none select-none" style="left: {selection.w < 0 ? selection.x + selection.w : selection.x}px; top: {selection.h < 0 ? selection.y + selection.h : selection.y}px; width: {Math.abs(selection.w)}px; height: {Math.abs(selection.h)}px;">
 						{#if selection.buffer}
 							<img src={selection.buffer.toDataURL()} alt="" draggable="false" class="h-full w-full object-fill opacity-90 select-none pointer-events-none" />
 						{/if}

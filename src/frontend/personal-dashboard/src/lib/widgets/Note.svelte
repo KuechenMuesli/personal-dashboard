@@ -39,7 +39,6 @@
   }
 
   function handleDelete() {
-    // Clean up local storage before deleting the widget
     localStorage.removeItem(`note-settings-${id}`);
     localStorage.removeItem(`note-mode-${id}`);
     if (onDelete) onDelete();

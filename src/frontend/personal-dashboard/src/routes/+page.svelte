@@ -83,6 +83,48 @@
         const parsed = JSON.parse(saved);
         dashboardLayout = parsed.map((w: any) => ({ ...w, showSettings: false }));
       } catch (e) { console.error(e); }
+    } else {
+      const welcomeId = crypto.randomUUID();
+      const hintId = crypto.randomUUID();
+
+      localStorage.setItem(`note-settings-${welcomeId}`,
+        "# Welcome to your Dashboard! \n\n" +
+        "You can customize this space exactly how *you* like it. \n\n" +
+        "* **Add Widgets**: Use the '+' button.\n" +
+        "* **Rearrange**: Click the 'Edit' (✎) button to drag and resize.\n" +
+        "* **Markdown**: This note supports **bold**, *italics*, and lists!"
+
+      );
+      localStorage.setItem(`note-mode-${welcomeId}`, "true");
+
+      localStorage.setItem(`note-settings-${hintId}`,
+        "## Start Here! \n\n" +
+        "Click the **pencil icon** in the bottom right corner to enter **edit** mode and **add** widgets."
+      );
+      localStorage.setItem(`note-mode-${hintId}`, "true");
+
+      dashboardLayout = [
+        {
+          id: welcomeId,
+          type: 'note',
+          x: 0,
+          y: 0,
+          width: 3,
+          height: 6,
+          showSettings: false
+        },
+        {
+          id: hintId,
+          type: 'note',
+          x: columns - 2,
+          y: Math.floor(window.innerHeight / ROW_HEIGHT) - 5,
+          width: 2,
+          height: 4,
+          showSettings: false
+        }
+      ];
+
+      save();
     }
   });
 

@@ -126,13 +126,24 @@
 
   function deleteWidget(id: string) {
     dashboardLayout = dashboardLayout.filter(w => w.id !== id);
+
     if (widgetStates[id]) delete widgetStates[id];
+
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.includes(id)) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
     save();
   }
 
   function startInteraction(e: MouseEvent | TouchEvent, id: string, mode: 'drag' | 'resize') {
     if (e.cancelable) e.preventDefault();
-    if (containerWidth < 640) return; // Prevent drag/resize on mobile
+    if (containerWidth < 640) return;
 
     const widget = dashboardLayout.find(w => w.id === id);
     if (!widget) return;

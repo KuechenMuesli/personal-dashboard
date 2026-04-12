@@ -131,9 +131,8 @@
 			{#each engines as engine, i}
 				<div class="flex items-center gap-2.5 py-1 {engine.isDefault ? 'mb-2 border-b border-neutral-800 pb-3' : ''}">
 					{#if engine.isDefault}
-						<div class="flex w-20 shrink-0 items-center gap-1 text-[11px] font-bold text-blue-500">
-							<span class="text-[10px]">🔒</span>
-							<span>DEF</span>
+						<div class="flex w-20 shrink-0 items-center gap-1 text-[11px] font-bold text-neutral-500">
+							<span>DEFAULT</span>
 						</div>
 					{:else}
 						<div class="flex w-20 shrink-0 items-center gap-1">

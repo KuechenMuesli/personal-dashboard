@@ -12,6 +12,7 @@
     embed:            { name: "Web Embed", load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 } },
     TimerStopwatch:   { name: "Timer / Stopwatch", load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 } },
     sketch:           { name: "Whiteboard", load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 } },
+		newtorkMetrics:   { name: "Network Metrics", load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 } ,}
   }
 
   const STORAGE_KEY = "dashboard-layout";

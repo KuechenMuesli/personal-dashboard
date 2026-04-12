@@ -5,7 +5,7 @@
     id,
     isEditing,
     showSettings = $bindable(false),
-    hidden = $bindable(false)
+    hidden = $bindable(true)
   } = $props<{
     id: string,
     isEditing: boolean,
@@ -54,7 +54,7 @@
     if (isEditing) {
       hidden = false;
     } else {
-      hidden = deliveries.length === 0 && !isLoading;
+      hidden = deliveries.length === 0;
     }
   });
 

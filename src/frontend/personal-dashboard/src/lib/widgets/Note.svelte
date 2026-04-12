@@ -1,21 +1,27 @@
 <script lang="ts">
   import { marked } from 'marked';
 
-  let { id, isEditing, onAddNote, onDragStart, onResizeStart } = $props<{
+  let { id, isEditing, onAddNote, onDelete, onDragStart, onResizeStart } = $props<{
     id: string,
     isEditing: boolean,
     onAddNote?: () => void,
+    onDelete?: () => void,
     onDragStart?: (e: MouseEvent | TouchEvent) => void,
     onResizeStart?: (e: MouseEvent | TouchEvent) => void
   }>();
 
   let content = $state("");
-  let isMarkdownMode = $state(true);
+  let isMarkdownMode = $state(false);
   let saveTimeout: ReturnType<typeof setTimeout>;
 
   $effect(() => {
-    const saved = localStorage.getItem(`note-settings-${id}`);
-    if (saved) content = saved;
+    const savedContent = localStorage.getItem(`note-settings-${id}`);
+    if (savedContent) content = savedContent;
+
+    const savedMode = localStorage.getItem(`note-mode-${id}`);
+    if (savedMode !== null) {
+      isMarkdownMode = savedMode === 'true';
+    }
   });
 
   function handleInput(e: Event) {
@@ -27,13 +33,34 @@
     }, 500);
   }
 
+  function toggleMode() {
+    isMarkdownMode = !isMarkdownMode;
+    localStorage.setItem(`note-mode-${id}`, String(isMarkdownMode));
+  }
+
+  function handleDelete() {
+    // Clean up local storage before deleting the widget
+    localStorage.removeItem(`note-settings-${id}`);
+    localStorage.removeItem(`note-mode-${id}`);
+    if (onDelete) onDelete();
+  }
+
   const renderedMarkdown = $derived(marked.parse(content));
 </script>
 
 <div class="flex h-full w-full flex-col overflow-hidden rounded-xl bg-neutral-800 ring-1 ring-white/5">
-	<div class="flex h-8 shrink-0 items-center border-b border-white/5 bg-neutral-900/50 px-2">
+	<div class="flex h-8 shrink-0 items-center gap-2 border-b border-white/5 bg-neutral-900/50 px-2">
+
 		<button
-				onclick={() => isMarkdownMode = !isMarkdownMode}
+				onclick={onAddNote}
+				title="Add new note"
+				class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-700/50 text-lg leading-none text-neutral-400 transition-colors hover:bg-neutral-600 hover:text-white"
+		>
+			<span class="mb-0.5">+</span>
+		</button>
+
+		<button
+				onclick={toggleMode}
 				class="h-5 flex items-center rounded px-2 text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0
                {!isMarkdownMode ? 'bg-neutral-600 text-white' : 'bg-neutral-700/50 text-neutral-400 hover:text-white'}"
 		>
@@ -50,11 +77,13 @@
 		</div>
 
 		<button
-				onclick={onAddNote}
-				class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-700 text-lg leading-none text-neutral-300 transition-colors hover:bg-neutral-600 hover:text-white"
+				onclick={handleDelete}
+				title="Delete note"
+				class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-700/50 text-sm font-bold leading-none text-neutral-400 transition-colors hover:bg-red-500/80 hover:text-white"
 		>
-			<span class="mb-0.5">+</span>
+			<span>×</span>
 		</button>
+
 	</div>
 
 	<div class="relative flex-grow overflow-hidden">

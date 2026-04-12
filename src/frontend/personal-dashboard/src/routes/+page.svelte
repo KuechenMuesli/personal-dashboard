@@ -5,7 +5,7 @@
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 } },
     favorites:        { name: "Favorites", load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 4 } },
-    note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 1, height: 4 }},
+    note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 1, height: 3 }},
     parcel:           { name: "Parcel Tracker", load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 } },
     trmnl:            { name: "TRMNL Current Screen", load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 } },
     clockWeatherDate: { name: "Clock & Weather", load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 } },
@@ -303,11 +303,7 @@
 				{/if}
 
 				<div class="h-full w-full overflow-hidden">
-					{#await widgetDef.load()}
-						<div class="flex h-full w-full items-center justify-center text-neutral-500/50">
-							<span class="animate-pulse">Lädt...</span>
-						</div>
-					{:then module}
+					{#await widgetDef.load() then module}
 						{@const Widget = module.default}
 						<Widget
 								id={sw.id}
@@ -317,11 +313,12 @@
 								onDragStart={(e) => handleInternalDrag(e, sw.id)}
 								onResizeStart={(e) => handleInternalResize(e, sw.id)}
 								onAddNote={() => addWidget('note')}
+								onDelete={() => debounceAction(() => deleteWidget(sw.id))}
 								bind:showSettings={sw.showSettings}
 								bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
-                  if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
-                  widgetStates[sw.id].hidden = v;
-                }}
+             if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
+             widgetStates[sw.id].hidden = v;
+           }}
 						/>
 					{:catch error}
 						<div class="flex h-full w-full flex-col items-center justify-center gap-2 text-red-500 text-sm p-4 text-center bg-red-900/10">

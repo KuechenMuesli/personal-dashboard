@@ -5,13 +5,22 @@
     id: string, isEditing: boolean, showSettings: boolean
   }>();
 
-  interface Engine { key: string; url: string; isDefault?: boolean; }
+  // 1. Added 'name' to the interface
+  interface Engine {
+    key: string;
+    name: string;
+    url: string;
+    isDefault?: boolean;
+  }
 
   const INITIAL_ENGINES: Engine[] = [
-    { key: "DEFAULT", url: "https://www.google.com/search?q={query}", isDefault: true },
-    { key: "!gi", url: "https://www.google.com/search?tbm=isch&q={query}" },
-    { key: "!gsc", url: "https://scholar.google.com/scholar?q={query}" },
-    { key: "!a", url: "https://www.google.com/search?q={query}&udm=14" }
+    { key: "DEFAULT", name: "Google", url: "https://www.google.com/search?q={query}", isDefault: true },
+    { key: "!gi", name: "Images", url: "https://www.google.com/search?tbm=isch&q={query}" },
+    { key: "!gsc", name: "Scholar", url: "https://scholar.google.com/scholar?q={query}" },
+    { key: "!a", name: "Google AI", url: "https://www.google.com/search?q={query}&udm=50" },
+    { key: "!r", name: "Reddit", url: "https://www.reddit.com/search/?q={query}" },
+    { key: "!w", name: "Wikipedia", url: "https://de.wikipedia.org/wiki/{query}" },
+    { key: "!y", name: "Youtube", url: "https://www.youtube.com/results?search_query={query}" },
   ];
 
   let query = $state("");
@@ -19,19 +28,34 @@
   let dialogEl: HTMLDialogElement;
   let searchInput = $state<HTMLInputElement | null>(null);
 
+  const activeEngine = $derived.by(() => {
+    const trimmed = query.trim();
+    const defaultEngine = engines.find(e => e.isDefault) || INITIAL_ENGINES[0];
+
+    if (!trimmed) return defaultEngine;
+
+    const shortcuts = engines
+      .filter(e => !e.isDefault)
+      .sort((a, b) => b.key.length - a.key.length);
+
+    for (const engine of shortcuts) {
+      if (trimmed.includes(engine.key)) {
+        return engine;
+      }
+    }
+
+    return defaultEngine;
+  });
+
   onMount(async () => {
     await tick();
-
     const firstSearch = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
     if (firstSearch) firstSearch.focus();
 
     const handleGlobalKey = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') ||
         e.ctrlKey || e.metaKey || e.altKey || isEditing) return;
-
-      if (e.key.length === 1) {
-        searchInput?.focus();
-      }
+      if (e.key.length === 1) searchInput?.focus();
     };
 
     window.addEventListener('keydown', handleGlobalKey);
@@ -59,33 +83,11 @@
     const trimmed = query.trim();
     if (!trimmed) return;
 
-    const engineMap = Object.fromEntries(engines.map(e => [e.key, e.url]));
-    const defaultEngine = engines.find(e => e.isDefault) || INITIAL_ENGINES[0];
-
-    const shortcutKeys = Object.keys(engineMap)
-      .filter(k => k !== "DEFAULT")
-      .sort((a, b) => b.length - a.length);
-
-    let targetUrl = "";
-    let foundShortcut = null;
-
-    for (const key of shortcutKeys) {
-      if (trimmed.includes(key)) {
-        foundShortcut = key;
-        break;
-      }
-    }
-
-    if (foundShortcut) {
-      const searchTerms = trimmed
-        .replace(foundShortcut, " ")
-        .split(/\s+/)
-        .filter(Boolean)
-        .join(" ");
-      targetUrl = engineMap[foundShortcut].replace("{query}", encodeURIComponent(searchTerms));
-    } else {
-      targetUrl = defaultEngine.url.replace("{query}", encodeURIComponent(trimmed));
-    }
+    const targetUrl = activeEngine.isDefault
+      ? activeEngine.url.replace("{query}", encodeURIComponent(trimmed))
+      : activeEngine.url.replace("{query}", encodeURIComponent(
+        trimmed.replace(activeEngine.key, "").trim()
+      ));
 
     if (targetUrl) window.location.href = targetUrl;
   }
@@ -103,19 +105,17 @@
 		/>
 		<button
 				onclick={handleSearch}
-				class="flex aspect-square h-full items-center justify-center bg-neutral-800 text-white transition-colors hover:bg-neutral-700 active:bg-neutral-600"
+				class="flex h-full items-center justify-center bg-neutral-800 px-4 text-[11px] font-bold uppercase tracking-wider text-neutral-300 transition-colors hover:bg-neutral-700 active:bg-neutral-600 border-l border-neutral-700"
 				aria-label="Search"
 		>
-			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-			</svg>
+			{activeEngine.name}
 		</button>
 	</div>
 </div>
 
 <dialog
 		bind:this={dialogEl}
-		class="fixed left-1/2 top-1/2 m-0 w-[95vw] max-w-[650px] -translate-x-1/2 -translate-y-1/2 rounded-xl border-none bg-neutral-900 p-0 text-white outline-none backdrop:bg-black/85 backdrop:backdrop-blur-sm"
+		class="fixed left-1/2 top-1/2 m-0 w-[95vw] max-w-[750px] -translate-x-1/2 -translate-y-1/2 rounded-xl border-none bg-neutral-900 p-0 text-white outline-none backdrop:bg-black/85 backdrop:backdrop-blur-sm"
 		onclose={() => showSettings = false}
 >
 	<div class="flex max-h-[80vh] flex-col p-6">
@@ -123,8 +123,8 @@
 			<h3 class="text-base font-semibold">Search Shortcuts</h3>
 			<button
 					class="rounded-md bg-blue-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
-					onclick={() => engines.push({key: '!', url: ''})}
-			>+ Add</button>
+					onclick={() => engines.push({key: '!', name: 'New', url: ''})}
+			>+ Add Engine</button>
 		</header>
 
 		<div class="flex flex-col gap-2 overflow-y-auto pr-1">
@@ -146,6 +146,14 @@
 							/>
 						</div>
 					{/if}
+
+					<input
+							type="text"
+							bind:value={engine.name}
+							placeholder="Name (e.g. Google)"
+							class="w-32 rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+					/>
+
 					<input
 							type="text"
 							bind:value={engine.url}

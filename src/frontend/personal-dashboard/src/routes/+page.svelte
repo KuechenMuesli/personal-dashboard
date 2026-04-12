@@ -1,7 +1,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { StoredWidget } from '../types/stored-widget';
-  import { widgets } from "$lib/widgets.js";
+
+  export const widgets = {
+    searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 } },
+    favorites:        { name: "Favorites", load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 4 } },
+    note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 1, height: 4 }},
+    parcel:           { name: "Parcel Tracker", load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 } },
+    trmnl:            { name: "TRMNL Current Screen", load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 } },
+    clockWeatherDate: { name: "Clock & Weather", load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 } },
+    embed:            { name: "Web Embed", load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 } },
+    TimerStopwatch:   { name: "Timer / Stopwatch", load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 } },
+    sketch:           { name: "Whiteboard", load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 } },
+  }
 
   const STORAGE_KEY = "dashboard-layout";
 
@@ -97,7 +108,7 @@
   }
 
   function addWidget(type: string) {
-    const config = widgets[type];
+    const config = widgets[type as keyof typeof widgets];
     const { width, height } = config.defaultSize;
     const { x, y } = findFirstAvailableSpace(width, height);
 
@@ -248,7 +259,7 @@
 	{/if}
 
 	{#each activeLayout as sw (sw.id)}
-		{@const Widget = widgets[sw.type].component}
+		{@const widgetDef = widgets[sw.type as keyof typeof widgets]}
 		{@const isHidden = widgetStates[sw.id]?.hidden && !isEditing}
 
 		<div
@@ -291,20 +302,32 @@
 				{/if}
 
 				<div class="h-full w-full overflow-hidden">
-					<Widget
-							id={sw.id}
-							isEditing={isEditing}
-							width={sw.width}
-							height={sw.height}
-							onDragStart={(e) => handleInternalDrag(e, sw.id)}
-							onResizeStart={(e) => handleInternalResize(e, sw.id)}
-							onAddNote={() => addWidget('note')}
-							bind:showSettings={sw.showSettings}
-							bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
-                if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
-                widgetStates[sw.id].hidden = v;
-              }}
-					/>
+					{#await widgetDef.load()}
+						<div class="flex h-full w-full items-center justify-center text-neutral-500/50">
+							<span class="animate-pulse">Lädt...</span>
+						</div>
+					{:then module}
+						{@const Widget = module.default}
+						<Widget
+								id={sw.id}
+								isEditing={isEditing}
+								width={sw.width}
+								height={sw.height}
+								onDragStart={(e) => handleInternalDrag(e, sw.id)}
+								onResizeStart={(e) => handleInternalResize(e, sw.id)}
+								onAddNote={() => addWidget('note')}
+								bind:showSettings={sw.showSettings}
+								bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
+                  if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
+                  widgetStates[sw.id].hidden = v;
+                }}
+						/>
+					{:catch error}
+						<div class="flex h-full w-full flex-col items-center justify-center gap-2 text-red-500 text-sm p-4 text-center bg-red-900/10">
+							<span class="font-bold">Fehler</span>
+							<span class="text-xs text-red-400">Widget konnte nicht geladen werden.</span>
+						</div>
+					{/await}
 				</div>
 			</div>
 		</div>
@@ -356,7 +379,7 @@
 								style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
 						></div>
 					</div>
-					<span class="pointer-events-none mt-3 text-sm font-medium capitalize text-neutral-300">{type}</span>
+					<span class="pointer-events-none mt-3 text-sm font-medium text-center text-neutral-300">{config.name}</span>
 				</button>
 			{/each}
 		</div>

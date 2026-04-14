@@ -92,7 +92,7 @@
         "You can customize this space exactly how *you* like it. \n\n" +
         "- **Add Widgets**: Use the '+' button.\n" +
         "- **Rearrange**: Click the 'Edit' (✎) button to drag and resize.\n" +
-        "- **Markdown**: This note supports **bold**, *italics*, and lists! \n\n" +
+        "- **Markdown**: This note supports **bold**, *italics*, lists and more! \n\n" +
 				"Connect with me on [LinkedIn](https://www.linkedin.com/in/paul-simon-470477272) or [GitHub](https://github.com/KuechenMuesli) " +
 				"or [contribute to this project yourself!](https://github.com/KuechenMuesli/personal-dashboard)"
       );

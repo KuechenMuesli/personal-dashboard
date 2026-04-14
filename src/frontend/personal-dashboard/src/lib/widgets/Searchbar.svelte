@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import {onMount, tick} from "svelte";
 
   let { id, isEditing, showSettings = $bindable(false) } = $props<{
     id: string, isEditing: boolean, showSettings: boolean
   }>();
 
-  // 1. Added 'name' to the interface
   interface Engine {
     key: string;
     name: string;
@@ -81,6 +80,14 @@
 
   function handleSearch() {
     const trimmed = query.trim();
+    const isUrlExpression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
+
+    if (activeEngine.isDefault && trimmed.match(isUrlExpression)) {
+      const url = trimmed.match(/^https?:\/\//) ? trimmed : `https://${trimmed}`;
+      window.location.href = encodeURI(url);
+      return;
+    }
+
     if (!trimmed) return;
 
     const targetUrl = activeEngine.isDefault

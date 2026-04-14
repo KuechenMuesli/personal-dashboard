@@ -94,7 +94,7 @@
         "- **Rearrange**: Click the 'Edit' (✎) button to drag and resize.\n" +
         "- **Markdown**: This note supports **bold**, *italics*, and lists! \n\n" +
 				"Connect with me on [LinkedIn](https://www.linkedin.com/in/paul-simon-470477272) or [GitHub](https://github.com/KuechenMuesli) " +
-				"or [contribute to this project!](https://github.com/KuechenMuesli/personal-dashboard)"
+				"or [contribute to this project yourself!](https://github.com/KuechenMuesli/personal-dashboard)"
       );
       localStorage.setItem(`note-mode-${welcomeId}`, "true");
 

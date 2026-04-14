@@ -80,7 +80,7 @@
 
   function handleSearch() {
     const trimmed = query.trim();
-    const isUrlExpression = /^[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
+    const isUrlExpression = /^(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
     if (activeEngine.isDefault && trimmed.match(isUrlExpression)) {
       const url = trimmed.match(/^https?:\/\//) ? trimmed : `https://${trimmed}`;

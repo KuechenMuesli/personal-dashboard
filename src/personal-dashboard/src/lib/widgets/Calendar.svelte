@@ -150,7 +150,7 @@
     } else {
       storedConfigs = [...storedConfigs, {
         id: Math.random().toString(36).substr(2, 9),
-        url: newCalUrl,
+        url: newCalUrl.replace("webcal://", "https://"),
         name: newCalName,
         color: newCalColor
       }];

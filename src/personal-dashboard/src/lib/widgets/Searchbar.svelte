@@ -1,8 +1,8 @@
 <script lang="ts">
-  import {onMount, tick} from "svelte";
+  import { onMount, tick } from "svelte";
 
   let { id, isEditing, showSettings = $bindable(false) } = $props<{
-    id: string, isEditing: boolean, showSettings: boolean
+    id: string; isEditing: boolean; showSettings: boolean;
   }>();
 
   interface Engine {
@@ -10,6 +10,11 @@
     name: string;
     url: string;
     isDefault?: boolean;
+  }
+
+  interface Favorite {
+    name: string;
+    url: string;
   }
 
   const INITIAL_ENGINES: Engine[] = [
@@ -24,8 +29,14 @@
 
   let query = $state("");
   let engines = $state<Engine[]>([]);
+  let allFavorites = $state<Favorite[]>([]);
   let dialogEl: HTMLDialogElement;
   let searchInput = $state<HTMLInputElement | null>(null);
+  let wrapperEl = $state<HTMLDivElement | null>(null);
+
+  let isFocused = $state(false);
+  let selectedIndex = $state(-1);
+  let dropdownStyle = $state("");
 
   const activeEngine = $derived.by(() => {
     const trimmed = query.trim();
@@ -46,6 +57,53 @@
     return defaultEngine;
   });
 
+  const suggestions = $derived.by(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed || trimmed.startsWith('!')) return [];
+
+    return allFavorites
+      .filter(f => f.name.toLowerCase().includes(trimmed) || f.url.toLowerCase().includes(trimmed))
+      .slice(0, 5);
+  });
+
+  $effect(() => {
+    query;
+    selectedIndex = -1;
+  });
+
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      }
+    };
+  }
+
+  function updateDropdownPosition() {
+    if (!wrapperEl) return;
+    const rect = wrapperEl.getBoundingClientRect();
+    dropdownStyle = `
+      position: fixed;
+      top: ${rect.bottom + 6}px;
+      left: ${rect.left}px;
+      width: ${rect.width}px;
+      z-index: 99999;
+    `;
+  }
+
+  $effect(() => {
+    if (isFocused && suggestions.length > 0) {
+      updateDropdownPosition();
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      window.addEventListener('resize', updateDropdownPosition);
+      return () => {
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+        window.removeEventListener('resize', updateDropdownPosition);
+      };
+    }
+  });
+
   onMount(async () => {
     await tick();
     const firstSearch = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
@@ -58,8 +116,36 @@
     };
 
     window.addEventListener('keydown', handleGlobalKey);
-    return () => window.removeEventListener('keydown', handleGlobalKey);
+
+    loadFavorites();
+    window.addEventListener('storage', loadFavorites);
+
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKey);
+      window.removeEventListener('storage', loadFavorites);
+    };
   });
+
+  function loadFavorites() {
+    const loadedFavs: Favorite[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('favorites-settings-')) {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+          if (parsed.favorites) {
+            loadedFavs.push(...parsed.favorites);
+          }
+        } catch (e) { console.error("Fehler beim Parsen der Favoriten", e); }
+      }
+    }
+
+    const unique = new Map<string, Favorite>();
+    for (const fav of loadedFavs) {
+      if (fav.url) unique.set(fav.url, fav);
+    }
+    allFavorites = Array.from(unique.values());
+  }
 
   $effect(() => {
     if (!engines.length) {
@@ -98,27 +184,77 @@
 
     if (targetUrl) window.location.href = targetUrl;
   }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+        return;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+        return;
+      }
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+        window.location.href = suggestions[selectedIndex].url;
+      } else {
+        handleSearch();
+      }
+    }
+  }
 </script>
 
 <div class="flex h-full w-full items-center px-2 font-sans">
-	<div class="flex h-10 w-full overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 shadow-xl shadow-black/40 focus-within:ring-1 focus-within:ring-blue-500/50 focus-within:border-blue-500/50">
-		<input
-				bind:this={searchInput}
-				type="text"
-				bind:value={query}
-				placeholder="Search..."
-				class="min-w-0 flex-1 bg-transparent px-3 text-[13px] text-white border-none outline-none focus:ring-0 placeholder:text-neutral-500"
-				onkeydown={(e) => e.key === 'Enter' && handleSearch()}
-		/>
-		<button
-				onclick={handleSearch}
-				class="flex h-full items-center justify-center bg-neutral-800 px-4 text-[11px] font-bold uppercase tracking-wider text-neutral-300 transition-colors hover:bg-neutral-700 active:bg-neutral-600 border-l border-neutral-700"
-				aria-label="Search"
-		>
-			{activeEngine.name}
-		</button>
+	<div bind:this={wrapperEl} class="relative w-full">
+		<div class="flex h-10 w-full overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 shadow-xl shadow-black/40 focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50">
+			<input
+					bind:this={searchInput}
+					type="text"
+					bind:value={query}
+					placeholder="Search..."
+					class="min-w-0 flex-1 border-none bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
+					onkeydown={handleKeydown}
+					onfocus={() => isFocused = true}
+					onblur={() => setTimeout(() => isFocused = false, 150)}
+			/>
+			<button
+					onclick={handleSearch}
+					class="flex h-full items-center justify-center border-l border-neutral-700 bg-neutral-800 px-4 text-[11px] font-bold uppercase tracking-wider text-neutral-300 transition-colors hover:bg-neutral-700 active:bg-neutral-600"
+					aria-label="Search"
+			>
+				{activeEngine.name}
+			</button>
+		</div>
 	</div>
 </div>
+
+{#if isFocused && suggestions.length > 0}
+	<div
+			use:portal
+			style={dropdownStyle}
+			class="overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 shadow-2xl shadow-black/80 font-sans"
+	>
+		{#each suggestions as fav, i}
+			<button
+					class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors {i === selectedIndex ? 'bg-neutral-800' : 'hover:bg-neutral-800/60'}"
+					onclick={() => window.location.href = fav.url}
+			>
+				<div class="flex min-w-0 flex-col pr-2">
+					<span class="truncate text-[12px] font-semibold {i === selectedIndex ? 'text-white' : 'text-neutral-200'}">{fav.name}</span>
+					<span class="truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : 'text-neutral-500'}">{fav.url}</span>
+				</div>
+				<div class="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] font-bold text-neutral-500">
+					FAV
+				</div>
+			</button>
+		{/each}
+	</div>
+{/if}
 
 <dialog
 		bind:this={dialogEl}

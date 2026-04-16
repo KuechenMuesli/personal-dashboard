@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { slide } from "svelte/transition";
 
   interface StoredCalendar {
     id: string;
@@ -9,11 +10,12 @@
   }
 
   interface CalendarEvent {
+    id: string;
     title: string;
     description?: string;
     start: Date;
     end: Date;
-    location: string;
+    location?: string;
     calName?: string;
     calColor?: string;
   }
@@ -38,10 +40,11 @@
 
   let storedConfigs = $state<StoredCalendar[]>([]);
   let calendarsData = $state<Calendar[]>([]);
-  let viewMode = $state<"upcoming" | "grouped">("upcoming");
+  let viewMode = $state<"today" | "upcoming" | "grouped">("upcoming");
 
   let dialogEl = $state<HTMLDialogElement | null>(null);
   let isLoading = $state(false);
+  let expandedEventId = $state<string | null>(null);
 
   let editingCalId = $state<string | null>(null);
   let newCalUrl = $state("");
@@ -65,7 +68,22 @@
     return all
       .filter(e => e.end > now)
       .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
+      .slice(0, 5);
+  });
+
+  const todayEvents = $derived(() => {
+    const now = new Date();
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    let all: CalendarEvent[] = [];
+    calendarsData.forEach(cal => {
+      cal.events.forEach(ev => {
+        all.push({ ...ev, calName: cal.name, calColor: cal.color });
+      });
+    });
+    return all
+      .filter(e => e.start <= endOfToday && e.end > now)
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
   });
 
   onMount(() => {
@@ -82,7 +100,7 @@
     if (saved) {
       try { storedConfigs = JSON.parse(saved); } catch (e) { console.error(e); }
     }
-    if (savedMode === "grouped" || savedMode === "upcoming") {
+    if (savedMode === "grouped" || savedMode === "upcoming" || savedMode === "today") {
       viewMode = savedMode;
     }
   }
@@ -137,7 +155,6 @@
         color: newCalColor
       }];
     }
-
     resetForm();
   }
 
@@ -168,29 +185,36 @@
 
   function parseICS(icsData: string): CalendarEvent[] {
     const events: CalendarEvent[] = [];
-    const lines = icsData.split(/\r?\n/);
+    const unfoldedData = icsData.replace(/\r?\n[ \t]/g, '');
+    const lines = unfoldedData.split(/\r?\n/);
+
     let currentEvent: Partial<CalendarEvent> | null = null;
 
     for (let line of lines) {
       if (line.startsWith("BEGIN:VEVENT")) {
-        currentEvent = {};
+        currentEvent = { id: Math.random().toString(36).substring(2, 11) };
       } else if (line.startsWith("END:VEVENT") && currentEvent) {
         if (currentEvent.start && currentEvent.title) {
           events.push(currentEvent as CalendarEvent);
         }
         currentEvent = null;
       } else if (currentEvent) {
-        const [key, ...valueParts] = line.split(":");
-        const value = valueParts.join(":").trim();
+        const colonIdx = line.indexOf(":");
+        if (colonIdx > -1) {
+          const key = line.substring(0, colonIdx);
+          const value = line.substring(colonIdx + 1).trim();
 
-        if (key.startsWith("DTSTART")) {
-          currentEvent.start = parseIcsDate(value);
-        } else if (key.startsWith("DTEND")) {
-          currentEvent.end = parseIcsDate(value);
-        } else if (key.startsWith("SUMMARY")) {
-          currentEvent.title = value;
-        } else if (key.startsWith("LOCATION")) {
-          currentEvent.location = value;
+          if (key.startsWith("DTSTART")) {
+            currentEvent.start = parseIcsDate(value);
+          } else if (key.startsWith("DTEND")) {
+            currentEvent.end = parseIcsDate(value);
+          } else if (key.startsWith("SUMMARY")) {
+            currentEvent.title = value.replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, ' ');
+          } else if (key.startsWith("LOCATION")) {
+            currentEvent.location = value.replace(/\\,/g, ',').replace(/\\n/g, ', ');
+          } else if (key.startsWith("DESCRIPTION")) {
+            currentEvent.description = value.replace(/\\n/g, '\n').replace(/\\,/g, ',');
+          }
         }
       }
     }
@@ -214,8 +238,16 @@
     return date.toLocaleDateString([], { weekday: 'short', day: '2-digit', month: '2-digit' });
   }
 
+  function formatDateTimeFull(date: Date) {
+    return date.toLocaleDateString([], { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
   function formatTime(date: Date) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function toggleExpand(eventId: string) {
+    expandedEventId = expandedEventId === eventId ? null : eventId;
   }
 
   $effect(() => {
@@ -226,6 +258,79 @@
     }
   });
 </script>
+
+{#snippet eventItem(event: CalendarEvent, dateLabel: string, showCalName: boolean)}
+	<button
+			class="flex flex-col gap-2 rounded-lg bg-neutral-900/50 p-2.5 transition-colors hover:bg-neutral-900 border border-transparent hover:border-white/5 cursor-pointer overflow-hidden w-full text-left"
+			onclick={() => toggleExpand(event.id)}
+	>
+		<div class="flex items-start gap-3 w-full">
+			<div class="w-1 rounded-full shrink-0 mt-1" style="background-color: {event.calColor}; min-height: 24px;"></div>
+			<div class="flex flex-col overflow-hidden min-w-0 flex-grow">
+				<span class="text-sm font-bold {isLarge ? 'text-base' : ''} {expandedEventId === event.id ? '' : 'truncate'}">{event.title}</span>
+				{#if showCalName && !isHeight1}
+					<span class="truncate text-[10px] text-neutral-400 font-medium">{event.calName}</span>
+				{/if}
+			</div>
+			<div class="flex flex-col items-end shrink-0 text-right">
+				<span class="text-xs font-semibold tabular-nums text-blue-400">{dateLabel}</span>
+				<span class="text-[10px] tabular-nums text-neutral-500">{formatTime(event.start)}</span>
+			</div>
+		</div>
+
+		{#if expandedEventId === event.id}
+			<div transition:slide={{ duration: 200 }} class="w-full text-xs text-neutral-300 pl-4 ml-1 space-y-2 mt-1 border-l-2 border-white/10 pb-1 cursor-default" onclick={(e) => e.stopPropagation()}>
+				<div class="flex gap-2 items-start text-neutral-400">
+					<span class="text-neutral-500 shrink-0 mt-0.5">🕒</span>
+					<span>{formatDateTimeFull(event.start)} - {formatTime(event.end)}</span>
+				</div>
+				{#if event.location}
+					<div class="flex gap-2 items-start">
+						<span class="text-neutral-500 shrink-0 mt-0.5">📍</span>
+						<span class="break-words font-medium">{event.location}</span>
+					</div>
+				{/if}
+				{#if event.description}
+					<div class="flex gap-2 items-start">
+						<span class="text-neutral-500 shrink-0 mt-0.5">📝</span>
+						<div class="whitespace-pre-wrap break-words text-neutral-400 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 pr-2">{event.description}</div>
+					</div>
+				{/if}
+			</div>
+		{/if}
+	</button>
+{/snippet}
+
+{#snippet groupedEventItem(event: CalendarEvent)}
+	<button
+			class="flex flex-col cursor-pointer rounded p-1.5 -mx-1.5 hover:bg-white/5 transition-colors w-full text-left"
+			onclick={() => toggleExpand(event.id)}
+	>
+		<div class="flex items-baseline justify-between gap-2 w-full">
+			<span class="text-xs text-neutral-300 {expandedEventId === event.id ? '' : 'truncate'}">{event.title}</span>
+			<span class="shrink-0 text-[10px] text-neutral-500 tabular-nums">{formatDateShort(event.start)}</span>
+		</div>
+
+		{#if expandedEventId === event.id}
+			<div transition:slide={{ duration: 200 }} class="text-[10px] text-neutral-400 mt-2 space-y-1.5 bg-black/20 rounded-lg p-2.5 cursor-default w-full" onclick={(e) => e.stopPropagation()}>
+				<div class="flex gap-1.5 items-start">
+					<span class="text-neutral-500 shrink-0 mt-0.5">🕒</span>
+					<span>{formatDateTimeFull(event.start)} - {formatTime(event.end)}</span>
+				</div>
+				{#if event.location}
+					<div class="flex gap-1.5 items-start">
+						<span class="text-neutral-500 shrink-0 mt-0.5">📍</span>
+						<span class="break-words text-neutral-300">{event.location}</span>
+					</div>
+				{/if}
+				{#if event.description}
+					<div class="whitespace-pre-wrap break-words pt-1.5 border-t border-white/5 mt-1.5 leading-relaxed max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700">{event.description}</div>
+				{/if}
+			</div>
+		{/if}
+	</button>
+{/snippet}
+
 
 <div class="flex h-full w-full flex-col bg-neutral-800 font-sans text-white overflow-hidden transition-all {isHeight1 ? 'px-4 py-0 justify-center' : 'p-4'}">
 	{#if !isConfigured}
@@ -241,12 +346,16 @@
 
 				<div class="flex gap-1 bg-black/20 rounded p-0.5">
 					<button
+							class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'today' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-white'}"
+							onclick={() => { viewMode = 'today'; saveSettingsLocally(); expandedEventId = null; }}
+					>Today</button>
+					<button
 							class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'upcoming' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-white'}"
-							onclick={() => { viewMode = 'upcoming'; saveSettingsLocally(); }}
+							onclick={() => { viewMode = 'upcoming'; saveSettingsLocally(); expandedEventId = null; }}
 					>Upcoming</button>
 					<button
 							class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'grouped' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-white'}"
-							onclick={() => { viewMode = 'grouped'; saveSettingsLocally(); }}
+							onclick={() => { viewMode = 'grouped'; saveSettingsLocally(); expandedEventId = null; }}
 					>Grouped</button>
 				</div>
 			</div>
@@ -254,52 +363,44 @@
 
 		<div class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent {isHeight1 ? 'flex items-center' : 'pr-1'}">
 
-			{#if viewMode === 'upcoming' || isHeight1}
+			{#if viewMode === 'today' && !isHeight1}
+				{#if todayEvents().length === 0}
+					<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">No more events today.</div>
+				{:else}
+					<div class="flex flex-col gap-2 w-full">
+						{#each todayEvents() as event (event.id)}
+							{@render eventItem(event, "Today", true)}
+						{/each}
+					</div>
+				{/if}
+
+			{:else if viewMode === 'upcoming' || isHeight1}
 				{#if upcomingEvents().length === 0}
 					<div class="text-xs text-neutral-500 italic">No upcoming events.</div>
 				{:else}
-					<ul class="flex flex-col gap-2 w-full">
-						{#each upcomingEvents().slice(0, isHeight1 ? 1 : undefined) as event}
-							<li class="flex items-center gap-3 rounded-lg bg-neutral-900/50 p-2.5 transition-colors hover:bg-neutral-900 border border-transparent hover:border-white/5">
-								<div class="w-1 h-full rounded-full shrink-0" style="background-color: {event.calColor}; min-height: 24px;"></div>
-								<div class="flex flex-col overflow-hidden min-w-0 flex-grow">
-									<span class="truncate text-sm font-bold {isLarge ? 'text-base' : ''}">{event.title}</span>
-									{#if !isHeight1}
-                    <span class="truncate text-[10px] text-neutral-400 font-medium">
-                      {event.calName}
-                    </span>
-									{/if}
-								</div>
-								<div class="flex flex-col items-end shrink-0 text-right">
-									<span class="text-xs font-semibold tabular-nums text-blue-400">{formatDateShort(event.start)}</span>
-									<span class="text-[10px] tabular-nums text-neutral-500">{formatTime(event.start)}</span>
-								</div>
-							</li>
+					<div class="flex flex-col gap-2 w-full">
+						{#each upcomingEvents().slice(0, isHeight1 ? 1 : undefined) as event (event.id)}
+							{@render eventItem(event, formatDateShort(event.start), true)}
 						{/each}
-					</ul>
+					</div>
 				{/if}
 
-			{:else}
+			{:else if viewMode === 'grouped'}
 				<div class="space-y-5">
 					{#each calendarsData as calendar}
 						<section>
 							<h3 class="flex items-center gap-2 text-xs font-bold mb-2 uppercase tracking-wide" style="color: {calendar.color}">
-								<span class="w-2 h-2 rounded-full bg-current"></span>
-								{calendar.name}
+								<span class="w-2 h-2 rounded-full bg-current shrink-0"></span>
+								<span class="truncate">{calendar.name}</span>
 							</h3>
 							{#if calendar.events.filter(e => e.end > new Date()).length === 0}
 								<div class="text-[10px] text-neutral-600 pl-4">No upcoming events.</div>
 							{:else}
-								<ul class="flex flex-col gap-1.5 pl-4 border-l border-white/5 ml-1">
-									{#each calendar.events.filter(e => e.end > new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 5) as event}
-										<li class="flex items-baseline justify-between gap-2">
-											<span class="truncate text-xs text-neutral-300">{event.title}</span>
-											<span class="shrink-0 text-[10px] text-neutral-500 tabular-nums">
-                        {formatDateShort(event.start)}
-                      </span>
-										</li>
+								<div class="flex flex-col gap-0.5 pl-4 border-l border-white/5 ml-1">
+									{#each calendar.events.filter(e => e.end > new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 5) as event (event.id)}
+										{@render groupedEventItem(event)}
 									{/each}
-								</ul>
+								</div>
 							{/if}
 						</section>
 					{/each}

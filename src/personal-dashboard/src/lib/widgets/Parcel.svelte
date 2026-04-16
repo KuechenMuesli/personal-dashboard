@@ -14,6 +14,8 @@
   }>();
 
   const PROXY_URL = "https://raspy-cloud-c6cd.kuechenmuesli.workers.dev";
+  const TARGET_API_BASE = "https://api.parcel.app/external";
+
   const COOLDOWN_MS = 5 * 60 * 1000;
 
   const STATUS_MAP: Record<number, { label: string, color: string }> = {
@@ -48,7 +50,9 @@
   let newTrackingNum = $state("");
   let newDescription = $state("");
   let dialogEl = $state<HTMLDialogElement | null>(null);
-  const fetchEndpoint = $derived(`${PROXY_URL}/deliveries/?filter_mode=${filterMode}`);
+  const fetchEndpoint = $derived(
+    `${PROXY_URL}/?target=${encodeURIComponent(`${TARGET_API_BASE}/deliveries/?filter_mode=${filterMode}`)}`
+  );
 
   $effect(() => {
     if (isEditing) {
@@ -128,7 +132,8 @@
     if (!apiKey || !newTrackingNum) return;
     isLoading = true;
     try {
-      const res = await fetch(`${PROXY_URL}/deliveries/`, {
+      const postTarget = encodeURIComponent(`${TARGET_API_BASE}/deliveries/`);
+      const res = await fetch(`${PROXY_URL}/?target=${postTarget}`, {
         method: "POST",
         headers: { "api-key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({ tracking_number: newTrackingNum, description: newDescription })

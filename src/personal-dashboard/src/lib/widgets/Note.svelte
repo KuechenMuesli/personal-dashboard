@@ -33,6 +33,34 @@
     }, 500);
   }
 
+  function handleKeyDown(e: KeyboardEvent) {
+    const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+    const isMod: boolean = isMac ? e.metaKey : e.ctrlKey;
+
+    if (isMod && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+
+      const markdownTitle = extractTitle(content);
+      const fileName = markdownTitle
+        ? markdownTitle.replace(/\s+/g, '_') + '.md'
+        : 'dashboard-note.md';
+
+      const file = new File([content], fileName, { type: "text/markdown" });
+
+      const exportUrl = URL.createObjectURL(file);
+      const link = document.createElement('a');
+
+      link.href = exportUrl;
+      link.download = fileName;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(exportUrl);
+    }
+  }
+
   function toggleMode() {
     isMarkdownMode = !isMarkdownMode;
     localStorage.setItem(`note-mode-${id}`, String(isMarkdownMode));
@@ -44,10 +72,19 @@
     if (onDelete) onDelete();
   }
 
+  function extractTitle(markdown: string): string | null {
+    const match = markdown.match(/^#+\s*(.+)/);
+
+    if (match)
+      return match[1].trim();
+
+    return null;
+  }
+
   const renderedMarkdown = $derived(marked.parse(content));
 </script>
 
-<div class="flex h-full w-full flex-col overflow-hidden rounded-xl bg-neutral-800 ring-1 ring-white/5">
+<div class="flex h-full w-full flex-col overflow-hidden rounded-xl bg-neutral-800 ring-1 ring-white/5" onkeydown={handleKeyDown}>
 	<div class="flex h-8 shrink-0 items-center gap-2 border-b border-white/5 bg-neutral-900/50 px-2">
 
 		<button

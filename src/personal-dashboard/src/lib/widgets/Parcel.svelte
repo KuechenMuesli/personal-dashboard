@@ -13,7 +13,7 @@
     hidden: boolean
   }>();
 
-  const PROXY_URL = "https://raspy-cloud-c6cd.kuechenmuesli.workers.dev";
+  const PROXY_URL = "https://dashboard-proxy.paul-simon.dev/";
   const TARGET_API_BASE = "https://api.parcel.app/external";
 
   const COOLDOWN_MS = 5 * 60 * 1000;

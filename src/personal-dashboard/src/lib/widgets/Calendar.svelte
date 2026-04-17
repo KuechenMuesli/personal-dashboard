@@ -51,7 +51,7 @@
   let newCalName = $state("");
   let newCalColor = $state("#3b82f6");
 
-  const PROXY_URL = "https://raspy-cloud-c6cd.kuechenmuesli.workers.dev/";
+  const PROXY_URL = "https://dashboard-proxy.paul-simon.dev/";
 
   const isHeight1 = $derived(height === 1);
   const isLarge = $derived(height >= 3);

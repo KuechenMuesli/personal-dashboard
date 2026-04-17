@@ -33,20 +33,6 @@ export default {
 		}
 
 		try {
-			const parsedTarget = new URL(targetUrl);
-			const allowedTargetDomains = [
-				"api.example.com",
-				"api.anotherservice.com"
-			];
-
-			if (!allowedTargetDomains.includes(parsedTarget.hostname)) {
-				return new Response("Target domain not allowed", { status: 403, headers: corsHeaders });
-			}
-		} catch (e) {
-			return new Response("Invalid target URL format", { status: 400, headers: corsHeaders });
-		}
-
-		try {
 			const fetchHeaders = new Headers();
 			fetchHeaders.set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36");
 

@@ -74,7 +74,7 @@
   }
 
   const PREDICTIONS: Record<string, string[]> = {
-    kg: ['lbs', 'g'], g: ['oz', 'kg'], mg: ['g'], oz: ['g'], lb: ['kg'], lbs: ['kg'],
+    kg: ['lb', 'g'], g: ['oz', 'kg'], mg: ['g'], oz: ['g'], lb: ['kg'], lbs: ['kg'],
     m: ['ft', 'cm'], cm: ['in', 'm'], mm: ['in', 'cm'], in: ['cm'], ft: ['m'], yd: ['m'], mi: ['km'], km: ['mi'],
     c: ['f'], f: ['c'],
     l: ['gal', 'ml'], ml: ['l', 'floz'], gal: ['l'],
@@ -170,13 +170,20 @@
       if (!isNaN(val)) {
         const allUnits = getAllCategoryUnits(fromUnit);
 
-        const targetUnits = targetPrefix
+        let targetUnits = targetPrefix
           ? allUnits.filter(u => u.startsWith(targetPrefix))
           : allUnits;
 
+        targetUnits.sort((a, b) => a.length - b.length);
+
+        const seenValues = new Set<string>();
+
         for (const toUnit of targetUnits) {
           const res = calculateConversion(val, fromUnit, toUnit);
-          if (res !== null) results.push({ val: res, unit: toUnit });
+          if (res !== null && !seenValues.has(res)) {
+            seenValues.add(res);
+            results.push({ val: res, unit: toUnit });
+          }
         }
       }
       return results;
@@ -188,9 +195,14 @@
       const fromUnit = implicitMatch[2].toLowerCase();
 
       if (!isNaN(val) && PREDICTIONS[fromUnit]) {
+        const seenValues = new Set<string>();
+
         for (const toUnit of PREDICTIONS[fromUnit]) {
           const res = calculateConversion(val, fromUnit, toUnit);
-          if (res !== null) results.push({ val: res, unit: toUnit });
+          if (res !== null && !seenValues.has(res)) {
+            seenValues.add(res);
+            results.push({ val: res, unit: toUnit });
+          }
         }
       }
     }

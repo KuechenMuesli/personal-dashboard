@@ -4,18 +4,19 @@
   let {
     id,
     isEditing,
+    height,
     showSettings = $bindable(false),
     hidden = $bindable(true)
   } = $props<{
-    id: string,
-    isEditing: boolean,
-    showSettings: boolean,
-    hidden: boolean
+    id: string;
+    isEditing: boolean;
+    height: number;
+    showSettings: boolean;
+    hidden: boolean;
   }>();
 
   const PROXY_URL = "https://dashboard-proxy.paul-simon.dev/";
   const TARGET_API_BASE = "https://api.parcel.app/external";
-
   const COOLDOWN_MS = 5 * 60 * 1000;
 
   const STATUS_MAP: Record<number, { label: string, color: string }> = {
@@ -47,9 +48,15 @@
   let deliveries = $state<Delivery[]>([]);
   let isLoading = $state(false);
   let lastFetched = $state<number>(0);
+
+  let showAddForm = $state(false);
   let newTrackingNum = $state("");
   let newDescription = $state("");
   let dialogEl = $state<HTMLDialogElement | null>(null);
+
+  const isConfigured = $derived(!!apiKey);
+  const isCompact = $derived(height <= 2);
+
   const fetchEndpoint = $derived(
     `${PROXY_URL}/?target=${encodeURIComponent(`${TARGET_API_BASE}/deliveries/?filter_mode=${filterMode}`)}`
   );
@@ -58,11 +65,21 @@
     if (isEditing) {
       hidden = false;
     } else {
-      hidden = deliveries.length === 0;
+      hidden = deliveries.length === 0 && !showAddForm && isConfigured;
     }
   });
 
   onMount(() => {
+    loadSettings();
+    const timeSinceLastFetch = Date.now() - lastFetched;
+    if (apiKey && (!deliveries.length || timeSinceLastFetch > COOLDOWN_MS)) {
+      fetchDeliveries();
+    }
+    const refreshTimer = setInterval(() => fetchDeliveries(), 60 * 60 * 1000);
+    return () => clearInterval(refreshTimer);
+  });
+
+  function loadSettings() {
     const saved = localStorage.getItem(`parcel-settings-${id}`);
     const cachedData = localStorage.getItem(`parcel-cache-${id}`);
 
@@ -81,12 +98,7 @@
         lastFetched = cache.timestamp || 0;
       } catch (e) { console.error(e); }
     }
-
-    const timeSinceLastFetch = Date.now() - lastFetched;
-    if (apiKey && (!deliveries.length || timeSinceLastFetch > COOLDOWN_MS)) {
-      fetchDeliveries();
-    }
-  });
+  }
 
   async function fetchDeliveries(force = false) {
     if (!apiKey) return;
@@ -141,6 +153,7 @@
       if (res.ok) {
         newTrackingNum = "";
         newDescription = "";
+        showAddForm = false;
         await fetchDeliveries(true);
       }
     } catch (e) {
@@ -156,132 +169,170 @@
     fetchDeliveries(true);
   }
 
+  function formatDate(dateStr: string | undefined | null) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+  }
+
   $effect(() => {
-    if (showSettings && dialogEl) {
-      dialogEl.showModal();
-    } else if (dialogEl && dialogEl.open) {
-      dialogEl.close();
-    }
+    if (showSettings && dialogEl) dialogEl.showModal();
+    else if (dialogEl?.open) dialogEl.close();
   });
 </script>
 
-<div class="flex flex-col h-full overflow-hidden rounded-xl bg-neutral-800 font-sans text-white">
-	<div class="flex gap-1.5 border-b border-neutral-700 bg-neutral-900 p-2.5">
-		<input
-				bind:value={newTrackingNum}
-				placeholder="Tracking #"
-				class="min-w-0 flex-1 rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1.5 text-xs text-white outline-none focus:border-blue-500"
-				onkeydown={(e) => e.stopPropagation()}
-		/>
-		<input
-				bind:value={newDescription}
-				placeholder="Label"
-				class="min-w-0 flex-1 rounded-md border border-neutral-700 bg-neutral-800 px-2.5 py-1.5 text-xs text-white outline-none focus:border-blue-500"
-				onkeydown={(e) => e.stopPropagation()}
-		/>
-		<button
-				onclick={addDelivery}
-				disabled={isLoading || !newTrackingNum}
-				class="rounded-md bg-blue-600 px-3.5 font-bold text-white transition-opacity hover:bg-blue-500 disabled:opacity-50"
-		>
-			+
+<div class="flex h-full w-full flex-col bg-neutral-800 font-sans text-white overflow-hidden p-3">
+	{#if !isConfigured}
+		<button onclick={() => showSettings = true} class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors">
+			<span>⚙️</span> Configure Tracker
 		</button>
-	</div>
+	{:else}
 
-	<div class="flex flex-1 flex-col gap-2 overflow-y-auto p-2.5">
-		{#if isLoading && !deliveries.length}
-			<div class="py-5 text-center text-xs text-neutral-500">Updating...</div>
-		{:else if deliveries.length === 0}
-			<div class="py-5 text-center text-xs text-neutral-500">No {filterMode} parcels.</div>
-		{:else}
-			{#each deliveries as item (item.uuid)}
-				<div class="rounded-lg border border-neutral-700 bg-neutral-900 p-3">
-					<div class="mb-2 flex items-center justify-between gap-2">
-            <span class="truncate text-[13px] font-semibold text-slate-200">
-              {item.description}
-            </span>
-						<span
-								class="shrink-0 rounded px-2 py-0.5 text-[9px] font-extrabold uppercase"
-								style="background-color: {item.status.color}33; color: {item.status.color}"
+		<div class="flex shrink-0 items-center justify-between mb-2 border-b border-white/10 pb-1.5">
+			<h2 class="text-[10px] font-black uppercase tracking-widest text-neutral-500 flex items-center gap-2">
+				{isLoading ? 'Syncing...' : 'Deliveries'}
+			</h2>
+			<div class="flex items-center gap-1 bg-black/20 rounded p-0.5 border border-white/5">
+				<button
+						onclick={() => fetchDeliveries(true)}
+						class="h-5 w-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-neutral-700 transition-colors"
+						title="Refresh"
+				>
+					<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+					</svg>
+				</button>
+				<button
+						onclick={() => showAddForm = !showAddForm}
+						class="h-5 w-5 flex items-center justify-center rounded transition-colors {showAddForm ? 'bg-blue-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-neutral-700'}"
+						title="Add Package"
+				>
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M12 5v14m-7-7h14"/>
+					</svg>
+				</button>
+			</div>
+		</div>
+
+		{#if showAddForm}
+			<div class="flex gap-1.5 mb-2 bg-black/20 p-1.5 rounded-lg border border-white/5 shrink-0">
+				<input
+						bind:value={newTrackingNum}
+						placeholder="Tracking #"
+						class="min-w-0 flex-1 rounded bg-neutral-900 border border-white/5 px-2 py-1 text-[10px] text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+						onkeydown={(e) => e.stopPropagation()}
+				/>
+				<input
+						bind:value={newDescription}
+						placeholder="Label"
+						class="min-w-0 flex-1 rounded bg-neutral-900 border border-white/5 px-2 py-1 text-[10px] text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+						onkeydown={(e) => { e.stopPropagation(); if (e.key === 'Enter') addDelivery(); }}
+				/>
+				<button
+						onclick={addDelivery}
+						disabled={isLoading || !newTrackingNum}
+						class="shrink-0 rounded bg-blue-600 px-2.5 text-[10px] font-bold text-white transition-opacity hover:bg-blue-500 disabled:opacity-50"
+				>+</button>
+			</div>
+		{/if}
+
+		<div class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent pr-1">
+			{#if isLoading && !deliveries.length}
+				<div class="flex h-full items-center justify-center text-[10px] uppercase font-bold tracking-widest text-neutral-600">Loading...</div>
+			{:else if deliveries.length === 0}
+				<div class="flex h-full flex-col items-center justify-center text-center pb-2">
+					<span class="text-neutral-600 mb-1.5 text-sm">📦</span>
+					<p class="text-[9px] text-neutral-500 font-medium mb-2">No {filterMode} packages.</p>
+					{#if !showAddForm}
+						<button
+								onclick={() => showAddForm = true}
+								class="rounded px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider bg-black/20 text-neutral-400 hover:text-white border border-white/5 transition-colors"
 						>
-              {item.status.label}
-            </span>
-					</div>
-					{#if item.last_event}
-						<div class="space-y-1">
-							<p class="m-0 text-[11px] leading-relaxed text-neutral-400">
-								{item.last_event.description}
-							</p>
-							<p class="m-0 text-[9px] text-neutral-600">
-								{item.last_event.location}{item.last_event.location ? ' • ' : ''}
-								{item.last_event.occured_at}
-							</p>
-						</div>
+							Track Package
+						</button>
 					{/if}
 				</div>
-			{/each}
-			{#if isLoading}
-				<div class="p-2.5 text-center text-xs text-neutral-500">Refreshing...</div>
+			{:else}
+				<div class="flex flex-col gap-1.5 w-full">
+					{#each deliveries as item (item.uuid)}
+						<div class="flex flex-col gap-1 rounded-lg bg-neutral-900/40 p-2 transition-colors hover:bg-neutral-900 border border-transparent hover:border-white/5 w-full text-left">
+							<div class="flex items-start justify-between gap-2 w-full">
+								<div class="flex flex-col min-w-0 gap-0.5">
+									<span class="truncate text-[11px] font-bold text-slate-200 leading-none">{item.description}</span>
+									{#if item.description !== item.tracking_number && !isCompact}
+										<span class="truncate font-mono text-[9px] text-neutral-500 leading-none">{item.tracking_number}</span>
+									{/if}
+								</div>
+								<span
+										class="shrink-0 rounded px-1.5 py-[2px] text-[8px] font-black uppercase tracking-wider leading-none"
+										style="background-color: {item.status.color}1A; color: {item.status.color}"
+								>
+             {item.status.label}
+           </span>
+							</div>
+
+							{#if item.last_event}
+								<div class="flex flex-col min-w-0 border-l border-white/10 pl-1.5 ml-0.5 mt-0.5">
+           <span class="truncate text-[10px] text-neutral-400">
+             {item.last_event.description}
+           </span>
+									<span class="truncate text-[8px] text-neutral-600 font-medium tracking-wide mt-0.5">
+             {#if item.last_event.location}
+               {item.last_event.location} &bull;
+             {/if}
+										{formatDate(item.last_event.occured_at)}
+           </span>
+								</div>
+							{/if}
+						</div>
+					{/each}
+				</div>
 			{/if}
-		{/if}
-	</div>
+		</div>
+	{/if}
 </div>
 
 <dialog
 		bind:this={dialogEl}
-		class="fixed left-1/2 top-1/2 w-[90vw] max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-700 bg-neutral-900 p-0 text-white outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm"
+		class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-800 bg-neutral-900 p-0 text-white shadow-2xl outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm"
 		onclose={() => (showSettings = false)}
 >
-	<div class="flex flex-col gap-4 p-5">
-		<header class="flex items-center justify-between">
-			<h3 class="text-lg font-medium">Parcel Settings</h3>
-			<button
-					class="flex h-6 w-6 items-center justify-center rounded bg-neutral-800 text-neutral-500 hover:text-white"
-					onclick={() => (showSettings = false)}
-			>
-				&times;
-			</button>
+	<div class="flex flex-col gap-5 p-6">
+		<header class="flex items-center justify-between shrink-0">
+			<h3 class="text-lg font-bold">Parcel Settings</h3>
+			<button class="text-2xl text-neutral-500 hover:text-white leading-none" onclick={() => (showSettings = false)}>&times;</button>
 		</header>
 
 		<div class="space-y-4">
-			<div class="space-y-1">
-				<label for="api-key-input" class="block text-xs text-slate-400">API Key</label>
+			<div class="space-y-2">
+				<label for="api-key-input" class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">API Key</label>
 				<input
 						id="api-key-input"
 						type="password"
 						bind:value={apiKey}
-						class="w-full rounded-md border border-neutral-700 bg-neutral-800 p-2 text-white outline-none focus:border-emerald-500"
+						placeholder="sk_..."
+						class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2.5 text-sm text-white outline-none focus:border-blue-500"
 						onkeydown={(e) => e.stopPropagation()}
 				/>
 			</div>
 
-			<div class="space-y-1">
-				<label for="filter-mode-select" class="block text-xs text-slate-400">Display Filter</label>
+			<div class="space-y-2">
+				<label for="filter-mode-select" class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">Display Filter</label>
 				<select
 						id="filter-mode-select"
 						bind:value={filterMode}
-						class="w-full rounded-md border border-neutral-700 bg-neutral-800 p-2 text-sm text-white outline-none focus:border-emerald-500"
+						class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2.5 text-sm text-white outline-none focus:border-blue-500 appearance-none cursor-pointer"
 				>
 					<option value="active">Active Packages</option>
-					<option value="recent">Recent History</option>
+					<option value="recent">Recent History (30 Days)</option>
 				</select>
-				<p class="text-[10px] text-neutral-500">"Active" hides delivered packages. "Recent" shows everything from the last 30 days.</p>
 			</div>
 		</div>
 
-		<footer class="flex justify-end gap-2 mt-2">
-			<button
-					class="rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-500 hover:bg-neutral-800"
-					onclick={() => (showSettings = false)}
-			>
-				Cancel
-			</button>
-			<button
-					class="rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400"
-					onclick={saveSettings}
-			>
-				Save Key
-			</button>
+		<footer class="flex justify-end gap-2 shrink-0 border-t border-neutral-800 pt-4 mt-2">
+			<button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors" onclick={() => (showSettings = false)}>Cancel</button>
+			<button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={saveSettings}>Save Config</button>
 		</footer>
 	</div>
 </dialog>

@@ -35,41 +35,41 @@
     { key: "!y", name: "Youtube", url: "https://www.youtube.com/results?search_query={query}" },
   ];
 
-  const CONVERSIONS: Record<string, Record<string, (val: number) => number>> = {
-    kg: { lbs: v => v * 2.20462, lb: v => v * 2.20462, g: v => v * 1000 },
-    g: { kg: v => v / 1000, lbs: v => v * 0.00220462, oz: v => v / 28.3495 },
-    oz: { g: v => v * 28.3495, lbs: v => v / 16 },
-    lb: { kg: v => v / 2.20462, lbs: v => v, oz: v => v * 16 },
-    lbs: { kg: v => v / 2.20462, lb: v => v, oz: v => v * 16 },
-    m: { ft: v => v * 3.28084, in: v => v * 39.3701, cm: v => v * 100, mm: v => v * 1000, km: v => v / 1000 },
-    ft: { m: v => v / 3.28084, in: v => v * 12, cm: v => v * 30.48 },
-    cm: { m: v => v / 100, in: v => v / 2.54, mm: v => v * 10 },
-    in: { cm: v => v * 2.54, m: v => v * 0.0254, ft: v => v / 12 },
-    c: { f: v => (v * 9/5) + 32, k: v => v + 273.15 },
-    f: { c: v => (v - 32) * 5/9, k: v => (v - 32) * 5/9 + 273.15 },
-    km: { mi: v => v * 0.621371, m: v => v * 1000 },
-    mi: { km: v => v / 0.621371, ft: v => v * 5280 },
-    l: { gal: v => v * 0.264172, ml: v => v * 1000 },
-    ml: { l: v => v / 1000, oz: v => v / 29.5735 },
-    gal: { l: v => v / 0.264172 }
+  const UNIT_CATEGORIES: Record<string, { factors: Record<string, number> }> = {
+    length: { // base: meters
+      factors: { m: 1, km: 1000, cm: 0.01, mm: 0.001, in: 0.0254, ft: 0.3048, yd: 0.9144, mi: 1609.344 }
+    },
+    weight: { // base: grams
+      factors: { g: 1, kg: 1000, mg: 0.001, oz: 28.349523, lb: 453.59237, lbs: 453.59237 }
+    },
+    volume: { // base: liters
+      factors: { l: 1, ml: 0.001, gal: 3.78541, floz: 0.0295735 }
+    },
+    time: { // base: seconds
+      factors: { ms: 0.001, s: 1, sec: 1, min: 60, h: 3600, hr: 3600, d: 86400, day: 86400, w: 604800, wk: 604800, mo: 2592000, month: 2592000, y: 31536000, yr: 31536000, year: 31536000 }
+    }
   };
 
+  const TEMPERATURE: Record<string, Record<string, (v: number) => number>> = {
+    c: { c: v=>v, f: v=>(v*9/5)+32, k: v=>v+273.15 },
+    f: { c: v=>(v-32)*5/9, f: v=>v, k: v=>(v-32)*5/9+273.15 },
+    k: { c: v=>v-273.15, f: v=>(v-273.15)*9/5+32, k: v=>v }
+  };
+
+  function getUnitInfo(unit: string) {
+    if (TEMPERATURE[unit]) return { category: 'temperature' };
+    for (const [category, data] of Object.entries(UNIT_CATEGORIES)) {
+      if (data.factors[unit]) return { category, factor: data.factors[unit] };
+    }
+    return null;
+  }
+
   const PREDICTIONS: Record<string, string[]> = {
-    kg: ['lbs'],
-    g: ['oz'],
-    oz: ['g'],
-    lb: ['kg'],
-    lbs: ['kg'],
-    m: ['ft', 'in'],
-    cm: ['in'],
-    in: ['cm'],
-    ft: ['m'],
-    c: ['f'],
-    f: ['c'],
-    km: ['mi'],
-    mi: ['km'],
-    l: ['gal'],
-    gal: ['l']
+    kg: ['lbs', 'g'], g: ['oz', 'kg'], mg: ['g'], oz: ['g'], lb: ['kg'], lbs: ['kg'],
+    m: ['ft', 'cm'], cm: ['in', 'm'], mm: ['in', 'cm'], in: ['cm'], ft: ['m'], yd: ['m'], mi: ['km'], km: ['mi'],
+    c: ['f'], f: ['c'],
+    l: ['gal', 'ml'], ml: ['l', 'floz'], gal: ['l'],
+    ms: ['s'], s: ['min', 'ms'], sec: ['min'], min: ['s', 'h'], h: ['min', 'd'], hr: ['min'], d: ['h', 'w'], day: ['h'], w: ['d', 'mo'], mo: ['w', 'y'], y: ['mo']
   };
 
   let query = $state("");
@@ -99,9 +99,13 @@
     return defaultEngine;
   });
 
+  function formatNumber(num: number): string {
+    if (Number.isInteger(num)) return num.toString();
+    return Number(num.toPrecision(7)).toString().replace('.', ',');
+  }
+
   function evaluateMath(input: string): string | null {
     let s = input.toLowerCase().replace(/,/g, '.').trim();
-
     const mathKeywords = ['sqrt', 'sin', 'cos', 'tan', 'log', 'abs', 'pi'];
 
     const hasOperator = /[\+\-\*\/\^\%]/.test(s);
@@ -110,7 +114,6 @@
     if (!hasOperator && !hasKeyword) return null;
 
     s = s.replace(/\^/g, '**');
-
     mathKeywords.forEach(kw => {
       const regex = new RegExp(`\\b${kw}\\b`, 'g');
       s = s.replace(regex, kw === 'pi' ? 'Math.PI' : `Math.${kw}`);
@@ -122,12 +125,27 @@
     try {
       const res = new Function(`return ${s}`)();
       if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
-        return Number.isInteger(res) ? res.toString() : parseFloat(res.toFixed(4)).toString().replace('.', ',');
+        return formatNumber(res);
       }
-    } catch {
-      return null;
-    }
+    } catch { return null; }
     return null;
+  }
+
+  function calculateConversion(val: number, fromUnit: string, toUnit: string): string | null {
+    const fromInfo = getUnitInfo(fromUnit);
+    const toInfo = getUnitInfo(toUnit);
+
+    if (!fromInfo || !toInfo || fromInfo.category !== toInfo.category) return null;
+
+    let res: number;
+    if (fromInfo.category === 'temperature') {
+      res = TEMPERATURE[fromUnit][toUnit](val);
+    } else {
+      const valueInBase = val * fromInfo.factor!;
+      res = valueInBase / toInfo.factor!;
+    }
+
+    return formatNumber(res);
   }
 
   function evaluateConversion(input: string): { val: string, unit: string }[] {
@@ -140,12 +158,9 @@
       const fromUnit = explicitMatch[2].toLowerCase();
       const toUnit = explicitMatch[4].toLowerCase();
 
-      if (!isNaN(val) && CONVERSIONS[fromUnit]?.[toUnit]) {
-        const res = CONVERSIONS[fromUnit][toUnit](val);
-        results.push({
-          val: parseFloat(res.toFixed(4)).toString().replace('.', ','),
-          unit: toUnit
-        });
+      if (!isNaN(val)) {
+        const res = calculateConversion(val, fromUnit, toUnit);
+        if (res !== null) results.push({ val: res, unit: toUnit });
       }
       return results;
     }
@@ -156,15 +171,9 @@
       const fromUnit = implicitMatch[2].toLowerCase();
 
       if (!isNaN(val) && PREDICTIONS[fromUnit]) {
-        const targetUnits = PREDICTIONS[fromUnit];
-        for (const toUnit of targetUnits) {
-          if (CONVERSIONS[fromUnit]?.[toUnit]) {
-            const res = CONVERSIONS[fromUnit][toUnit](val);
-            results.push({
-              val: parseFloat(res.toFixed(4)).toString().replace('.', ','),
-              unit: toUnit
-            });
-          }
+        for (const toUnit of PREDICTIONS[fromUnit]) {
+          const res = calculateConversion(val, fromUnit, toUnit);
+          if (res !== null) results.push({ val: res, unit: toUnit });
         }
       }
     }
@@ -182,10 +191,7 @@
     const mathRes = evaluateMath(trimmed);
     if (mathRes !== null) {
       results.push({
-        id: 'math',
-        title: `= ${mathRes}`,
-        subtitle: 'Copy to clipboard',
-        badge: 'CALC',
+        id: 'math', title: `= ${mathRes}`, subtitle: 'Copy to clipboard', badge: 'CALC',
         action: async () => {
           await navigator.clipboard.writeText(mathRes);
           copiedId = 'math';
@@ -198,10 +204,7 @@
     for (const conv of convResults) {
       const uniqueId = `conv-${conv.unit}`;
       results.push({
-        id: uniqueId,
-        title: `= ${conv.val} ${conv.unit}`,
-        subtitle: 'Copy to clipboard',
-        badge: 'CONV',
+        id: uniqueId, title: `= ${conv.val} ${conv.unit}`, subtitle: 'Copy to clipboard', badge: 'CONV',
         action: async () => {
           await navigator.clipboard.writeText(conv.val);
           copiedId = uniqueId;
@@ -214,20 +217,14 @@
       .filter(f => f.name.toLowerCase().includes(lower) || f.url.toLowerCase().includes(lower))
       .slice(0, 5)
       .map((f, i) => ({
-        id: `fav-${i}`,
-        title: f.name,
-        subtitle: f.url,
-        badge: 'FAV',
+        id: `fav-${i}`, title: f.name, subtitle: f.url, badge: 'FAV',
         action: () => { window.location.href = f.url; }
       }));
 
     return [...results, ...favs];
   });
 
-  $effect(() => {
-    query;
-    selectedIndex = -1;
-  });
+  $effect(() => { query; selectedIndex = -1; });
 
   function portal(node: HTMLElement) {
     document.body.appendChild(node);
@@ -237,13 +234,7 @@
   function updateDropdownPosition() {
     if (!wrapperEl) return;
     const rect = wrapperEl.getBoundingClientRect();
-    dropdownStyle = `
-      position: fixed;
-      top: ${rect.bottom + 6}px;
-      left: ${rect.left}px;
-      width: ${rect.width}px;
-      z-index: 99999;
-    `;
+    dropdownStyle = `position: fixed; top: ${rect.bottom + 6}px; left: ${rect.left}px; width: ${rect.width}px; z-index: 99999;`;
   }
 
   $effect(() => {
@@ -290,11 +281,8 @@
         } catch (e) { console.error("Error parsing favorites", e); }
       }
     }
-
     const unique = new Map<string, Favorite>();
-    for (const fav of loadedFavs) {
-      if (fav.url) unique.set(fav.url, fav);
-    }
+    for (const fav of loadedFavs) { if (fav.url) unique.set(fav.url, fav); }
     allFavorites = Array.from(unique.values());
   }
 
@@ -324,14 +312,11 @@
       window.location.href = encodeURI(url);
       return;
     }
-
     if (!trimmed) return;
 
     const targetUrl = activeEngine.isDefault
       ? activeEngine.url.replace("{query}", encodeURIComponent(trimmed))
-      : activeEngine.url.replace("{query}", encodeURIComponent(
-        trimmed.replace(activeEngine.key, "").trim()
-      ));
+      : activeEngine.url.replace("{query}", encodeURIComponent(trimmed.replace(activeEngine.key, "").trim()));
 
     if (targetUrl) window.location.href = targetUrl;
   }
@@ -348,7 +333,6 @@
         return;
       }
     }
-
     if (e.key === 'Enter') {
       e.preventDefault();
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
@@ -367,7 +351,7 @@
 					bind:this={searchInput}
 					type="text"
 					bind:value={query}
-					placeholder="Search, Calculate (3^2) or Convert (5kg)..."
+					placeholder="Search, Calculate or Convert..."
 					class="min-w-0 flex-1 border-none bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
 					onkeydown={handleKeydown}
 					onfocus={() => isFocused = true}

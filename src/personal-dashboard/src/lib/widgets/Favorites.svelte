@@ -55,7 +55,7 @@
   function getIcon(url: string) {
     try {
       const domain = new URL(url).hostname;
-      return `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+      return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
     } catch { return ""; }
   }
 

@@ -368,7 +368,7 @@
 					bind:this={searchInput}
 					type="text"
 					bind:value={query}
-					placeholder="Search, Calculate (3^2) or Convert (500mm in mi)..."
+					placeholder="Search, Calculate or Convert..."
 					class="min-w-0 flex-1 border-none bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
 					onkeydown={handleKeydown}
 					onfocus={() => isFocused = true}

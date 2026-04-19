@@ -36,16 +36,16 @@
   ];
 
   const UNIT_CATEGORIES: Record<string, { factors: Record<string, number> }> = {
-    length: { // base: meters
+    length: {
       factors: { m: 1, km: 1000, cm: 0.01, mm: 0.001, in: 0.0254, ft: 0.3048, yd: 0.9144, mi: 1609.344 }
     },
-    weight: { // base: grams
+    weight: {
       factors: { g: 1, kg: 1000, mg: 0.001, oz: 28.349523, lb: 453.59237, lbs: 453.59237 }
     },
-    volume: { // base: liters
+    volume: {
       factors: { l: 1, ml: 0.001, gal: 3.78541, floz: 0.0295735 }
     },
-    time: { // base: seconds
+    time: {
       factors: { ms: 0.001, s: 1, sec: 1, min: 60, h: 3600, hr: 3600, d: 86400, day: 86400, w: 604800, wk: 604800, mo: 2592000, month: 2592000, y: 31536000, yr: 31536000, year: 31536000 }
     }
   };
@@ -62,6 +62,15 @@
       if (data.factors[unit]) return { category, factor: data.factors[unit] };
     }
     return null;
+  }
+
+  function getAllCategoryUnits(unit: string): string[] {
+    const info = getUnitInfo(unit);
+    if (!info) return [];
+    if (info.category === 'temperature') {
+      return Object.keys(TEMPERATURE[unit]).filter(u => u !== unit);
+    }
+    return Object.keys(UNIT_CATEGORIES[info.category].factors).filter(u => u !== unit);
   }
 
   const PREDICTIONS: Record<string, string[]> = {
@@ -152,15 +161,23 @@
     const results: { val: string, unit: string }[] = [];
     const trimmed = input.trim();
 
-    const explicitMatch = trimmed.match(/^([\d\.\,]+)\s*([a-zA-Z]+)\s+(in|to)\s+([a-zA-Z]+)$/i);
+    const explicitMatch = trimmed.match(/^([\d\.\,]+)\s*([a-zA-Z]+)\s+(in|to)\s*([a-zA-Z]*)$/i);
     if (explicitMatch) {
       const val = parseFloat(explicitMatch[1].replace(',', '.'));
       const fromUnit = explicitMatch[2].toLowerCase();
-      const toUnit = explicitMatch[4].toLowerCase();
+      const targetPrefix = explicitMatch[4].toLowerCase();
 
       if (!isNaN(val)) {
-        const res = calculateConversion(val, fromUnit, toUnit);
-        if (res !== null) results.push({ val: res, unit: toUnit });
+        const allUnits = getAllCategoryUnits(fromUnit);
+
+        const targetUnits = targetPrefix
+          ? allUnits.filter(u => u.startsWith(targetPrefix))
+          : allUnits;
+
+        for (const toUnit of targetUnits) {
+          const res = calculateConversion(val, fromUnit, toUnit);
+          if (res !== null) results.push({ val: res, unit: toUnit });
+        }
       }
       return results;
     }
@@ -278,7 +295,7 @@
         try {
           const parsed = JSON.parse(localStorage.getItem(key) || '{}');
           if (parsed.favorites) loadedFavs.push(...parsed.favorites);
-        } catch (e) { console.error("Error parsing favorites", e); }
+        } catch (e) {}
       }
     }
     const unique = new Map<string, Favorite>();
@@ -351,7 +368,7 @@
 					bind:this={searchInput}
 					type="text"
 					bind:value={query}
-					placeholder="Search, Calculate or Convert..."
+					placeholder="Search, Calculate (3^2) or Convert (500mm in mi)..."
 					class="min-w-0 flex-1 border-none bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
 					onkeydown={handleKeydown}
 					onfocus={() => isFocused = true}

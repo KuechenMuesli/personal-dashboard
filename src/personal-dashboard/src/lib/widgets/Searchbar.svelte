@@ -17,6 +17,14 @@
     url: string;
   }
 
+  interface SuggestionItem {
+    id: string;
+    title: string;
+    subtitle: string;
+    badge: string;
+    action: () => void;
+  }
+
   const INITIAL_ENGINES: Engine[] = [
     { key: "DEFAULT", name: "Google", url: "https://www.google.com/search?q={query}", isDefault: true },
     { key: "!gi", name: "Images", url: "https://www.google.com/search?tbm=isch&q={query}" },
@@ -26,6 +34,43 @@
     { key: "!w", name: "Wikipedia", url: "https://de.wikipedia.org/wiki/{query}" },
     { key: "!y", name: "Youtube", url: "https://www.youtube.com/results?search_query={query}" },
   ];
+
+  const CONVERSIONS: Record<string, Record<string, (val: number) => number>> = {
+    kg: { lbs: v => v * 2.20462, lb: v => v * 2.20462, g: v => v * 1000 },
+    g: { kg: v => v / 1000, lbs: v => v * 0.00220462, oz: v => v / 28.3495 },
+    oz: { g: v => v * 28.3495, lbs: v => v / 16 },
+    lb: { kg: v => v / 2.20462, lbs: v => v, oz: v => v * 16 },
+    lbs: { kg: v => v / 2.20462, lb: v => v, oz: v => v * 16 },
+    m: { ft: v => v * 3.28084, in: v => v * 39.3701, cm: v => v * 100, mm: v => v * 1000, km: v => v / 1000 },
+    ft: { m: v => v / 3.28084, in: v => v * 12, cm: v => v * 30.48 },
+    cm: { m: v => v / 100, in: v => v / 2.54, mm: v => v * 10 },
+    in: { cm: v => v * 2.54, m: v => v * 0.0254, ft: v => v / 12 },
+    c: { f: v => (v * 9/5) + 32, k: v => v + 273.15 },
+    f: { c: v => (v - 32) * 5/9, k: v => (v - 32) * 5/9 + 273.15 },
+    km: { mi: v => v * 0.621371, m: v => v * 1000 },
+    mi: { km: v => v / 0.621371, ft: v => v * 5280 },
+    l: { gal: v => v * 0.264172, ml: v => v * 1000 },
+    ml: { l: v => v / 1000, oz: v => v / 29.5735 },
+    gal: { l: v => v / 0.264172 }
+  };
+
+  const PREDICTIONS: Record<string, string[]> = {
+    kg: ['lbs'],
+    g: ['oz'],
+    oz: ['g'],
+    lb: ['kg'],
+    lbs: ['kg'],
+    m: ['ft', 'in'],
+    cm: ['in'],
+    in: ['cm'],
+    ft: ['m'],
+    c: ['f'],
+    f: ['c'],
+    km: ['mi'],
+    mi: ['km'],
+    l: ['gal'],
+    gal: ['l']
+  };
 
   let query = $state("");
   let engines = $state<Engine[]>([]);
@@ -37,11 +82,11 @@
   let isFocused = $state(false);
   let selectedIndex = $state(-1);
   let dropdownStyle = $state("");
+  let copiedId = $state<string | null>(null);
 
   const activeEngine = $derived.by(() => {
     const trimmed = query.trim();
     const defaultEngine = engines.find(e => e.isDefault) || INITIAL_ENGINES[0];
-
     if (!trimmed) return defaultEngine;
 
     const shortcuts = engines
@@ -49,21 +94,134 @@
       .sort((a, b) => b.key.length - a.key.length);
 
     for (const engine of shortcuts) {
-      if (trimmed.includes(engine.key)) {
-        return engine;
-      }
+      if (trimmed.includes(engine.key)) return engine;
     }
-
     return defaultEngine;
   });
 
-  const suggestions = $derived.by(() => {
-    const trimmed = query.trim().toLowerCase();
+  function evaluateMath(input: string): string | null {
+    let s = input.toLowerCase().replace(/,/g, '.').trim();
+
+    const mathKeywords = ['sqrt', 'sin', 'cos', 'tan', 'log', 'abs', 'pi'];
+
+    const hasOperator = /[\+\-\*\/\^\%]/.test(s);
+    const hasKeyword = mathKeywords.some(kw => s.includes(kw));
+
+    if (!hasOperator && !hasKeyword) return null;
+
+    s = s.replace(/\^/g, '**');
+
+    mathKeywords.forEach(kw => {
+      const regex = new RegExp(`\\b${kw}\\b`, 'g');
+      s = s.replace(regex, kw === 'pi' ? 'Math.PI' : `Math.${kw}`);
+    });
+
+    const securityCheck = s.replace(/Math\.(sqrt|sin|cos|tan|log|abs|PI)/g, '');
+    if (!/^[\d\+\-\*\/\(\)\.\s\%]+$/.test(securityCheck)) return null;
+
+    try {
+      const res = new Function(`return ${s}`)();
+      if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
+        return Number.isInteger(res) ? res.toString() : parseFloat(res.toFixed(4)).toString().replace('.', ',');
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  function evaluateConversion(input: string): { val: string, unit: string }[] {
+    const results: { val: string, unit: string }[] = [];
+    const trimmed = input.trim();
+
+    const explicitMatch = trimmed.match(/^([\d\.\,]+)\s*([a-zA-Z]+)\s+(in|to)\s+([a-zA-Z]+)$/i);
+    if (explicitMatch) {
+      const val = parseFloat(explicitMatch[1].replace(',', '.'));
+      const fromUnit = explicitMatch[2].toLowerCase();
+      const toUnit = explicitMatch[4].toLowerCase();
+
+      if (!isNaN(val) && CONVERSIONS[fromUnit]?.[toUnit]) {
+        const res = CONVERSIONS[fromUnit][toUnit](val);
+        results.push({
+          val: parseFloat(res.toFixed(4)).toString().replace('.', ','),
+          unit: toUnit
+        });
+      }
+      return results;
+    }
+
+    const implicitMatch = trimmed.match(/^([\d\.\,]+)\s*([a-zA-Z]+)$/i);
+    if (implicitMatch) {
+      const val = parseFloat(implicitMatch[1].replace(',', '.'));
+      const fromUnit = implicitMatch[2].toLowerCase();
+
+      if (!isNaN(val) && PREDICTIONS[fromUnit]) {
+        const targetUnits = PREDICTIONS[fromUnit];
+        for (const toUnit of targetUnits) {
+          if (CONVERSIONS[fromUnit]?.[toUnit]) {
+            const res = CONVERSIONS[fromUnit][toUnit](val);
+            results.push({
+              val: parseFloat(res.toFixed(4)).toString().replace('.', ','),
+              unit: toUnit
+            });
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  const suggestions = $derived.by<SuggestionItem[]>(() => {
+    const trimmed = query.trim();
     if (!trimmed || trimmed.startsWith('!')) return [];
 
-    return allFavorites
-      .filter(f => f.name.toLowerCase().includes(trimmed) || f.url.toLowerCase().includes(trimmed))
-      .slice(0, 5);
+    const lower = trimmed.toLowerCase();
+    const results: SuggestionItem[] = [];
+
+    const mathRes = evaluateMath(trimmed);
+    if (mathRes !== null) {
+      results.push({
+        id: 'math',
+        title: `= ${mathRes}`,
+        subtitle: 'Copy to clipboard',
+        badge: 'CALC',
+        action: async () => {
+          await navigator.clipboard.writeText(mathRes);
+          copiedId = 'math';
+          setTimeout(() => copiedId = null, 1500);
+        }
+      });
+    }
+
+    const convResults = evaluateConversion(trimmed);
+    for (const conv of convResults) {
+      const uniqueId = `conv-${conv.unit}`;
+      results.push({
+        id: uniqueId,
+        title: `= ${conv.val} ${conv.unit}`,
+        subtitle: 'Copy to clipboard',
+        badge: 'CONV',
+        action: async () => {
+          await navigator.clipboard.writeText(conv.val);
+          copiedId = uniqueId;
+          setTimeout(() => copiedId = null, 1500);
+        }
+      });
+    }
+
+    const favs = allFavorites
+      .filter(f => f.name.toLowerCase().includes(lower) || f.url.toLowerCase().includes(lower))
+      .slice(0, 5)
+      .map((f, i) => ({
+        id: `fav-${i}`,
+        title: f.name,
+        subtitle: f.url,
+        badge: 'FAV',
+        action: () => { window.location.href = f.url; }
+      }));
+
+    return [...results, ...favs];
   });
 
   $effect(() => {
@@ -73,11 +231,7 @@
 
   function portal(node: HTMLElement) {
     document.body.appendChild(node);
-    return {
-      destroy() {
-        node.remove();
-      }
-    };
+    return { destroy() { node.remove(); } };
   }
 
   function updateDropdownPosition() {
@@ -116,7 +270,6 @@
     };
 
     window.addEventListener('keydown', handleGlobalKey);
-
     loadFavorites();
     window.addEventListener('storage', loadFavorites);
 
@@ -133,10 +286,8 @@
       if (key?.startsWith('favorites-settings-')) {
         try {
           const parsed = JSON.parse(localStorage.getItem(key) || '{}');
-          if (parsed.favorites) {
-            loadedFavs.push(...parsed.favorites);
-          }
-        } catch (e) { console.error("Fehler beim Parsen der Favoriten", e); }
+          if (parsed.favorites) loadedFavs.push(...parsed.favorites);
+        } catch (e) { console.error("Error parsing favorites", e); }
       }
     }
 
@@ -201,7 +352,7 @@
     if (e.key === 'Enter') {
       e.preventDefault();
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-        window.location.href = suggestions[selectedIndex].url;
+        suggestions[selectedIndex].action();
       } else {
         handleSearch();
       }
@@ -216,7 +367,7 @@
 					bind:this={searchInput}
 					type="text"
 					bind:value={query}
-					placeholder="Search..."
+					placeholder="Search, Calculate (3^2) or Convert (5kg)..."
 					class="min-w-0 flex-1 border-none bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
 					onkeydown={handleKeydown}
 					onfocus={() => isFocused = true}
@@ -239,17 +390,21 @@
 			style={dropdownStyle}
 			class="overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 shadow-2xl shadow-black/80 font-sans"
 	>
-		{#each suggestions as fav, i}
+		{#each suggestions as item, i}
 			<button
 					class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors {i === selectedIndex ? 'bg-neutral-800' : 'hover:bg-neutral-800/60'}"
-					onclick={() => window.location.href = fav.url}
+					onclick={() => item.action()}
 			>
 				<div class="flex min-w-0 flex-col pr-2">
-					<span class="truncate text-[12px] font-semibold {i === selectedIndex ? 'text-white' : 'text-neutral-200'}">{fav.name}</span>
-					<span class="truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : 'text-neutral-500'}">{fav.url}</span>
+      <span class="truncate text-[12px] font-semibold {i === selectedIndex ? 'text-white' : 'text-neutral-200'}">
+        {item.title}
+      </span>
+					<span class="truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : (item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-500')}">
+        {copiedId === item.id ? '✓ Copied!' : item.subtitle}
+      </span>
 				</div>
-				<div class="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] font-bold text-neutral-500">
-					FAV
+				<div class="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] font-bold {item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-400'}">
+					{item.badge}
 				</div>
 			</button>
 		{/each}

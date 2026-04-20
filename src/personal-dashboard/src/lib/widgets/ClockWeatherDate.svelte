@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import { Sun, Cloud, CloudRain, Snowflake, CloudLightning, Settings } from "lucide-svelte";
 
   let {
     id,
@@ -121,114 +124,96 @@
     return "Thunderstorm";
   }
 
-  function getWeatherIcon(code: number) {
-    if (code <= 1) return "☀️";
-    if (code <= 3) return "☁️";
-    if (code <= 67) return "🌧️";
-    if (code <= 77) return "❄️";
-    return "⛈️";
-  }
-
-  $effect(() => {
-    if (showSettings && dialogEl) dialogEl.showModal();
-    else if (dialogEl?.open) dialogEl.close();
-  });
+  const iconSize = $derived(isLarge ? 32 : isHeight3 ? 24 : 20);
 </script>
 
-<div class="flex h-full w-full bg-neutral-800 font-sans text-white overflow-hidden transition-all {isHeight1 ? 'items-center px-4' : 'p-4'}">
-	{#if !isConfigured && showWeather}
-		<button onclick={() => showSettings = true} class="flex w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400">
-			<span>⚙️</span> Configure Location
-		</button>
-	{:else}
-		<div class="flex w-full
-    {isHeight1 || isHeight2 ? 'flex-row justify-between' : 'flex-col justify-center'}
-    {isHeight1 ? 'gap-0' : 'gap-4'}">
+{#snippet WeatherIcon(code: number, size: number)}
+	{#if code <= 1} <Sun {size} strokeWidth={2} />
+	{:else if code <= 3} <Cloud {size} strokeWidth={2} />
+	{:else if code <= 67} <CloudRain {size} strokeWidth={2} />
+	{:else if code <= 77} <Snowflake {size} strokeWidth={2} />
+	{:else} <CloudLightning {size} strokeWidth={2} />
+	{/if}
+{/snippet}
 
-			{#if showingTimeGroup}
-				<div class="flex {isHeight1 || isHeight2 ? 'items-center' : 'items-baseline'} gap-3
-      		{!isHeight1 && !isHeight2 ? 'flex-col items-start mb-2' : 'flex-row'}">
+<WidgetCard bind:showSettings={showSettings} isConfigured={isConfigured} padding={false}>
+	<div class="flex h-full w-full transition-all {isHeight1 ? 'items-center px-4' : 'p-3 sm:p-4'}">
+		{#if !isConfigured && showWeather}
+			<button onclick={() => showSettings = true} class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors">
+				<Settings size={14} strokeWidth={2.5} /> Configure Location
+			</button>
+		{:else}
+			<div class="flex w-full {isHeight1 || isHeight2 ? 'flex-row justify-between' : 'flex-col justify-center'} {isHeight1 ? 'gap-0' : 'gap-4'}">
 
-					{#if showClock}
-        <span class="font-bold tabular-nums tracking-tight
-          {isLarge ? 'text-5xl' : isHeight3 ? 'text-3xl' : isHeight2 ? 'text-2xl' : 'text-xl'}">
-          {timeString}
-        </span>
-					{/if}
+				{#if showingTimeGroup}
+					<div class="flex {isHeight1 || isHeight2 ? 'items-center' : 'items-baseline'} gap-3 {!isHeight1 && !isHeight2 ? 'flex-col items-start mb-2' : 'flex-row'}">
+						{#if showClock}
+          <span class="font-bold tabular-nums tracking-tight text-slate-200 {isLarge ? 'text-5xl' : isHeight3 ? 'text-3xl' : isHeight2 ? 'text-2xl' : 'text-xl'}">
+            {timeString}
+          </span>
+						{/if}
 
-					{#if showDate}
-        <span class="font-medium uppercase tracking-wider
-          {isLarge ? 'text-sm text-blue-400' : isHeight3 || isHeight2 ? 'text-xs text-blue-400' : 'text-[11px] text-neutral-400'}">
-          {isLarge ? dateStringYear : (isHeight3 || isHeight2) ? dateStringFull : dateStringShort}
-        </span>
-					{/if}
-				</div>
-			{/if}
-
-			{#if showWeather && weather}
-				<div class="flex items-center
-      {isHeight1 || isHeight2 ? 'gap-2 border-l border-neutral-700/50 pl-4' : 'flex-col items-start border-t border-neutral-700/50 pt-2'}">
-
-					{#if isLarge}
-						<div class="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">{city}</div>
-					{/if}
-
-					<div class="flex items-center gap-2">
-						<span class="{isLarge ? 'text-3xl' : isHeight3 ? 'text-xl' : 'text-lg'}">{getWeatherIcon(weather.code)}</span>
-						<span class="{isLarge ? 'text-2xl' : isHeight3 ? 'text-lg' : 'text-sm'} font-semibold tabular-nums">{weather.temp}°</span>
-						{#if !isHeight1}
-							<span class="ml-1 text-neutral-400 {isLarge ? 'text-xs' : 'text-[10px]'}">{getWeatherLabel(weather.code)}</span>
+						{#if showDate}
+          <span class="font-medium uppercase tracking-wider {isLarge ? 'text-sm text-blue-400' : isHeight3 || isHeight2 ? 'text-xs text-blue-400' : 'text-[11px] text-neutral-400'}">
+            {isLarge ? dateStringYear : (isHeight3 || isHeight2) ? dateStringFull : dateStringShort}
+          </span>
 						{/if}
 					</div>
-				</div>
-			{/if}
-		</div>
-	{/if}
-</div>
+				{/if}
 
-<dialog bind:this={dialogEl} class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-800 bg-neutral-900 p-0 text-white shadow-2xl outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm" onclose={() => (showSettings = false)}>
-	<div class="flex flex-col gap-5 p-6">
-		<header class="flex items-center justify-between">
-			<h3 class="text-lg font-bold">General Info Settings</h3>
-			<button class="text-2xl text-neutral-500 hover:text-white" onclick={() => (showSettings = false)}>&times;</button>
-		</header>
+				{#if showWeather && weather}
+					<div class="flex items-center {isHeight1 || isHeight2 ? 'gap-2 border-l border-black/30 pl-4' : 'flex-col items-start border-t border-black/30 pt-3'}">
 
-		<div class="space-y-4">
-			<div class="space-y-1.5">
-				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="city">City</label>
-				<input id="city" bind:value={city} placeholder="e.g. London" class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-3 text-sm text-white outline-none focus:border-blue-500" onkeydown={(e) => e.stopPropagation()} />
+						{#if isLarge}
+							<div class="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">{city}</div>
+						{/if}
+
+						<div class="flex items-center gap-2 text-slate-200">
+							{@render WeatherIcon(weather.code, iconSize)}
+							<span class="{isLarge ? 'text-2xl' : isHeight3 ? 'text-lg' : 'text-sm'} font-semibold tabular-nums">{weather.temp}°</span>
+
+							{#if !isHeight1}
+								<span class="ml-1 text-neutral-400 {isLarge ? 'text-xs' : 'text-[10px]'}">{getWeatherLabel(weather.code)}</span>
+							{/if}
+						</div>
+					</div>
+				{/if}
 			</div>
-
-			<div class="grid grid-cols-2 gap-4">
-				<div class="space-y-1.5">
-					<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Temperature</label>
-					<select bind:value={unit} class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2 text-sm text-white outline-none">
-						<option value="celsius">Celsius (°C)</option>
-						<option value="fahrenheit">Fahrenheit (°F)</option>
-					</select>
-				</div>
-				<div class="space-y-1.5">
-					<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Time Format</label>
-					<select bind:value={hour12} class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2 text-sm text-white outline-none">
-						<option value={false}>24h (13:00)</option>
-						<option value={true}>12h (1:00 PM)</option>
-					</select>
-				</div>
-			</div>
-
-			<div class="flex flex-col gap-3">
-				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Visibility</label>
-				<div class="grid grid-cols-3 gap-2">
-					<button class="rounded-lg py-2 text-xs font-bold transition-colors {showClock ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-500'}" onclick={() => showClock = !showClock}>Clock</button>
-					<button class="rounded-lg py-2 text-xs font-bold transition-colors {showDate ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-500'}" onclick={() => showDate = !showDate}>Date</button>
-					<button class="rounded-lg py-2 text-xs font-bold transition-colors {showWeather ? 'bg-blue-600' : 'bg-neutral-800 text-neutral-500'}" onclick={() => showWeather = !showWeather}>Weather</button>
-				</div>
-			</div>
-		</div>
-
-		<footer class="mt-2 flex justify-end gap-2">
-			<button class="rounded-lg px-4 py-2 text-sm text-neutral-500 hover:bg-neutral-800" onclick={() => (showSettings = false)}>Cancel</button>
-			<button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500" onclick={saveSettings}>Save</button>
-		</footer>
+		{/if}
 	</div>
-</dialog>
+</WidgetCard>
+
+<SettingsDialog title="General Info Settings" bind:show={showSettings} onSave={saveSettings}>
+	<div class="space-y-4">
+		<div class="space-y-1.5">
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="city">City</label>
+			<input id="city" bind:value={city} placeholder="e.g. London" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" onkeydown={(e) => e.stopPropagation()} />
+		</div>
+
+		<div class="grid grid-cols-2 gap-4">
+			<div class="space-y-1.5">
+				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Temperature</label>
+				<select bind:value={unit} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer">
+					<option value="celsius">Celsius (°C)</option>
+					<option value="fahrenheit">Fahrenheit (°F)</option>
+				</select>
+			</div>
+			<div class="space-y-1.5">
+				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Time Format</label>
+				<select bind:value={hour12} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer">
+					<option value={false}>24h (13:00)</option>
+					<option value={true}>12h (1:00 PM)</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="flex flex-col gap-3 pt-2">
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Visibility</label>
+			<div class="grid grid-cols-3 gap-2">
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showClock ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showClock = !showClock}>Clock</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showDate ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showDate = !showDate}>Date</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showWeather ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showWeather = !showWeather}>Weather</button>
+			</div>
+		</div>
+	</div>
+</SettingsDialog>

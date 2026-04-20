@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { Settings } from "lucide-svelte";
+  import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import SettingsDialog from "$lib/components/SettingsDialog.svelte";
 
   let {
     id,
@@ -59,7 +62,6 @@
   let currentScale = $state(0.4);
   let transitionDuration = $state(0);
   let timer: ReturnType<typeof setTimeout>;
-  let dialogEl = $state<HTMLDialogElement | null>(null);
 
   const activeTechnique = $derived(TECHNIQUES[selectedTech] || TECHNIQUES.box);
   const activeThemeObj = $derived(THEMES.find(t => t.id === selectedTheme) || THEMES[0]);
@@ -136,38 +138,32 @@
     if (isActive) stopCycle();
     else startCycle();
   }
-
-  $effect(() => {
-    if (showSettings && dialogEl) dialogEl.showModal();
-    else if (dialogEl?.open) dialogEl.close();
-  });
 </script>
 
-<div class="flex h-full w-full flex-col bg-neutral-800 font-sans text-white overflow-hidden transition-colors hover:bg-neutral-800/80">
+{#snippet headerButtons()}
+	<button
+			onclick={(e) => { e.stopPropagation(); showSettings = true; }}
+			class="h-5 w-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-black/40 transition-colors z-20"
+			title="Settings"
+	>
+		<Settings size={12} strokeWidth={2.5} />
+	</button>
+{/snippet}
 
-	<header class="flex shrink-0 items-center justify-between p-3 pb-0">
-		<h2 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">
-			Zen
-		</h2>
-		<button
-				onclick={(e) => { e.stopPropagation(); showSettings = true; }}
-				class="h-5 w-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-neutral-700 transition-colors z-20"
-				title="Settings"
-		>
-			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
-			</svg>
-		</button>
-	</header>
-
+<WidgetCard
+		title="Zen"
+		bind:showSettings={showSettings}
+		isConfigured={true}
+		headerActions={headerButtons}
+		padding={true}
+>
 	<div
-			class="relative flex-grow flex items-center justify-center w-full h-full cursor-pointer select-none"
+			class="relative flex-grow flex items-center justify-center w-full h-full cursor-pointer select-none rounded-lg transition-colors hover:bg-black/10"
 			onclick={toggle}
 			role="button"
 			tabindex="0"
 			onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggle(); }}
 	>
-
 		<div
 				class="absolute rounded-full ease-linear will-change-transform shadow-2xl"
 				style="
@@ -198,52 +194,37 @@
 				Click to relax
 			</p>
 		</div>
-
 	</div>
-</div>
+</WidgetCard>
 
-<dialog
-		bind:this={dialogEl}
-		class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-800 bg-neutral-900 p-0 text-white shadow-2xl outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm"
-		onclose={() => (showSettings = false)}
->
-	<div class="flex flex-col gap-5 p-6">
-		<header class="flex items-center justify-between shrink-0">
-			<h3 class="text-lg font-bold">Zen Settings</h3>
-			<button class="text-2xl text-neutral-500 hover:text-white leading-none" onclick={() => (showSettings = false)}>&times;</button>
-		</header>
+<SettingsDialog title="Zen Settings" bind:show={showSettings} onSave={saveSettings}>
+	<div class="space-y-5">
 
-		<div class="space-y-5">
-			<div class="space-y-2">
-				<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">Breathing Technique</label>
-				<select
-						bind:value={selectedTech}
-						class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2.5 text-sm text-white outline-none focus:border-blue-500 appearance-none cursor-pointer"
-				>
-					{#each Object.entries(TECHNIQUES) as [key, tech]}
-						<option value={key}>{tech.name}</option>
-					{/each}
-				</select>
-			</div>
+		<div class="space-y-2">
+			<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">Breathing Technique</label>
+			<select
+					bind:value={selectedTech}
+					class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer"
+			>
+				{#each Object.entries(TECHNIQUES) as [key, tech]}
+					<option value={key} class="bg-neutral-800 text-white">{tech.name}</option>
+				{/each}
+			</select>
+		</div>
 
-			<div class="space-y-3">
-				<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">Glow Color</label>
-				<div class="flex gap-3">
-					{#each THEMES as theme}
-						<button
-								class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 {selectedTheme === theme.id ? 'scale-110 ring-2 ring-white/20' : 'border-transparent'}"
-								style="background-color: {theme.hex}; border-color: {selectedTheme === theme.id ? 'white' : 'transparent'};"
-								onclick={() => selectedTheme = theme.id}
-								aria-label={theme.id}
-						></button>
-					{/each}
-				</div>
+		<div class="space-y-3">
+			<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">Glow Color</label>
+			<div class="flex gap-3">
+				{#each THEMES as theme}
+					<button
+							class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 shadow-sm {selectedTheme === theme.id ? 'scale-110 ring-2 ring-white/20' : 'border-transparent'}"
+							style="background-color: {theme.hex}; border-color: {selectedTheme === theme.id ? 'white' : 'transparent'};"
+							onclick={() => selectedTheme = theme.id}
+							aria-label={theme.id}
+					></button>
+				{/each}
 			</div>
 		</div>
 
-		<footer class="flex justify-end gap-2 shrink-0 border-t border-neutral-800 pt-4 mt-2">
-			<button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors" onclick={() => (showSettings = false)}>Cancel</button>
-			<button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={saveSettings}>Save Config</button>
-		</footer>
 	</div>
-</dialog>
+</SettingsDialog>

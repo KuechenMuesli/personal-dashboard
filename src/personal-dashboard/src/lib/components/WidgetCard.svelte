@@ -5,6 +5,7 @@
     title,
     isConfigured = true,
     padding = true,
+    transparent = false, // <-- NEW: Added transparent toggle
     showSettings = $bindable(false),
     headerActions,
     children
@@ -12,13 +13,16 @@
     title?: string;
     isConfigured?: boolean;
     padding?: boolean;
+    transparent?: boolean;
     showSettings?: boolean;
     headerActions?: Snippet;
     children: Snippet;
   } = $props();
 </script>
 
-<div class="flex h-full w-full flex-col rounded-xl border border-black/40 bg-neutral-800 shadow-xl font-sans text-slate-200 overflow-hidden transition-all {padding ? 'p-3 sm:p-4' : ''}">
+<div class="flex h-full w-full flex-col font-sans text-slate-200 overflow-hidden transition-all
+  {transparent ? '' : 'rounded-xl border border-black/40 bg-neutral-800 shadow-xl'}
+  {padding ? 'p-3 sm:p-4' : ''}">
 
 	{#if !isConfigured}
 		<button

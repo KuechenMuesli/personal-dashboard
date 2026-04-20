@@ -5,7 +5,7 @@
     title,
     isConfigured = true,
     padding = true,
-    transparent = false, // <-- NEW: Added transparent toggle
+    transparent = false,
     showSettings = $bindable(false),
     headerActions,
     children

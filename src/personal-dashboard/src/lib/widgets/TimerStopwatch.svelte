@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { Play, Pause, Plus, Minus } from "lucide-svelte";
+  import WidgetCard from "$lib/components/WidgetCard.svelte";
 
   let { id, height, width } = $props<{ id: string; height: number; width: number }>();
 
@@ -122,67 +124,81 @@
   onDestroy(() => clearInterval(interval));
 </script>
 
-<div class="flex h-full w-full font-sans text-white overflow-hidden transition-all duration-500
-  {isFinished ? 'bg-red-900 animate-pulse' : 'bg-neutral-800'}
-  {isCompact ? 'items-center px-4' : 'flex-col px-3 py-2'}">
+<WidgetCard isConfigured={true} padding={false}>
+	<div class="flex h-full w-full font-sans text-slate-200 overflow-hidden transition-all duration-500
+    {isFinished ? 'bg-red-900/80 animate-pulse' : 'bg-transparent'}
+    {isCompact ? 'items-center px-4' : 'flex-col px-3 py-2'}">
 
-	{#if isLarge}
-		<div class="flex h-8 shrink-0 items-center justify-between border-b border-white/10 mb-2">
+		{#if isLarge}
+			<div class="flex h-8 w-full shrink-0 items-center justify-between border-b border-black/20 mb-2">
+				<button
+						class="rounded px-2 py-0.5 text-[9px] font-black uppercase tracking-widest transition-all
+          {mode === 'timer' ? 'bg-white/10 text-white shadow-sm' : 'bg-black/20 text-neutral-500 hover:text-white'}"
+						onclick={cycleMode}
+				>{mode}</button>
+
+				{#if mode === 'timer' && !isRunning}
+					<div class="flex items-center gap-1.5 bg-black/20 rounded px-1.5 py-0.5 border border-black/40">
+						<button onclick={() => adjustTime(1)} class="text-neutral-400 hover:text-blue-400 transition-colors p-0.5">
+							<Plus size={10} strokeWidth={3} />
+						</button>
+						<button onclick={cycleStep} class="text-[8px] font-black text-blue-400 uppercase tracking-tight hover:text-blue-300">
+							{currentStep?.label ?? ''}
+						</button>
+						<button onclick={() => adjustTime(-1)} class="text-neutral-400 hover:text-blue-400 transition-colors p-0.5">
+							<Minus size={10} strokeWidth={3} />
+						</button>
+					</div>
+				{/if}
+			</div>
+		{/if}
+
+		<div class="flex w-full {isCompact ? 'justify-between items-center' : 'flex-col items-center justify-around flex-1'}">
+
+			<div class="flex items-center">
+				<button
+						onclick={cycleMode}
+						disabled={isRunning}
+						class="font-normal tabular-nums tracking-tight transition-colors {isLarge ? 'text-xl' : 'text-lg'}
+          {isRunning ? 'cursor-default' : 'hover:text-white/70'}"
+				>
+					{displayTime}
+				</button>
+
+				{#if mode === 'timer' && !isRunning && isCompact}
+					<div class="ml-2 flex flex-col items-center bg-black/20 rounded p-0.5 border border-black/40">
+						<button onclick={() => adjustTime(1)} class="p-0.5 text-neutral-400 hover:text-blue-400 transition-colors">
+							<Plus size={8} strokeWidth={3} />
+						</button>
+						<button onclick={cycleStep} class="text-[7px] font-black text-blue-400 uppercase px-1 py-0.5 leading-none hover:text-blue-300">
+							{currentStep?.label ?? ''}
+						</button>
+						<button onclick={() => adjustTime(-1)} class="p-0.5 text-neutral-400 hover:text-blue-400 transition-colors">
+							<Minus size={8} strokeWidth={3} />
+						</button>
+					</div>
+				{/if}
+			</div>
+
 			<button
-					class="rounded px-2 py-0.5 text-[9px] font-black uppercase tracking-widest transition-all
-        {mode === 'timer' ? 'bg-white/20 text-white' : 'bg-black/20 text-white/50 hover:text-white'}"
-					onclick={cycleMode}
-			>{mode}</button>
-
-			{#if mode === 'timer' && !isRunning}
-				<div class="flex items-center gap-1.5 bg-black/20 rounded px-1.5 py-0.5 border border-white/10">
-					<button onclick={() => adjustTime(1)} class="text-[10px] font-bold hover:text-blue-400 leading-none">+</button>
-					<button onclick={cycleStep} class="text-[8px] font-black text-blue-400 uppercase tracking-tight">{currentStep?.label ?? ''}</button>
-					<button onclick={() => adjustTime(-1)} class="text-[10px] font-bold hover:text-blue-400 leading-none">-</button>
-				</div>
-			{/if}
-		</div>
-	{/if}
-
-	<div class="flex {isCompact ? 'w-full justify-between items-center' : 'flex-col items-center justify-around flex-1'}">
-
-		<div class="flex items-center">
-			<button
-					onclick={cycleMode}
-					disabled={isRunning}
-					class="font-normal tabular-nums tracking-tight transition-colors {isLarge ? 'text-xl' : 'text-lg'}
-        {isRunning ? 'cursor-default' : 'hover:text-white/70'}"
+					onclick={toggle}
+					class="flex shrink-0 items-center justify-center rounded-lg transition-all active:scale-90
+        {isFinished ? 'bg-white text-red-900 shadow-lg' : 'bg-black/30 border border-black/20 text-slate-200 hover:bg-black/40 hover:text-white'}
+        {isLarge ? 'h-8 w-8' : 'h-7 w-7'}"
 			>
-				{displayTime}
+				{#if isRunning}
+					<Pause size={isLarge ? 14 : 12} strokeWidth={2.5} fill="currentColor" />
+				{:else}
+					<Play size={isLarge ? 14 : 12} strokeWidth={2.5} fill="currentColor" class="ml-0.5" />
+				{/if}
 			</button>
-
-			{#if mode === 'timer' && !isRunning && isCompact}
-				<div class="ml-2 flex flex-col items-center bg-black/20 rounded p-0.5 border border-white/5">
-					<button onclick={() => adjustTime(1)} class="text-[8px] p-0.5 leading-none hover:text-blue-400">+</button>
-					<button onclick={cycleStep} class="text-[7px] font-black text-blue-400 uppercase px-1 leading-none">{currentStep?.label ?? ''}</button>
-					<button onclick={() => adjustTime(-1)} class="text-[8px] p-0.5 leading-none hover:text-blue-400">-</button>
-				</div>
-			{/if}
 		</div>
-
-		<button
-				onclick={toggle}
-				class="flex shrink-0 items-center justify-center rounded-lg transition-all active:scale-90
-      {isFinished ? 'bg-white text-red-900' : 'bg-neutral-700 text-white hover:bg-neutral-600'}
-      {isLarge ? 'h-8 w-8' : 'h-7 w-7'}"
-		>
-			{#if isRunning}
-				<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-			{:else}
-				<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-			{/if}
-		</button>
 	</div>
-</div>
+</WidgetCard>
 
 <style>
   @keyframes pulse {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+    50% { opacity: 0.85; }
   }
 </style>

@@ -380,9 +380,9 @@
 	<div class="flex h-full w-full items-center px-2 sm:px-3 font-sans">
 		<div bind:this={wrapperEl} class="relative w-full">
 
-			<div class="flex h-10 w-full overflow-hidden rounded-xl border border-black/40 bg-[#1c1c1c] shadow-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 transition-all">
+			<div class="flex h-10 w-full overflow-hidden rounded-xl border border-neutral-600 bg-[#1c1c1c] shadow-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 transition-all">
 
-				<div class="flex items-center pl-3 pr-1 text-neutral-500">
+				<div class="flex items-center pl-3 pr-1 text-neutral-500 bg-black/20">
 					<Search size={14} strokeWidth={2.5} />
 				</div>
 
@@ -391,7 +391,7 @@
 						type="text"
 						bind:value={query}
 						placeholder="Search, Calculate or Convert..."
-						class="min-w-0 flex-1 border-none bg-transparent px-2 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
+						class="min-w-0 flex-1 border-none bg-black/20 px-2 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
 						onkeydown={handleKeydown}
 						onfocus={() => isFocused = true}
 						onblur={() => setTimeout(() => isFocused = false, 150)}
@@ -399,7 +399,7 @@
 
 				<button
 						onclick={handleSearch}
-						class="flex h-full items-center justify-center border-l border-black/40 bg-black/20 px-4 text-[10px] font-bold uppercase tracking-wider text-neutral-400 transition-colors hover:bg-black/40 hover:text-white active:bg-black/60"
+						class="flex h-full items-center justify-center border-l border-black/40 bg-neutral-800 px-4 text-[10px] font-bold uppercase tracking-wider text-neutral-400 transition-colors hover:bg-black/40 hover:text-white active:bg-black/60"
 						aria-label="Search"
 				>
 					{activeEngine?.name || 'Search'}

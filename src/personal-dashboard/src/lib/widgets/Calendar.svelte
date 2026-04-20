@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { slide } from "svelte/transition";
+  import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import WidgetCard from "$lib/components/WidgetCard.svelte";
 
   interface StoredCalendar {
     id: string;
@@ -259,17 +261,32 @@
   });
 </script>
 
+{#snippet calendarHeader()}
+	<button
+			class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'today' ? 'bg-white/10 text-slate-200 shadow-sm' : 'text-neutral-500 hover:text-white'}"
+			onclick={() => { viewMode = 'today'; saveSettingsLocally(); expandedEventId = null; }}
+	>Today</button>
+	<button
+			class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'upcoming' ? 'bg-white/10 text-slate-200 shadow-sm' : 'text-neutral-500 hover:text-white'}"
+			onclick={() => { viewMode = 'upcoming'; saveSettingsLocally(); expandedEventId = null; }}
+	>Upcoming</button>
+	<button
+			class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'grouped' ? 'bg-white/10 text-slate-200 shadow-sm' : 'text-neutral-500 hover:text-white'}"
+			onclick={() => { viewMode = 'grouped'; saveSettingsLocally(); expandedEventId = null; }}
+	>Grouped</button>
+{/snippet}
+
 {#snippet eventItem(event: CalendarEvent, dateLabel: string, showCalName: boolean)}
 	<button
-			class="flex flex-col gap-2 rounded-lg bg-neutral-900/50 p-2.5 transition-colors hover:bg-neutral-900 border border-transparent hover:border-white/5 cursor-pointer overflow-hidden w-full text-left"
+			class="flex flex-col gap-2 rounded-lg bg-black/20 p-2.5 transition-colors hover:bg-black/40 border border-transparent hover:border-black/40 cursor-pointer overflow-hidden w-full text-left"
 			onclick={() => toggleExpand(event.id)}
 	>
 		<div class="flex items-start gap-3 w-full">
 			<div class="w-1 rounded-full shrink-0 mt-1" style="background-color: {event.calColor}; min-height: 24px;"></div>
 			<div class="flex flex-col overflow-hidden min-w-0 flex-grow">
-				<span class="text-sm font-bold {isLarge ? 'text-base' : ''} {expandedEventId === event.id ? '' : 'truncate'}">{event.title}</span>
+				<span class="text-sm font-bold text-slate-200 {isLarge ? 'text-base' : ''} {expandedEventId === event.id ? '' : 'truncate'}">{event.title}</span>
 				{#if showCalName && !isHeight1}
-					<span class="truncate text-[10px] text-neutral-400 font-medium">{event.calName}</span>
+					<span class="truncate text-[10px] text-neutral-500 font-medium">{event.calName}</span>
 				{/if}
 			</div>
 			<div class="flex flex-col items-end shrink-0 text-right">
@@ -279,20 +296,23 @@
 		</div>
 
 		{#if expandedEventId === event.id}
-			<div transition:slide={{ duration: 200 }} class="w-full text-xs text-neutral-300 pl-4 ml-1 space-y-2 mt-1 border-l-2 border-white/10 pb-1 cursor-default" onclick={(e) => e.stopPropagation()}>
+			<div transition:slide={{ duration: 200 }} class="w-full text-xs text-neutral-300 pl-4 ml-1 space-y-2 mt-1 border-l-2 border-black/40 pb-1 cursor-default" onclick={(e) => e.stopPropagation()}>
+
 				<div class="flex gap-2 items-start text-neutral-400">
-					<span class="text-neutral-500 shrink-0 mt-0.5">🕒</span>
+					<svg class="shrink-0 mt-0.5 text-neutral-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
 					<span>{formatDateTimeFull(event.start)} - {formatTime(event.end)}</span>
 				</div>
+
 				{#if event.location}
 					<div class="flex gap-2 items-start">
-						<span class="text-neutral-500 shrink-0 mt-0.5">📍</span>
+						<svg class="shrink-0 mt-0.5 text-neutral-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 						<span class="break-words font-medium">{event.location}</span>
 					</div>
 				{/if}
+
 				{#if event.description}
 					<div class="flex gap-2 items-start">
-						<span class="text-neutral-500 shrink-0 mt-0.5">📝</span>
+						<svg class="shrink-0 mt-0.5 text-neutral-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
 						<div class="whitespace-pre-wrap break-words text-neutral-400 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 pr-2">{event.description}</div>
 					</div>
 				{/if}
@@ -303,183 +323,154 @@
 
 {#snippet groupedEventItem(event: CalendarEvent)}
 	<button
-			class="flex flex-col cursor-pointer rounded p-1.5 -mx-1.5 hover:bg-white/5 transition-colors w-full text-left"
+			class="flex flex-col cursor-pointer rounded p-1.5 -mx-1.5 hover:bg-black/20 transition-colors w-full text-left"
 			onclick={() => toggleExpand(event.id)}
 	>
 		<div class="flex items-baseline justify-between gap-2 w-full">
-			<span class="text-xs text-neutral-300 {expandedEventId === event.id ? '' : 'truncate'}">{event.title}</span>
+			<span class="text-xs text-slate-200 {expandedEventId === event.id ? '' : 'truncate'}">{event.title}</span>
 			<span class="shrink-0 text-[10px] text-neutral-500 tabular-nums">{formatDateShort(event.start)}</span>
 		</div>
 
 		{#if expandedEventId === event.id}
-			<div transition:slide={{ duration: 200 }} class="text-[10px] text-neutral-400 mt-2 space-y-1.5 bg-black/20 rounded-lg p-2.5 cursor-default w-full" onclick={(e) => e.stopPropagation()}>
+			<div transition:slide={{ duration: 200 }} class="text-[10px] text-neutral-400 mt-2 space-y-1.5 bg-black/30 rounded-lg p-2.5 cursor-default w-full" onclick={(e) => e.stopPropagation()}>
 				<div class="flex gap-1.5 items-start">
-					<span class="text-neutral-500 shrink-0 mt-0.5">🕒</span>
+					<svg class="shrink-0 mt-0.5 text-neutral-500" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
 					<span>{formatDateTimeFull(event.start)} - {formatTime(event.end)}</span>
 				</div>
 				{#if event.location}
 					<div class="flex gap-1.5 items-start">
-						<span class="text-neutral-500 shrink-0 mt-0.5">📍</span>
+						<svg class="shrink-0 mt-0.5 text-neutral-500" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 						<span class="break-words text-neutral-300">{event.location}</span>
 					</div>
 				{/if}
 				{#if event.description}
-					<div class="whitespace-pre-wrap break-words pt-1.5 border-t border-white/5 mt-1.5 leading-relaxed max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700">{event.description}</div>
+					<div class="whitespace-pre-wrap break-words pt-1.5 border-t border-black/40 mt-1.5 leading-relaxed max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700">{event.description}</div>
 				{/if}
 			</div>
 		{/if}
 	</button>
 {/snippet}
 
-
-<div class="flex h-full w-full flex-col bg-neutral-800 font-sans text-white overflow-hidden transition-all {isHeight1 ? 'px-4 py-0 justify-center' : 'p-4'}">
-	{#if !isConfigured}
-		<button onclick={() => showSettings = true} class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400">
-			<span>⚙️</span> Configure Calendars
-		</button>
-	{:else}
-		{#if !isHeight1}
-			<div class="flex shrink-0 items-center justify-between mb-3 border-b border-white/10 pb-2">
-				<h2 class="text-xs font-black uppercase tracking-widest text-neutral-500">
-					{isLoading ? 'Syncing...' : 'Calendar'}
-				</h2>
-
-				<div class="flex gap-1 bg-black/20 rounded p-0.5">
-					<button
-							class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'today' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-white'}"
-							onclick={() => { viewMode = 'today'; saveSettingsLocally(); expandedEventId = null; }}
-					>Today</button>
-					<button
-							class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'upcoming' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-white'}"
-							onclick={() => { viewMode = 'upcoming'; saveSettingsLocally(); expandedEventId = null; }}
-					>Upcoming</button>
-					<button
-							class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'grouped' ? 'bg-neutral-600 text-white' : 'text-neutral-500 hover:text-white'}"
-							onclick={() => { viewMode = 'grouped'; saveSettingsLocally(); expandedEventId = null; }}
-					>Grouped</button>
+<WidgetCard
+		title={isLoading ? 'Syncing...' : 'Calendar'}
+		bind:showSettings={showSettings}
+		isConfigured={isConfigured}
+		padding={!isHeight1}
+		headerActions={!isHeight1 ? calendarHeader : undefined}
+>
+	<div class="h-full w-full {isHeight1 ? 'flex items-center px-4' : 'pr-1'}">
+		{#if viewMode === 'today' && !isHeight1}
+			{#if todayEvents().length === 0}
+				<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">No more events today.</div>
+			{:else}
+				<div class="flex flex-col gap-2 w-full">
+					{#each todayEvents() as event (event.id)}
+						{@render eventItem(event, "Today", true)}
+					{/each}
 				</div>
+			{/if}
+
+		{:else if viewMode === 'upcoming' || isHeight1}
+			{#if upcomingEvents().length === 0}
+				<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">No upcoming events.</div>
+			{:else}
+				<div class="flex flex-col gap-2 w-full">
+					{#each upcomingEvents().slice(0, isHeight1 ? 1 : undefined) as event (event.id)}
+						{@render eventItem(event, formatDateShort(event.start), true)}
+					{/each}
+				</div>
+			{/if}
+
+		{:else if viewMode === 'grouped'}
+			<div class="space-y-5 pb-2">
+				{#each calendarsData as calendar}
+					<section>
+						<h3 class="flex items-center gap-2 text-xs font-bold mb-2 uppercase tracking-wide" style="color: {calendar.color}">
+							<span class="w-2 h-2 rounded-full bg-current shrink-0"></span>
+							<span class="truncate">{calendar.name}</span>
+						</h3>
+						{#if calendar.events.filter(e => e.end > new Date()).length === 0}
+							<div class="text-[10px] text-neutral-600 pl-4">No upcoming events.</div>
+						{:else}
+							<div class="flex flex-col gap-0.5 pl-4 border-l border-black/40 ml-1">
+								{#each calendar.events.filter(e => e.end > new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 5) as event (event.id)}
+									{@render groupedEventItem(event)}
+								{/each}
+							</div>
+						{/if}
+					</section>
+				{/each}
 			</div>
 		{/if}
+	</div>
+</WidgetCard>
 
-		<div class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent {isHeight1 ? 'flex items-center' : 'pr-1'}">
+<SettingsDialog
+		title="Calendar Settings"
+		bind:show={showSettings}
+		onSave={saveAndCloseSettings}
+>
+	<div class="space-y-6">
 
-			{#if viewMode === 'today' && !isHeight1}
-				{#if todayEvents().length === 0}
-					<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">No more events today.</div>
-				{:else}
-					<div class="flex flex-col gap-2 w-full">
-						{#each todayEvents() as event (event.id)}
-							{@render eventItem(event, "Today", true)}
-						{/each}
-					</div>
-				{/if}
-
-			{:else if viewMode === 'upcoming' || isHeight1}
-				{#if upcomingEvents().length === 0}
-					<div class="text-xs text-neutral-500 italic">No upcoming events.</div>
-				{:else}
-					<div class="flex flex-col gap-2 w-full">
-						{#each upcomingEvents().slice(0, isHeight1 ? 1 : undefined) as event (event.id)}
-							{@render eventItem(event, formatDateShort(event.start), true)}
-						{/each}
-					</div>
-				{/if}
-
-			{:else if viewMode === 'grouped'}
-				<div class="space-y-5">
-					{#each calendarsData as calendar}
-						<section>
-							<h3 class="flex items-center gap-2 text-xs font-bold mb-2 uppercase tracking-wide" style="color: {calendar.color}">
-								<span class="w-2 h-2 rounded-full bg-current shrink-0"></span>
-								<span class="truncate">{calendar.name}</span>
-							</h3>
-							{#if calendar.events.filter(e => e.end > new Date()).length === 0}
-								<div class="text-[10px] text-neutral-600 pl-4">No upcoming events.</div>
-							{:else}
-								<div class="flex flex-col gap-0.5 pl-4 border-l border-white/5 ml-1">
-									{#each calendar.events.filter(e => e.end > new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 5) as event (event.id)}
-										{@render groupedEventItem(event)}
-									{/each}
-								</div>
-							{/if}
-						</section>
+		<div class="space-y-2">
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Active Calendars</label>
+			{#if storedConfigs.length === 0}
+				<div class="text-sm text-neutral-600 italic rounded-lg border border-black/40 border-dashed p-4 text-center">No calendars added yet.</div>
+			{:else}
+				<div class="flex flex-col gap-2">
+					{#each storedConfigs as config}
+						<div class="flex items-center justify-between gap-3 rounded-lg bg-neutral-900 p-2.5 border border-black/40 {editingCalId === config.id ? 'ring-1 ring-blue-500' : ''}">
+							<div class="flex items-center gap-2 overflow-hidden">
+								<div class="w-3 h-3 rounded-full shrink-0" style="background-color: {config.color}"></div>
+								<span class="font-medium text-sm truncate text-slate-200">{config.name}</span>
+							</div>
+							<div class="flex items-center gap-1">
+								<button
+										onclick={() => editCalendar(config)}
+										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+										title="Edit Calendar"
+								>
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+								</button>
+								<button
+										onclick={() => removeCalendar(config.id)}
+										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+										title="Remove Calendar"
+								>
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+								</button>
+							</div>
+						</div>
 					{/each}
 				</div>
 			{/if}
 		</div>
-	{/if}
-</div>
 
-<dialog bind:this={dialogEl} class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-800 bg-neutral-900 p-0 text-white shadow-2xl outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm" onclose={() => (showSettings = false)}>
-	<div class="flex flex-col gap-5 p-6 max-h-[85vh]">
-		<header class="flex items-center justify-between shrink-0">
-			<h3 class="text-lg font-bold">Calendar Settings</h3>
-			<button class="text-2xl text-neutral-500 hover:text-white leading-none" onclick={() => (showSettings = false)}>&times;</button>
-		</header>
-
-		<div class="flex-grow overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent pr-2">
-
-			<div class="space-y-2">
-				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Active Calendars</label>
-				{#if storedConfigs.length === 0}
-					<div class="text-sm text-neutral-600 italic rounded-lg border border-neutral-800 border-dashed p-4 text-center">No calendars added yet.</div>
-				{:else}
-					<div class="flex flex-col gap-2">
-						{#each storedConfigs as config}
-							<div class="flex items-center justify-between gap-3 rounded-lg bg-neutral-800/50 p-2.5 border border-white/5 {editingCalId === config.id ? 'ring-1 ring-blue-500' : ''}">
-								<div class="flex items-center gap-2 overflow-hidden">
-									<div class="w-3 h-3 rounded-full shrink-0" style="background-color: {config.color}"></div>
-									<span class="font-medium text-sm truncate">{config.name}</span>
-								</div>
-								<div class="flex items-center gap-1">
-									<button
-											onclick={() => editCalendar(config)}
-											class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
-											title="Edit Calendar"
-									>✎</button>
-									<button
-											onclick={() => removeCalendar(config.id)}
-											class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
-											title="Remove Calendar"
-									>×</button>
-								</div>
-							</div>
-						{/each}
-					</div>
+		<div class="space-y-3 border-t border-black/40 pt-5">
+			<div class="flex justify-between items-center">
+				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">
+					{editingCalId ? 'Edit Calendar' : 'Add New Calendar'}
+				</label>
+				{#if editingCalId}
+					<button onclick={resetForm} class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase tracking-wider">Cancel Edit</button>
 				{/if}
 			</div>
 
-			<div class="space-y-3 border-t border-neutral-800 pt-5">
-				<div class="flex justify-between items-center">
-					<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">
-						{editingCalId ? 'Edit Calendar' : 'Add New Calendar'}
-					</label>
-					{#if editingCalId}
-						<button onclick={resetForm} class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase tracking-wider">Cancel Edit</button>
-					{/if}
-				</div>
-
-				<div class="grid grid-cols-[1fr_auto] gap-3">
-					<input bind:value={newCalName} placeholder="Calendar Name (e.g. Work)" class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2.5 text-sm text-white outline-none focus:border-blue-500" onkeydown={(e) => e.stopPropagation()} />
-					<input type="color" bind:value={newCalColor} class="h-[42px] w-[42px] rounded-lg cursor-pointer bg-neutral-800 border-neutral-800" title="Pick a color" />
-				</div>
-
-				<input bind:value={newCalUrl} placeholder="ICS URL (https://...)" class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2.5 text-sm text-white outline-none focus:border-blue-500 font-mono text-[11px]" onkeydown={(e) => e.stopPropagation()} />
-
-				<button
-						onclick={saveCalendar}
-						disabled={!newCalUrl || !newCalName}
-						class="w-full rounded-lg bg-neutral-800 py-2.5 text-sm font-bold text-white hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/5"
-				>
-					{editingCalId ? 'Save Changes' : '+ Add to List'}
-				</button>
+			<div class="grid grid-cols-[1fr_auto] gap-3">
+				<input bind:value={newCalName} placeholder="Calendar Name (e.g. Work)" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" onkeydown={(e) => e.stopPropagation()} />
+				<input type="color" bind:value={newCalColor} class="h-[42px] w-[42px] rounded-lg cursor-pointer border border-black/40 bg-neutral-900" title="Pick a color" />
 			</div>
 
+			<input bind:value={newCalUrl} placeholder="ICS URL (https://...)" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 font-mono text-[11px]" onkeydown={(e) => e.stopPropagation()} />
+
+			<button
+					onclick={saveCalendar}
+					disabled={!newCalUrl || !newCalName}
+					class="w-full rounded-lg bg-black/40 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-black/40"
+			>
+				{editingCalId ? 'Save Changes' : '+ Add to List'}
+			</button>
 		</div>
 
-		<footer class="flex justify-end gap-2 shrink-0 border-t border-neutral-800 pt-4 mt-2">
-			<button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors" onclick={() => (showSettings = false)}>Cancel</button>
-			<button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={saveAndCloseSettings}>Save & Sync</button>
-		</footer>
 	</div>
-</dialog>
+</SettingsDialog>

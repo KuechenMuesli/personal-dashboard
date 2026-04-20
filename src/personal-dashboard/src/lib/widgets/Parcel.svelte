@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import WidgetCard from "$lib/components/WidgetCard.svelte";
 
   let {
     id,
@@ -182,157 +184,142 @@
   });
 </script>
 
-<div class="flex h-full w-full flex-col bg-neutral-800 font-sans text-white overflow-hidden p-3">
-	{#if !isConfigured}
-		<button onclick={() => showSettings = true} class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors">
-			<span>⚙️</span> Configure Tracker
-		</button>
-	{:else}
+{#snippet headerButtons()}
+	<button
+			onclick={() => fetchDeliveries(true)}
+			class="h-5 w-5 flex items-center justify-center rounded text-widget-text-muted hover:text-white hover:bg-widget-bg-hover transition-colors"
+			title="Refresh"
+	>
+		<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+		</svg>
+	</button>
+	<button
+			onclick={() => showAddForm = !showAddForm}
+			class="h-5 w-5 flex items-center justify-center rounded transition-colors {showAddForm ? 'bg-widget-accent text-white' : 'text-widget-text-muted hover:text-white hover:bg-widget-bg-hover'}"
+			title="Add Package"
+	>
+		<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M12 5v14m-7-7h14"/>
+		</svg>
+	</button>
+{/snippet}
 
-		<div class="flex shrink-0 items-center justify-between mb-2 border-b border-white/10 pb-1.5">
-			<h2 class="text-[10px] font-black uppercase tracking-widest text-neutral-500 flex items-center gap-2">
-				{isLoading ? 'Syncing...' : 'Deliveries'}
-			</h2>
-			<div class="flex items-center gap-1 bg-black/20 rounded p-0.5 border border-white/5">
-				<button
-						onclick={() => fetchDeliveries(true)}
-						class="h-5 w-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-neutral-700 transition-colors"
-						title="Refresh"
-				>
-					<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
-					</svg>
-				</button>
-				<button
-						onclick={() => showAddForm = !showAddForm}
-						class="h-5 w-5 flex items-center justify-center rounded transition-colors {showAddForm ? 'bg-blue-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-neutral-700'}"
-						title="Add Package"
-				>
-					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M12 5v14m-7-7h14"/>
-					</svg>
-				</button>
-			</div>
-		</div>
-
-		{#if showAddForm}
-			<div class="flex gap-1.5 mb-2 bg-black/20 p-1.5 rounded-lg border border-white/5 shrink-0">
-				<input
-						bind:value={newTrackingNum}
-						placeholder="Tracking #"
-						class="min-w-0 flex-1 rounded bg-neutral-900 border border-white/5 px-2 py-1 text-[10px] text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-						onkeydown={(e) => e.stopPropagation()}
-				/>
-				<input
-						bind:value={newDescription}
-						placeholder="Label"
-						class="min-w-0 flex-1 rounded bg-neutral-900 border border-white/5 px-2 py-1 text-[10px] text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-						onkeydown={(e) => { e.stopPropagation(); if (e.key === 'Enter') addDelivery(); }}
-				/>
-				<button
-						onclick={addDelivery}
-						disabled={isLoading || !newTrackingNum}
-						class="shrink-0 rounded bg-blue-600 px-2.5 text-[10px] font-bold text-white transition-opacity hover:bg-blue-500 disabled:opacity-50"
-				>+</button>
-			</div>
-		{/if}
-
-		<div class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent pr-1">
-			{#if isLoading && !deliveries.length}
-				<div class="flex h-full items-center justify-center text-[10px] uppercase font-bold tracking-widest text-neutral-600">Loading...</div>
-			{:else if deliveries.length === 0}
-				<div class="flex h-full flex-col items-center justify-center text-center pb-2">
-					<span class="text-neutral-600 mb-1.5 text-sm">📦</span>
-					<p class="text-[9px] text-neutral-500 font-medium mb-2">No {filterMode} packages.</p>
-					{#if !showAddForm}
-						<button
-								onclick={() => showAddForm = true}
-								class="rounded px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider bg-black/20 text-neutral-400 hover:text-white border border-white/5 transition-colors"
-						>
-							Track Package
-						</button>
-					{/if}
-				</div>
-			{:else}
-				<div class="flex flex-col gap-1.5 w-full">
-					{#each deliveries as item (item.uuid)}
-						<div class="flex flex-col gap-1 rounded-lg bg-neutral-900/40 p-2 transition-colors hover:bg-neutral-900 border border-transparent hover:border-white/5 w-full text-left">
-							<div class="flex items-start justify-between gap-2 w-full">
-								<div class="flex flex-col min-w-0 gap-0.5">
-									<span class="truncate text-[11px] font-bold text-slate-200 leading-none">{item.description}</span>
-									{#if item.description !== item.tracking_number && !isCompact}
-										<span class="truncate font-mono text-[9px] text-neutral-500 leading-none">{item.tracking_number}</span>
-									{/if}
-								</div>
-								<span
-										class="shrink-0 rounded px-1.5 py-[2px] text-[8px] font-black uppercase tracking-wider leading-none"
-										style="background-color: {item.status.color}1A; color: {item.status.color}"
-								>
-             {item.status.label}
-           </span>
-							</div>
-
-							{#if item.last_event}
-								<div class="flex flex-col min-w-0 border-l border-white/10 pl-1.5 ml-0.5 mt-0.5">
-           <span class="truncate text-[10px] text-neutral-400">
-             {item.last_event.description}
-           </span>
-									<span class="truncate text-[8px] text-neutral-600 font-medium tracking-wide mt-0.5">
-             {#if item.last_event.location}
-               {item.last_event.location} &bull;
-             {/if}
-										{formatDate(item.last_event.occured_at)}
-           </span>
-								</div>
-							{/if}
-						</div>
-					{/each}
-				</div>
-			{/if}
+<WidgetCard
+		title={isLoading ? 'Syncing...' : 'Deliveries'}
+		bind:showSettings={showSettings}
+		isConfigured={isConfigured}
+		headerActions={headerButtons}
+>
+	{#if showAddForm}
+		<div class="flex gap-1.5 mb-2 bg-black/20 p-1.5 rounded-lg border border-widget-border shrink-0">
+			<input
+					bind:value={newTrackingNum}
+					placeholder="Tracking #"
+					class="min-w-0 flex-1 rounded bg-widget-bg border border-widget-border px-2 py-1 text-[10px] text-widget-text outline-none focus:border-widget-accent focus:ring-1 focus:ring-widget-accent/50"
+					onkeydown={(e) => e.stopPropagation()}
+			/>
+			<input
+					bind:value={newDescription}
+					placeholder="Label"
+					class="min-w-0 flex-1 rounded bg-widget-bg border border-widget-border px-2 py-1 text-[10px] text-widget-text outline-none focus:border-widget-accent focus:ring-1 focus:ring-widget-accent/50"
+					onkeydown={(e) => { e.stopPropagation(); if (e.key === 'Enter') addDelivery(); }}
+			/>
+			<button
+					onclick={addDelivery}
+					disabled={isLoading || !newTrackingNum}
+					class="shrink-0 rounded bg-widget-accent px-2.5 text-[10px] font-bold text-white transition-opacity hover:opacity-80 disabled:opacity-50"
+			>+</button>
 		</div>
 	{/if}
-</div>
 
-<dialog
-		bind:this={dialogEl}
-		class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-800 bg-neutral-900 p-0 text-white shadow-2xl outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm"
-		onclose={() => (showSettings = false)}
+	<div class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent pr-1">
+		{#if isLoading && !deliveries.length}
+			<div class="flex h-full items-center justify-center text-[10px] uppercase font-bold tracking-widest text-widget-text-muted">Loading...</div>
+
+		{:else if deliveries.length === 0}
+			<div class="flex h-full flex-col items-center justify-center text-center pb-2">
+				<svg class="text-widget-text-muted mb-2 opacity-50" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
+				</svg>
+				<p class="text-[9px] text-widget-text-muted font-medium mb-2">No {filterMode} packages.</p>
+				{#if !showAddForm}
+					<button
+							onclick={() => showAddForm = true}
+							class="rounded px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider bg-black/20 text-widget-text-muted hover:text-white border border-widget-border transition-colors"
+					>
+						Track Package
+					</button>
+				{/if}
+			</div>
+
+		{:else}
+			<div class="flex flex-col gap-1.5 w-full">
+				{#each deliveries as item (item.uuid)}
+					<div class="flex flex-col gap-1 rounded-lg bg-widget-bg-hover/30 p-2 transition-colors hover:bg-widget-bg-hover border border-transparent hover:border-widget-border w-full text-left">
+						<div class="flex items-start justify-between gap-2 w-full">
+							<div class="flex flex-col min-w-0 gap-0.5">
+								<span class="truncate text-[11px] font-bold text-widget-text leading-none">{item.description}</span>
+								{#if item.description !== item.tracking_number && !isCompact}
+									<span class="truncate font-mono text-[9px] text-widget-text-muted leading-none">{item.tracking_number}</span>
+								{/if}
+							</div>
+							<span
+									class="shrink-0 rounded px-1.5 py-[2px] text-[8px] font-black uppercase tracking-wider leading-none"
+									style="background-color: {item.status.color}1A; color: {item.status.color}"
+							>
+            {item.status.label}
+          </span>
+						</div>
+
+						{#if item.last_event}
+							<div class="flex flex-col min-w-0 border-l border-widget-border pl-1.5 ml-0.5 mt-0.5">
+          <span class="truncate text-[10px] text-widget-text-muted">
+            {item.last_event.description}
+          </span>
+								<span class="truncate text-[8px] text-widget-text-muted opacity-80 font-medium tracking-wide mt-0.5">
+            {#if item.last_event.location}
+              {item.last_event.location} &bull;
+            {/if}
+									{formatDate(item.last_event.occured_at)}
+          </span>
+							</div>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
+</WidgetCard>
+
+<SettingsDialog
+		title="Parcel Settings"
+		bind:show={showSettings}
+		onSave={saveSettings}
 >
-	<div class="flex flex-col gap-5 p-6">
-		<header class="flex items-center justify-between shrink-0">
-			<h3 class="text-lg font-bold">Parcel Settings</h3>
-			<button class="text-2xl text-neutral-500 hover:text-white leading-none" onclick={() => (showSettings = false)}>&times;</button>
-		</header>
-
-		<div class="space-y-4">
-			<div class="space-y-2">
-				<label for="api-key-input" class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">API Key</label>
-				<input
-						id="api-key-input"
-						type="password"
-						bind:value={apiKey}
-						placeholder="sk_..."
-						class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2.5 text-sm text-white outline-none focus:border-blue-500"
-						onkeydown={(e) => e.stopPropagation()}
-				/>
-			</div>
-
-			<div class="space-y-2">
-				<label for="filter-mode-select" class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest">Display Filter</label>
-				<select
-						id="filter-mode-select"
-						bind:value={filterMode}
-						class="w-full rounded-lg border border-neutral-800 bg-neutral-800 p-2.5 text-sm text-white outline-none focus:border-blue-500 appearance-none cursor-pointer"
-				>
-					<option value="active">Active Packages</option>
-					<option value="recent">Recent History (30 Days)</option>
-				</select>
-			</div>
+	<div class="space-y-4">
+		<div class="space-y-2">
+			<label for="api-key-input" class="block text-[10px] uppercase font-black text-widget-text-muted tracking-widest">API Key</label>
+			<input
+					id="api-key-input"
+					type="password"
+					bind:value={apiKey}
+					placeholder="sk_..."
+					class="w-full rounded-lg bg-black/30 p-2.5 text-sm text-white outline-none focus:ring-1 focus:ring-widget-accent/50"
+					onkeydown={(e) => e.stopPropagation()}
+			/>
 		</div>
 
-		<footer class="flex justify-end gap-2 shrink-0 border-t border-neutral-800 pt-4 mt-2">
-			<button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors" onclick={() => (showSettings = false)}>Cancel</button>
-			<button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={saveSettings}>Save Config</button>
-		</footer>
+		<div class="space-y-2">
+			<label for="filter-mode-select" class="block text-[10px] uppercase font-black text-widget-text-muted tracking-widest">Display Filter</label>
+			<select
+					id="filter-mode-select"
+					bind:value={filterMode}
+					class="w-full rounded-lg bg-black/30 p-2.5 text-sm text-white outline-none focus:ring-1 focus:ring-widget-accent/50 appearance-none cursor-pointer"
+			>
+				<option value="active" class="bg-widget-bg text-white">Active Packages</option>
+				<option value="recent" class="bg-widget-bg text-white">Recent History (30 Days)</option>
+			</select>
+		</div>
 	</div>
-</dialog>
+</SettingsDialog>

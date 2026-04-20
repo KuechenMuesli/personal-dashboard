@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-widget-bg: #262626;
+  --color-widget-bg-hover: #333333;
+
+  --color-widget-border: rgba(0, 0, 0, 0.2);
+
+  --color-widget-text: #e4e4e7;
+  --color-widget-text-muted: #a1a1aa;
+  --color-widget-accent: #3b82f6;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #121212;
+    color: var(--color-widget-text);
+  }
+}

@@ -15,7 +15,6 @@
 		newtorkMetrics:   { name: "Network Metrics", load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 } ,},
 		calendar:					{ name: "Calendar", load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 } },
     zen:          		{ name: "Zen", load: () => import("$lib/widgets/Zen.svelte"), defaultSize: { width: 1, height: 4 } },
-    habits:          	{ name: "Daily Habits", load: () => import("$lib/widgets/Habits.svelte"), defaultSize: { width: 2, height: 4 } },
   }
 
   const STORAGE_KEY = "dashboard-layout";

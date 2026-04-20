@@ -1,5 +1,7 @@
 <script lang="ts">
   import { marked } from 'marked';
+  import { Plus, X, GripHorizontal, PenLine, Eye } from 'lucide-svelte';
+  import WidgetCard from '$lib/components/WidgetCard.svelte';
 
   let { id, isEditing, onAddNote, onDelete, onDragStart, onResizeStart } = $props<{
     id: string,
@@ -74,79 +76,82 @@
 
   function extractTitle(markdown: string): string | null {
     const match = markdown.match(/^#+\s*(.+)/);
-
-    if (match)
-      return match[1].trim();
-
+    if (match) return match[1].trim();
     return null;
   }
 
   const renderedMarkdown = $derived(marked.parse(content));
 </script>
 
-<div class="flex h-full w-full flex-col overflow-hidden rounded-xl bg-neutral-800 ring-1 ring-white/5" onkeydown={handleKeyDown}>
-	<div class="flex h-8 shrink-0 items-center gap-2 border-b border-white/5 bg-neutral-900/50 px-2">
+<WidgetCard isConfigured={true} padding={false}>
+	<div class="flex h-full w-full flex-col font-sans" onkeydown={handleKeyDown}>
 
-		<button
-				onclick={onAddNote}
-				title="Add new note"
-				class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-700/50 text-lg leading-none text-neutral-400 transition-colors hover:bg-neutral-600 hover:text-white"
-		>
-			<span class="mb-0.5">+</span>
-		</button>
+		<div class="flex h-8 shrink-0 items-center gap-2 border-b border-black/20 bg-black/10 px-2">
+			<button
+					onclick={onAddNote}
+					title="Add new note"
+					class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-black/20 hover:text-white"
+			>
+				<Plus size={14} strokeWidth={2.5} />
+			</button>
 
-		<button
-				onclick={toggleMode}
-				class="h-5 flex items-center rounded px-2 text-[10px] font-bold uppercase tracking-wider transition-colors shrink-0
-               {!isMarkdownMode ? 'bg-neutral-600 text-white' : 'bg-neutral-700/50 text-neutral-400 hover:text-white'}"
-		>
-			{isMarkdownMode ? 'Edit' : 'View'}
-		</button>
+			<button
+					onclick={toggleMode}
+					class="flex h-5 items-center gap-1.5 rounded px-2 text-[9px] font-bold uppercase tracking-wider transition-colors shrink-0
+             {!isMarkdownMode ? 'bg-white/10 text-slate-200 shadow-sm' : 'bg-black/20 text-neutral-500 hover:text-white'}"
+			>
+				{#if isMarkdownMode}
+					<PenLine size={10} strokeWidth={2.5} /> Edit
+				{:else}
+					<Eye size={10} strokeWidth={2.5} /> View
+				{/if}
+			</button>
 
-		<div
-				onmousedown={onDragStart}
-				ontouchstart={onDragStart}
-				role="presentation"
-				class="flex h-full flex-grow cursor-grab touch-none items-center justify-center text-neutral-600 transition-colors hover:text-neutral-400 active:cursor-grabbing"
-		>
-			<span class="text-xs">⠿</span>
+			<div
+					onmousedown={onDragStart}
+					ontouchstart={onDragStart}
+					role="presentation"
+					class="flex h-full flex-grow cursor-grab touch-none items-center justify-center text-neutral-600 transition-colors hover:text-neutral-400 active:cursor-grabbing"
+			>
+				<GripHorizontal size={14} strokeWidth={2.5} />
+			</div>
+
+			<button
+					onclick={handleDelete}
+					title="Delete note"
+					class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-red-500/20 hover:text-red-400"
+			>
+				<X size={14} strokeWidth={2.5} />
+			</button>
 		</div>
 
-		<button
-				onclick={handleDelete}
-				title="Delete note"
-				class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-neutral-700/50 text-sm font-bold leading-none text-neutral-400 transition-colors hover:bg-red-500/80 hover:text-white"
-		>
-			<span>×</span>
-		</button>
+		<div class="relative flex-grow overflow-hidden">
+			{#if isMarkdownMode}
+				<div class="prose prose-invert h-full w-full overflow-auto p-3.5 text-[13px] leading-relaxed text-slate-200
+                   scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+					{@html renderedMarkdown}
+				</div>
+			{:else}
+       <textarea
+					 value={content}
+					 oninput={handleInput}
+					 placeholder="Write something..."
+					 spellcheck="false"
+					 class="h-full w-full resize-none border-none bg-transparent p-3.5 font-mono text-[13px] leading-relaxed tracking-tight text-slate-200 outline-none placeholder:text-neutral-600
+                scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+			 ></textarea>
+			{/if}
+
+			<div
+					onmousedown={onResizeStart}
+					ontouchstart={onResizeStart}
+					role="presentation"
+					class="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize touch-none bg-gradient-to-br from-transparent from-50% to-black/30 to-50% transition-colors hover:to-black/50"
+			></div>
+		</div>
 
 	</div>
-
-	<div class="relative flex-grow overflow-hidden">
-		{#if isMarkdownMode}
-			<div class="prose prose-invert h-full w-full overflow-auto p-3.5 text-[13px] leading-relaxed text-slate-200
-                  scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
-				{@html renderedMarkdown}
-			</div>
-		{:else}
-      <textarea
-					value={content}
-					oninput={handleInput}
-					placeholder="Write something..."
-					spellcheck="false"
-					class="h-full w-full resize-none border-none bg-transparent p-3.5 font-mono text-[13px] leading-relaxed tracking-tight text-slate-200 outline-none placeholder:text-neutral-600
-               scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent"
-			></textarea>
-		{/if}
-
-		<div
-				onmousedown={onResizeStart}
-				ontouchstart={onResizeStart}
-				role="presentation"
-				class="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize touch-none bg-gradient-to-br from-transparent from-50% to-white/5 to-50% transition-colors hover:to-white/20"
-		></div>
-	</div>
-</div>
+</WidgetCard>
 
 <style>
   textarea::-webkit-scrollbar-track { margin: 8px 0; }

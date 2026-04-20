@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
+  import {Check, Plus, Search, X} from "lucide-svelte";
+  import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import WidgetCard from "$lib/components/WidgetCard.svelte";
 
   let { id, isEditing, showSettings = $bindable(false) } = $props<{
     id: string; isEditing: boolean; showSettings: boolean;
@@ -373,50 +376,64 @@
   }
 </script>
 
-<div class="flex h-full w-full items-center px-2 font-sans">
-	<div bind:this={wrapperEl} class="relative w-full">
-		<div class="flex h-10 w-full overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 shadow-xl shadow-black/40 focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50">
-			<input
-					bind:this={searchInput}
-					type="text"
-					bind:value={query}
-					placeholder="Search, Calculate or Convert..."
-					class="min-w-0 flex-1 border-none bg-transparent px-3 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
-					onkeydown={handleKeydown}
-					onfocus={() => isFocused = true}
-					onblur={() => setTimeout(() => isFocused = false, 150)}
-			/>
-			<button
-					onclick={handleSearch}
-					class="flex h-full items-center justify-center border-l border-neutral-700 bg-neutral-800 px-4 text-[11px] font-bold uppercase tracking-wider text-neutral-300 transition-colors hover:bg-neutral-700 active:bg-neutral-600"
-					aria-label="Search"
-			>
-				{activeEngine.name}
-			</button>
+<WidgetCard bind:showSettings={showSettings} isConfigured={true} padding={false} transparent={true}>
+	<div class="flex h-full w-full items-center px-2 sm:px-3 font-sans">
+		<div bind:this={wrapperEl} class="relative w-full">
+
+			<div class="flex h-10 w-full overflow-hidden rounded-xl border border-black/40 bg-[#1c1c1c] shadow-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 transition-all">
+
+				<div class="flex items-center pl-3 pr-1 text-neutral-500">
+					<Search size={14} strokeWidth={2.5} />
+				</div>
+
+				<input
+						bind:this={searchInput}
+						type="text"
+						bind:value={query}
+						placeholder="Search, Calculate or Convert..."
+						class="min-w-0 flex-1 border-none bg-transparent px-2 text-[13px] text-white outline-none placeholder:text-neutral-500 focus:ring-0"
+						onkeydown={handleKeydown}
+						onfocus={() => isFocused = true}
+						onblur={() => setTimeout(() => isFocused = false, 150)}
+				/>
+
+				<button
+						onclick={handleSearch}
+						class="flex h-full items-center justify-center border-l border-black/40 bg-black/20 px-4 text-[10px] font-bold uppercase tracking-wider text-neutral-400 transition-colors hover:bg-black/40 hover:text-white active:bg-black/60"
+						aria-label="Search"
+				>
+					{activeEngine?.name || 'Search'}
+				</button>
+			</div>
+
 		</div>
 	</div>
-</div>
+</WidgetCard>
 
 {#if isFocused && suggestions.length > 0}
 	<div
 			use:portal
 			style={dropdownStyle}
-			class="overflow-hidden rounded-lg border border-neutral-700 bg-neutral-900 shadow-2xl shadow-black/80 font-sans"
+			class="overflow-hidden rounded-xl border border-black/40 bg-[#1c1c1c] shadow-2xl font-sans z-[99999]"
 	>
 		{#each suggestions as item, i}
 			<button
-					class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors {i === selectedIndex ? 'bg-neutral-800' : 'hover:bg-neutral-800/60'}"
+					class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors {i === selectedIndex ? 'bg-black/40' : 'hover:bg-black/20'}"
 					onclick={() => item.action()}
 			>
 				<div class="flex min-w-0 flex-col pr-2">
-      <span class="truncate text-[12px] font-semibold {i === selectedIndex ? 'text-white' : 'text-neutral-200'}">
+      <span class="truncate text-[12px] font-semibold {i === selectedIndex ? 'text-white' : 'text-slate-300'}">
         {item.title}
       </span>
-					<span class="truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : (item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-500')}">
-        {copiedId === item.id ? '✓ Copied!' : item.subtitle}
+					<span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : (item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-500')}">
+        {#if copiedId === item.id}
+          <Check size={10} strokeWidth={3} /> Copied!
+        {:else}
+          {item.subtitle}
+        {/if}
       </span>
 				</div>
-				<div class="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] font-bold {item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-400'}">
+				<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-400'}">
 					{item.badge}
 				</div>
 			</button>
@@ -424,35 +441,36 @@
 	</div>
 {/if}
 
-<dialog
-		bind:this={dialogEl}
-		class="fixed left-1/2 top-1/2 m-0 w-[95vw] max-w-[750px] -translate-x-1/2 -translate-y-1/2 rounded-xl border-none bg-neutral-900 p-0 text-white outline-none backdrop:bg-black/85 backdrop:backdrop-blur-sm"
-		onclose={() => showSettings = false}
->
-	<div class="flex max-h-[80vh] flex-col p-6">
-		<header class="mb-5 flex items-center justify-between">
-			<h3 class="text-base font-semibold">Search Shortcuts</h3>
-			<button
-					class="rounded-md bg-blue-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
-					onclick={() => engines.push({key: '!', name: 'New', url: ''})}
-			>+ Add Engine</button>
-		</header>
+<SettingsDialog title="Search Shortcuts" bind:show={showSettings} onSave={saveSettings}>
+	<div class="flex flex-col gap-4">
 
-		<div class="flex flex-col gap-2 overflow-y-auto pr-1">
+		<div class="flex justify-end">
+			<button
+					class="flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-black/60 transition-colors border border-black/20"
+					onclick={() => engines.push({key: '!', name: 'New', url: ''})}
+			>
+				<Plus size={12} strokeWidth={2.5} /> ADD ENGINE
+			</button>
+		</div>
+
+		<div class="flex flex-col gap-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
 			{#each engines as engine, i}
-				<div class="flex items-center gap-2.5 py-1 {engine.isDefault ? 'mb-2 border-b border-neutral-800 pb-3' : ''}">
+				<div class="flex items-center gap-2.5 py-2 {engine.isDefault ? 'mb-2 border-b border-black/40 pb-4' : ''}">
+
 					{#if engine.isDefault}
-						<div class="flex w-20 shrink-0 items-center gap-1 text-[11px] font-bold text-neutral-500">
-							<span>DEFAULT</span>
+						<div class="flex w-20 shrink-0 items-center justify-center gap-1 text-[9px] font-black tracking-widest text-neutral-500 bg-black/20 py-1.5 rounded-md border border-black/10">
+							DEFAULT
 						</div>
 					{:else}
-						<div class="flex w-20 shrink-0 items-center gap-1">
-							<button class="w-5 text-lg text-red-500 hover:text-red-400" onclick={() => engines.splice(i, 1)}>×</button>
+						<div class="flex w-20 shrink-0 items-center gap-1.5">
+							<button class="text-neutral-600 hover:text-red-500 transition-colors" onclick={() => engines.splice(i, 1)}>
+								<X size={16} strokeWidth={2.5} />
+							</button>
 							<input
 									type="text"
 									bind:value={engine.key}
 									placeholder="!"
-									class="w-[50px] rounded border border-neutral-700 bg-neutral-800 py-1.5 text-center font-mono text-sm outline-none focus:border-blue-500"
+									class="w-full rounded-lg border border-black/40 bg-neutral-900 py-1.5 text-center font-mono text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
 							/>
 						</div>
 					{/if}
@@ -461,22 +479,18 @@
 							type="text"
 							bind:value={engine.name}
 							placeholder="Name (e.g. Google)"
-							class="w-32 rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+							class="w-28 rounded-lg border border-black/40 bg-neutral-900 px-2 py-1.5 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
 					/>
 
 					<input
 							type="text"
 							bind:value={engine.url}
 							placeholder="Search URL..."
-							class="flex-1 rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+							class="flex-1 rounded-lg border border-black/40 bg-neutral-900 px-2 py-1.5 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
 					/>
 				</div>
 			{/each}
 		</div>
 
-		<footer class="mt-6 flex justify-end gap-3 border-t border-neutral-800 pt-4">
-			<button class="rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-400 hover:bg-neutral-800" onclick={() => showSettings = false}>Cancel</button>
-			<button class="rounded-md bg-emerald-600 px-6 py-2 text-sm font-semibold text-white hover:bg-emerald-500" onclick={saveSettings}>Save Changes</button>
-		</footer>
 	</div>
-</dialog>
+</SettingsDialog>

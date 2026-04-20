@@ -127,7 +127,7 @@
 <WidgetCard isConfigured={true} padding={false}>
 	<div class="flex h-full w-full font-sans text-slate-200 overflow-hidden transition-all duration-500
     {isFinished ? 'bg-red-900/80 animate-pulse' : 'bg-transparent'}
-    {isCompact ? 'items-center px-4' : 'flex-col px-3 py-2'}">
+    {isCompact ? 'items-center px-1.5' : 'flex-col px-3 py-2'}">
 
 		{#if isLarge}
 			<div class="flex h-8 w-full shrink-0 items-center justify-between border-b border-black/20 mb-2">
@@ -159,18 +159,18 @@
 				<button
 						onclick={cycleMode}
 						disabled={isRunning}
-						class="font-normal tabular-nums tracking-tight transition-colors {isLarge ? 'text-xl' : 'text-lg'}
+						class="font-normal tabular-nums tracking-tight transition-colors {isLarge ? 'text-xl' : 'text-base'}
           {isRunning ? 'cursor-default' : 'hover:text-white/70'}"
 				>
 					{displayTime}
 				</button>
 
 				{#if mode === 'timer' && !isRunning && isCompact}
-					<div class="ml-2 flex flex-col items-center bg-black/20 rounded p-0.5 border border-black/40">
+					<div class="ml-1 flex flex-col items-center bg-black/20 rounded-md p-0.5 border border-black/40">
 						<button onclick={() => adjustTime(1)} class="p-0.5 text-neutral-400 hover:text-blue-400 transition-colors">
 							<Plus size={8} strokeWidth={3} />
 						</button>
-						<button onclick={cycleStep} class="text-[7px] font-black text-blue-400 uppercase px-1 py-0.5 leading-none hover:text-blue-300">
+						<button onclick={cycleStep} class="text-[6px] font-black text-blue-400 uppercase px-0.5 py-0 leading-none hover:text-blue-300">
 							{currentStep?.label ?? ''}
 						</button>
 						<button onclick={() => adjustTime(-1)} class="p-0.5 text-neutral-400 hover:text-blue-400 transition-colors">
@@ -184,12 +184,12 @@
 					onclick={toggle}
 					class="flex shrink-0 items-center justify-center rounded-lg transition-all active:scale-90
         {isFinished ? 'bg-white text-red-900 shadow-lg' : 'bg-black/30 border border-black/20 text-slate-200 hover:bg-black/40 hover:text-white'}
-        {isLarge ? 'h-8 w-8' : 'h-7 w-7'}"
+        {isLarge ? 'h-8 w-8' : 'h-6 w-6'}"
 			>
 				{#if isRunning}
-					<Pause size={isLarge ? 14 : 12} strokeWidth={2.5} fill="currentColor" />
+					<Pause size={isLarge ? 14 : 10} strokeWidth={2.5} fill="currentColor" />
 				{:else}
-					<Play size={isLarge ? 14 : 12} strokeWidth={2.5} fill="currentColor" class="ml-0.5" />
+					<Play size={isLarge ? 14 : 10} strokeWidth={2.5} fill="currentColor" class="ml-0.5" />
 				{/if}
 			</button>
 		</div>

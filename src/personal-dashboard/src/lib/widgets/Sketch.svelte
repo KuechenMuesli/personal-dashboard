@@ -458,7 +458,7 @@
   onMount(() => { if (canvas) initCanvas(canvas); });
 </script>
 
-<WidgetCard isConfigured={true} padding={false}>
+<WidgetCard isConfigured={true} padding={false} transparent={isCompact}>
 	<div
 			class="group relative flex h-full w-full flex-col outline-none select-none focus-within:ring-1 focus-within:ring-blue-500/50"
 			tabindex="0"
@@ -468,7 +468,8 @@
 	>
 		{#if isCompact}
 			<div class="flex h-full w-full items-center justify-center p-4">
-				<button class="rounded-lg bg-black/20 border border-black/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-400 hover:bg-black/40 hover:text-white transition-all" onclick={openExpanded}>
+				<button class="flex items-center justify-center rounded-lg bg-black/20 border border-black/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-400 hover:bg-black/40 hover:text-white transition-all" onclick={openExpanded}>
+					<Pencil size={15} strokeWidth={2.5} />
 					Open Sketch
 				</button>
 			</div>

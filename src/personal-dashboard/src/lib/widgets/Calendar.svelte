@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { slide } from "svelte/transition";
+  import { Clock, MapPin, FileText, Pencil, X } from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
 
@@ -299,20 +300,20 @@
 			<div transition:slide={{ duration: 200 }} class="w-full text-xs text-neutral-300 pl-4 ml-1 space-y-2 mt-1 border-l-2 border-black/40 pb-1 cursor-default" onclick={(e) => e.stopPropagation()}>
 
 				<div class="flex gap-2 items-start text-neutral-400">
-					<svg class="shrink-0 mt-0.5 text-neutral-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+					<Clock class="shrink-0 mt-0.5 text-neutral-500" size={12} strokeWidth={2.5} />
 					<span>{formatDateTimeFull(event.start)} - {formatTime(event.end)}</span>
 				</div>
 
 				{#if event.location}
 					<div class="flex gap-2 items-start">
-						<svg class="shrink-0 mt-0.5 text-neutral-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+						<MapPin class="shrink-0 mt-0.5 text-neutral-500" size={12} strokeWidth={2.5} />
 						<span class="break-words font-medium">{event.location}</span>
 					</div>
 				{/if}
 
 				{#if event.description}
 					<div class="flex gap-2 items-start">
-						<svg class="shrink-0 mt-0.5 text-neutral-500" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+						<FileText class="shrink-0 mt-0.5 text-neutral-500" size={12} strokeWidth={2.5} />
 						<div class="whitespace-pre-wrap break-words text-neutral-400 leading-relaxed max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 pr-2">{event.description}</div>
 					</div>
 				{/if}
@@ -334,12 +335,12 @@
 		{#if expandedEventId === event.id}
 			<div transition:slide={{ duration: 200 }} class="text-[10px] text-neutral-400 mt-2 space-y-1.5 bg-black/30 rounded-lg p-2.5 cursor-default w-full" onclick={(e) => e.stopPropagation()}>
 				<div class="flex gap-1.5 items-start">
-					<svg class="shrink-0 mt-0.5 text-neutral-500" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+					<Clock class="shrink-0 mt-0.5 text-neutral-500" size={10} strokeWidth={2.5} />
 					<span>{formatDateTimeFull(event.start)} - {formatTime(event.end)}</span>
 				</div>
 				{#if event.location}
 					<div class="flex gap-1.5 items-start">
-						<svg class="shrink-0 mt-0.5 text-neutral-500" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+						<MapPin class="shrink-0 mt-0.5 text-neutral-500" size={10} strokeWidth={2.5} />
 						<span class="break-words text-neutral-300">{event.location}</span>
 					</div>
 				{/if}
@@ -430,14 +431,14 @@
 										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
 										title="Edit Calendar"
 								>
-									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+									<Pencil size={12} strokeWidth={2.5} />
 								</button>
 								<button
 										onclick={() => removeCalendar(config.id)}
 										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
 										title="Remove Calendar"
 								>
-									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+									<X size={12} strokeWidth={2.5} />
 								</button>
 							</div>
 						</div>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { StoredWidget } from '../types/stored-widget';
+  import {Check, GripHorizontal, Pencil, Plus, Settings, X} from "lucide-svelte";
 
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 } },
@@ -337,17 +338,22 @@
 						<button
 								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
 								onclick={() => debounceAction(() => toggleSettings(sw.id))}
-						>⋮</button>
-						<div
-								class="flex-grow cursor-grab touch-none text-center text-xs font-bold text-neutral-500 select-none active:cursor-grabbing pointer-events-auto"
+						>
+							<Settings size={16} strokeWidth={1} />
+						</button>
+						<GripHorizontal
+								size={16}
+								strokeWidth={1}
 								onmousedown={(e) => startInteraction(e, sw.id, 'drag')}
 								ontouchstart={(e) => startInteraction(e, sw.id, 'drag')}
-								role="presentation"
-						>⠿</div>
+								class="flex-grow cursor-grab touch-none text-center text-xs font-bold text-neutral-500 select-none active:cursor-grabbing pointer-events-auto"
+						/>
 						<button
 								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400"
 								onclick={() => debounceAction(() => deleteWidget(sw.id))}
-						>×</button>
+						>
+							<X size={16} />
+						</button>
 					</div>
 
 					<div
@@ -394,14 +400,18 @@
 			<button
 					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
 					onclick={() => debounceAction(() => pickerDialog.showModal())}
-			>+</button>
+			><Plus size={20} /></button>
 		{/if}
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
              {isEditing ? 'bg-emerald-600' : 'bg-neutral-700'}"
 				onclick={() => debounceAction(() => isEditing = !isEditing)}
 		>
-			{isEditing ? '✓' : '✎'}
+			{#if isEditing}
+				<Check size={20} />
+			{:else}
+				<Pencil size={20} />
+			{/if}
 		</button>
 	</div>
 {/if}

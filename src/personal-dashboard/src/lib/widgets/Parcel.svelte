@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import {Package, Plus, RefreshCcw} from "lucide-svelte";
 
   let {
     id,
@@ -190,18 +191,14 @@
 			class="h-5 w-5 flex items-center justify-center rounded text-widget-text-muted hover:text-white hover:bg-widget-bg-hover transition-colors"
 			title="Refresh"
 	>
-		<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-			<path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
-		</svg>
+		<RefreshCcw size={10}></RefreshCcw>
 	</button>
 	<button
 			onclick={() => showAddForm = !showAddForm}
 			class="h-5 w-5 flex items-center justify-center rounded transition-colors {showAddForm ? 'bg-widget-accent text-white' : 'text-widget-text-muted hover:text-white hover:bg-widget-bg-hover'}"
 			title="Add Package"
 	>
-		<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-			<path d="M12 5v14m-7-7h14"/>
-		</svg>
+		<Plus size={10} />
 	</button>
 {/snippet}
 
@@ -239,9 +236,7 @@
 
 		{:else if deliveries.length === 0}
 			<div class="flex h-full flex-col items-center justify-center text-center pb-2">
-				<svg class="text-widget-text-muted mb-2 opacity-50" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
-				</svg>
+				<Package size={24} />
 				<p class="text-[9px] text-widget-text-muted font-medium mb-2">No {filterMode} packages.</p>
 				{#if !showAddForm}
 					<button

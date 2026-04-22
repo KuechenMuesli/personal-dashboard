@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { StoredWidget } from '../types/stored-widget';
-  import {Check, GripHorizontal, Pencil, Plus, Settings, X} from "lucide-svelte";
+  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X} from "lucide-svelte";
 
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 } },
@@ -298,6 +298,53 @@
       dashboardLayout[index].showSettings = !dashboardLayout[index].showSettings;
     }
   }
+
+  function exportConfig() {
+    const config: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key === STORAGE_KEY || key.includes('settings-') || key.includes('mode-'))) {
+        config[key] = localStorage.getItem(key) || "";
+      }
+    }
+
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dashboard-config-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importConfig(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const config = JSON.parse(e.target?.result as string);
+
+        if (!config[STORAGE_KEY]) {
+          alert("Invalid configuration file.");
+          return;
+        }
+
+        if (confirm("This will overwrite your current layout and settings. Continue?")) {
+          localStorage.clear();
+          Object.entries(config).forEach(([key, value]) => {
+            localStorage.setItem(key, value as string);
+          });
+          window.location.reload();
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Failed to parse the config file.");
+      }
+    };
+    reader.readAsText(file);
+  }
 </script>
 
 <div
@@ -397,11 +444,25 @@
 {#if containerWidth >= 640}
 	<div class="fixed bottom-8 right-8 z-[1000] flex flex-col gap-4">
 		{#if isEditing}
+			<label class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105">
+				<Download size={20} />
+				<input type="file" accept=".json" class="hidden" onchange={importConfig} />
+			</label>
+
+			<button
+					class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
+					onclick={exportConfig}
+					title="Export Settings"
+			>
+				<Upload size={20} />
+			</button>
+
 			<button
 					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
 					onclick={() => debounceAction(() => pickerDialog.showModal())}
 			><Plus size={20} /></button>
 		{/if}
+
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
              {isEditing ? 'bg-emerald-600' : 'bg-neutral-700'}"

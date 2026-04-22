@@ -172,13 +172,15 @@
 
     textInput = null;
   }
-
-  function handleInteractionStart(e: MouseEvent | TouchEvent, targetCanvas: HTMLCanvasElement) {
+	
+  function handleInteractionStart(e: PointerEvent, targetCanvas: HTMLCanvasElement) {
     if (isEditing || !targetCanvas) return;
 
     const rect = targetCanvas.getBoundingClientRect();
-    const x = ('touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX) - rect.left;
-    const y = ('touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY) - rect.top;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    targetCanvas.setPointerCapture(e.pointerId);
 
     if (mode === 'text') {
       if (textInput?.active) {
@@ -229,7 +231,9 @@
     } else {
       isDrawing = true;
       const ctx = targetCanvas.getContext("2d")!;
-      ctx.lineWidth = toolSize;
+      // Apply initial pressure if using a pen
+      ctx.lineWidth = toolSize * (e.pointerType === 'pen' ? (e.pressure || 1) * 1.5 : 1);
+
       if (mode === 'erase') {
         ctx.globalCompositeOperation = "destination-out";
       } else {
@@ -241,19 +245,19 @@
     }
   }
 
-  function handleInteractionMove(e: MouseEvent | TouchEvent, targetCanvas: HTMLCanvasElement) {
+  function handleInteractionMove(e: PointerEvent, targetCanvas: HTMLCanvasElement) {
     if (isEditing || !targetCanvas) return;
 
-    if (e instanceof MouseEvent && e.buttons !== 1) {
+    if (e.buttons !== 1) {
       if (isDrawing || selection?.dragging || selection?.resizing) {
-        handleInteractionEnd(targetCanvas);
+        handleInteractionEnd(e, targetCanvas);
       }
       return;
     }
 
     const rect = targetCanvas.getBoundingClientRect();
-    const x = ('touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX) - rect.left;
-    const y = ('touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY) - rect.top;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
     if (mode === 'select' && selection?.active) {
       if (selection.resizing) {
@@ -270,13 +274,26 @@
       }
     } else if (isDrawing) {
       const ctx = targetCanvas.getContext("2d")!;
+
+      if (e.pointerType === 'pen' && mode !== 'erase') {
+        ctx.lineWidth = toolSize * (e.pressure || 1) * 1.5;
+      }
+
       ctx.lineTo(x, y);
       ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
     }
   }
 
-  function handleInteractionEnd(targetCanvas: HTMLCanvasElement) {
+  function handleInteractionEnd(e: PointerEvent, targetCanvas: HTMLCanvasElement) {
     if (!targetCanvas) return;
+
+    if (targetCanvas.hasPointerCapture(e.pointerId)) {
+      targetCanvas.releasePointerCapture(e.pointerId);
+    }
+
     if (isDrawing) {
       isDrawing = false;
       const ctx = targetCanvas.getContext("2d")!;
@@ -511,10 +528,11 @@
 			<div class="relative flex-grow overflow-hidden bg-transparent">
 				<canvas
 						bind:this={canvas}
-						onmousedown={(e) => handleInteractionStart(e, canvas!)}
-						onmousemove={(e) => handleInteractionMove(e, canvas!)}
-						onmouseup={() => handleInteractionEnd(canvas!)}
-						onmouseleave={() => handleInteractionEnd(canvas!)}
+						onpointerdown={(e) => handleInteractionStart(e, canvas!)}
+						onpointermove={(e) => handleInteractionMove(e, canvas!)}
+						onpointerup={(e) => handleInteractionEnd(e, canvas!)}
+						onpointercancel={(e) => handleInteractionEnd(e, canvas!)}
+						onpointerleave={(e) => handleInteractionEnd(e, canvas!)}
 						class="h-full w-full touch-none select-none {mode === 'select' ? (selection?.resizing ? 'cursor-nwse-resize' : selection?.dragging ? 'cursor-grabbing' : 'cursor-cell') : mode === 'text' ? 'cursor-text' : 'cursor-crosshair'}"
 				></canvas>
 
@@ -532,7 +550,7 @@
 							bind:this={textInputRef}
 							contenteditable="true"
 							onblur={finalizeTextInput}
-							onmousedown={(e) => e.stopPropagation()}
+							onpointerdown={(e) => e.stopPropagation()}
 							style="position: absolute; left: {textInput.x}px; top: {textInput.y}px; color: {color}; font-size: {toolSize * 5}px; font-family: sans-serif; line-height: 1.2; min-width: 20px; outline: none; white-space: pre-wrap; word-break: break-word;"
 							class="border border-dashed border-blue-400 bg-blue-500/10 z-50 cursor-text min-h-[1.2em]"
 					></div>
@@ -584,10 +602,11 @@
 			<div class="relative h-full w-full bg-neutral-800 shadow-2xl overflow-hidden rounded-xl border border-black/40">
 				<canvas
 						bind:this={dialogCanvas}
-						onmousedown={(e) => handleInteractionStart(e, dialogCanvas!)}
-						onmousemove={(e) => handleInteractionMove(e, dialogCanvas!)}
-						onmouseup={() => handleInteractionEnd(dialogCanvas!)}
-						onmouseleave={() => handleInteractionEnd(dialogCanvas!)}
+						onpointerdown={(e) => handleInteractionStart(e, dialogCanvas!)}
+						onpointermove={(e) => handleInteractionMove(e, dialogCanvas!)}
+						onpointerup={(e) => handleInteractionEnd(e, dialogCanvas!)}
+						onpointercancel={(e) => handleInteractionEnd(e, dialogCanvas!)}
+						onpointerleave={(e) => handleInteractionEnd(e, dialogCanvas!)}
 						class="h-full w-full touch-none select-none {mode === 'select' ? (selection?.resizing ? 'cursor-nwse-resize' : selection?.dragging ? 'cursor-grabbing' : 'cursor-cell') : mode === 'text' ? 'cursor-text' : 'cursor-crosshair'}"
 				></canvas>
 
@@ -605,7 +624,7 @@
 							bind:this={textInputRef}
 							contenteditable="true"
 							onblur={finalizeTextInput}
-							onmousedown={(e) => e.stopPropagation()}
+							onpointerdown={(e) => e.stopPropagation()}
 							style="position: absolute; left: {textInput.x}px; top: {textInput.y}px; color: {color}; font-size: {toolSize * 5}px; font-family: sans-serif; line-height: 1.2; min-width: 20px; outline: none; white-space: pre-wrap; word-break: break-word;"
 							class="border border-dashed border-blue-400 bg-blue-500/10 z-50 cursor-text min-h-[1.2em]"
 					></div>

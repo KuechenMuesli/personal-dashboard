@@ -172,7 +172,7 @@
 
     textInput = null;
   }
-	
+
   function handleInteractionStart(e: PointerEvent, targetCanvas: HTMLCanvasElement) {
     if (isEditing || !targetCanvas) return;
 

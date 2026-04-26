@@ -9,6 +9,7 @@
     note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 1, height: 3 }},
     parcel:           { name: "Parcel Tracker", load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 } },
     trmnl:            { name: "TRMNL Current Screen", load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 } },
+    trmnlReminders:		{ name: "TRMNL Reminders", load: () => import("$lib/widgets/TrmnlReminders.svelte"), defaultSize: { width: 1, height: 4}},
     clockWeatherDate: { name: "Clock & Weather", load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 } },
     embed:            { name: "Web Embed", load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 } },
     TimerStopwatch:   { name: "Timer / Stopwatch", load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 } },

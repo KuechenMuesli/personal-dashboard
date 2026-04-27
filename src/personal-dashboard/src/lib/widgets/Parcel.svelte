@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
-  import {Package, Plus, RefreshCcw} from "lucide-svelte";
+  import {Package, Plus, RefreshCw} from "lucide-svelte";
 
   let {
     id,
@@ -191,7 +191,7 @@
 			class="h-5 w-5 flex items-center justify-center rounded text-widget-text-muted hover:text-white hover:bg-widget-bg-hover transition-colors"
 			title="Refresh"
 	>
-		<RefreshCcw size={10}></RefreshCcw>
+		<RefreshCw size={10}></RefreshCw>
 	</button>
 	<button
 			onclick={() => showAddForm = !showAddForm}

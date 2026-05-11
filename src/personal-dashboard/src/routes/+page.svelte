@@ -304,7 +304,7 @@
     const config: Record<string, string> = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key === STORAGE_KEY || key.includes('settings-') || key.includes('mode-'))) {
+      if (key) {
         config[key] = localStorage.getItem(key) || "";
       }
     }

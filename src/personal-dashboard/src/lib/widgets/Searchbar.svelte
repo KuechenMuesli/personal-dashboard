@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import {Check, Plus, Search, X, Trash2} from "lucide-svelte";
+  import {Check, Plus, Search, X, Trash2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Thermometer, Moon} from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
 
@@ -28,6 +28,7 @@
     action: () => void;
     expandable?: boolean;
     description?: string;
+    icon?: any;
     onDelete?: () => void;
   }
 
@@ -343,7 +344,53 @@
           return true;
        });
 
-       dashboardRes = matchedEvents.slice(0, 5).map((e, i) => {
+       const groupedEvents = new Map<string, any[]>();
+       for (const e of matchedEvents) {
+           const key = `${e.title}|${e.list}`;
+           if (!groupedEvents.has(key)) {
+               groupedEvents.set(key, []);
+           }
+           groupedEvents.get(key)!.push(e);
+       }
+
+       const consolidatedEvents = Array.from(groupedEvents.values()).map(group => {
+           group.sort((a, b) => {
+               if (!a.date) return -1;
+               if (!b.date) return 1;
+               return a.date.getTime() - b.date.getTime();
+           });
+
+           const nextEvent = group[0];
+           const futureEvents = group.slice(1);
+           
+           let description = nextEvent.desc || '';
+           if (futureEvents.length > 0) {
+               const futureDates = futureEvents.slice(0, 5).map(e => {
+                   let dStr = e.date.toLocaleDateString('de-DE');
+                   if (e.type === 'CALENDAR' || (e.date.getHours() !== 0 || e.date.getMinutes() !== 0)) {
+                       dStr += ` ${e.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+                   }
+                   return `• ${dStr}`;
+               });
+               
+               const moreText = futureEvents.length > 5 ? `\n...und ${futureEvents.length - 5} weitere Termine` : '';
+               const recurrenceInfo = `\n\nWeitere Termine:\n${futureDates.join('\n')}${moreText}`;
+               description = description ? description + recurrenceInfo : recurrenceInfo.trim();
+           }
+
+           return {
+               ...nextEvent,
+               desc: description
+           };
+       });
+
+       consolidatedEvents.sort((a, b) => {
+           if (!a.date) return 1;
+           if (!b.date) return -1;
+           return a.date.getTime() - b.date.getTime();
+       });
+
+       dashboardRes = consolidatedEvents.slice(0, 5).map((e, i) => {
           const uniqueId = `dash-evt-kw-${i}`;
           
           let dateStr = '';
@@ -479,22 +526,22 @@
                  .then(data => {
                     if (data.current) {
                       const c = data.current;
-                      const getWmoEmoji = (code: number, isDay: number) => {
-                         if (code === 0) return isDay ? '☀️' : '🌙';
-                         if (code === 1 || code === 2) return isDay ? '⛅' : '☁️';
-                         if (code === 3) return '☁️';
-                         if ([45, 48].includes(code)) return '🌫️';
-                         if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
-                         if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
-                         if ([95, 96, 99].includes(code)) return '⛈️';
-                         return '🌡️';
+                      const getWmoIcon = (code: number, isDay: number) => {
+                         if (code === 0) return isDay ? Sun : Moon;
+                         if (code === 1 || code === 2) return isDay ? Cloud : Cloud; // or maybe SunCloud
+                         if (code === 3) return Cloud;
+                         if ([45, 48].includes(code)) return Cloud; // mist
+                         if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return CloudRain;
+                         if ([71, 73, 75, 77, 85, 86].includes(code)) return Snowflake;
+                         if ([95, 96, 99].includes(code)) return CloudLightning;
+                         return Thermometer;
                       };
-                      const emoji = getWmoEmoji(c.weather_code, c.is_day);
+                      const icon = getWmoIcon(c.weather_code, c.is_day);
                       const temp = Math.round(c.temperature_2m);
                       const sign = temp > 0 ? '+' : '';
-                      const answer = `${geo.name}: ${emoji} ${sign}${temp}°C`;
+                      const answer = `${geo.name}: ${sign}${temp}°C`;
                       smartAnswer = {
-                        id: 'smart-weather', title: answer, subtitle: 'Copy to clipboard', badge: 'WEATHER',
+                        id: 'smart-weather', title: answer, subtitle: 'Copy to clipboard', badge: 'WEATHER', icon: icon,
                         action: async () => {
                           await navigator.clipboard.writeText(answer);
                           copiedId = 'smart-weather';
@@ -746,12 +793,15 @@
 					onclick={() => item.action()}
 			>
 				<div class="flex min-w-0 flex-col pr-2">
-      <span class="whitespace-pre-wrap break-words text-[12px] font-semibold leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
-        {item.title}
-        {#if item.description && expandedItemId === item.id}
-          <div class="font-normal mt-1.5 opacity-80">{item.description}</div>
+      <span class="whitespace-pre-wrap flex items-start break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
+        {#if item.icon}
+          <svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />
         {/if}
+        <span>{item.title}</span>
       </span>
+        {#if item.description && expandedItemId === item.id}
+          <div class="text-[12px] font-normal mt-1.5 opacity-80 whitespace-pre-wrap">{item.description}</div>
+        {/if}
 					<span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : getBadgeColor(item.badge)}">
         {#if copiedId === item.id}
           <Check size={10} strokeWidth={3} /> Copied!

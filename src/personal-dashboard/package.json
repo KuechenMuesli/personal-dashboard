@@ -32,6 +32,7 @@
 	},
 	"dependencies": {
 		"@types/sortablejs": "^1.15.9",
+		"ical.js": "^2.2.1",
 		"lucide-svelte": "^1.0.1",
 		"marked": "^18.0.0",
 		"sortablejs": "^1.15.7"

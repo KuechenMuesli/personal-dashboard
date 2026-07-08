@@ -2,6 +2,8 @@
   import { onMount, onDestroy } from "svelte";
   import { slide } from "svelte/transition";
   import { Clock, MapPin, FileText, Pencil, X, GripVertical } from "lucide-svelte";
+  // @ts-ignore
+  import ICAL from 'ical.js';
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import WidgetTabs from "$lib/components/WidgetTabs.svelte";
@@ -191,53 +193,52 @@
 
   function parseICS(icsData: string): CalendarEvent[] {
     const events: CalendarEvent[] = [];
-    const unfoldedData = icsData.replace(/\r?\n[ \t]/g, '');
-    const lines = unfoldedData.split(/\r?\n/);
+    try {
+      const jcalData = ICAL.parse(icsData);
+      const comp = new ICAL.Component(jcalData);
+      const vevents = comp.getAllSubcomponents('vevent');
+      
+      const now = new Date();
+      // Expand events up to 1 year into the future and 1 month in the past
+      const maxDate = new Date();
+      maxDate.setFullYear(now.getFullYear() + 1);
+      
+      for (const vevent of vevents) {
+        const event = new ICAL.Event(vevent);
+        if (!event.startDate) continue;
 
-    let currentEvent: Partial<CalendarEvent> | null = null;
-
-    for (let line of lines) {
-      if (line.startsWith("BEGIN:VEVENT")) {
-        currentEvent = { id: Math.random().toString(36).substring(2, 11) };
-      } else if (line.startsWith("END:VEVENT") && currentEvent) {
-        if (currentEvent.start && currentEvent.title) {
-          events.push(currentEvent as CalendarEvent);
-        }
-        currentEvent = null;
-      } else if (currentEvent) {
-        const colonIdx = line.indexOf(":");
-        if (colonIdx > -1) {
-          const key = line.substring(0, colonIdx);
-          const value = line.substring(colonIdx + 1).trim();
-
-          if (key.startsWith("DTSTART")) {
-            currentEvent.start = parseIcsDate(value);
-          } else if (key.startsWith("DTEND")) {
-            currentEvent.end = parseIcsDate(value);
-          } else if (key.startsWith("SUMMARY")) {
-            currentEvent.title = value.replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\n/g, ' ');
-          } else if (key.startsWith("LOCATION")) {
-            currentEvent.location = value.replace(/\\,/g, ',').replace(/\\n/g, ', ');
-          } else if (key.startsWith("DESCRIPTION")) {
-            currentEvent.description = value.replace(/\\n/g, '\n').replace(/\\,/g, ',');
+        if (event.isRecurring()) {
+          const expand = event.iterator();
+          let next;
+          // Prevent infinite loops just in case
+          let maxIterations = 500;
+          while ((next = expand.next()) && next.toJSDate() < maxDate && maxIterations > 0) {
+            maxIterations--;
+            const duration = event.endDate ? event.endDate.toJSDate().getTime() - event.startDate.toJSDate().getTime() : 0;
+            events.push({
+              id: Math.random().toString(36).substring(2, 11),
+              title: event.summary,
+              description: event.description || undefined,
+              location: event.location || undefined,
+              start: next.toJSDate(),
+              end: new Date(next.toJSDate().getTime() + duration)
+            });
           }
+        } else {
+          events.push({
+            id: Math.random().toString(36).substring(2, 11),
+            title: event.summary,
+            description: event.description || undefined,
+            location: event.location || undefined,
+            start: event.startDate.toJSDate(),
+            end: event.endDate ? event.endDate.toJSDate() : event.startDate.toJSDate()
+          });
         }
       }
+    } catch (e) {
+      console.error("Failed to parse ICS with ical.js", e);
     }
     return events;
-  }
-
-  function parseIcsDate(icsDate: string): Date {
-    const year = parseInt(icsDate.substring(0, 4));
-    const month = parseInt(icsDate.substring(4, 6)) - 1;
-    const day = parseInt(icsDate.substring(6, 8));
-    const hour = parseInt(icsDate.substring(9, 11)) || 0;
-    const min = parseInt(icsDate.substring(11, 13)) || 0;
-    const sec = parseInt(icsDate.substring(13, 15)) || 0;
-
-    return icsDate.includes("Z")
-      ? new Date(Date.UTC(year, month, day, hour, min, sec))
-      : new Date(year, month, day, hour, min, sec);
   }
 
   function formatDateShort(date: Date) {

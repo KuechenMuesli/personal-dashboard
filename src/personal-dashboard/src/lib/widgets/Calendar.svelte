@@ -139,6 +139,7 @@
       }
     }
     calendarsData = loadedCalendars;
+    localStorage.setItem('global-calendar-events', JSON.stringify(loadedCalendars));
     isLoading = false;
   }
 

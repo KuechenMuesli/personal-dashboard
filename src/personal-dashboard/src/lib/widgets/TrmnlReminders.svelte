@@ -81,6 +81,7 @@
         localStorage.setItem(`reminders-cache-${id}`, JSON.stringify({
           data: reminders, timestamp: lastFetched
         }));
+        localStorage.setItem('global-reminders', JSON.stringify(reminders));
       }
     } catch (e) {
       console.error("Reminders sync failed", e);

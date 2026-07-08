@@ -27,6 +27,7 @@
     badge: string;
     action: () => void;
     expandable?: boolean;
+    description?: string;
     onDelete?: () => void;
   }
 
@@ -225,6 +226,54 @@
     return results;
   }
 
+  function getBadgeColor(badge: string) {
+    switch (badge) {
+      case 'FAV': return 'text-yellow-500';
+      case 'CALENDAR': return 'text-purple-400';
+      case 'REMINDER': return 'text-orange-400';
+      case 'HISTORY': return 'text-slate-400';
+      case 'WEB': return 'text-blue-400';
+      case 'FACT': return 'text-emerald-400';
+      case 'CALC': return 'text-pink-400';
+      case 'CONV': return 'text-cyan-400';
+      case 'WEATHER': return 'text-sky-400';
+      case 'TIME': return 'text-indigo-400';
+      default: return 'text-emerald-400';
+    }
+  }
+
+  function getStoredEventsAndReminders() {
+    const calsStr = localStorage.getItem('global-calendar-events');
+    const remStr = localStorage.getItem('global-reminders');
+    
+    let events: any[] = [];
+    if (calsStr) {
+      try {
+        const cals = JSON.parse(calsStr);
+        cals.forEach((c: any) => {
+           c.events.forEach((e: any) => {
+              const fullDesc = [e.location, e.description].filter(Boolean).join('\n\n');
+              events.push({ type: 'CALENDAR', title: e.title, desc: fullDesc, date: new Date(e.start), list: c.name });
+           });
+        });
+      } catch(e){}
+    }
+    
+    if (remStr) {
+      try {
+        const rems = JSON.parse(remStr);
+        ['today', 'future', 'overdue'].forEach(k => {
+           if (rems[k]) {
+             rems[k].forEach((r: any) => {
+                events.push({ type: 'REMINDER', title: r.n, desc: r.o, date: r.d ? new Date(r.d) : null, list: r.l });
+             });
+           }
+        });
+      } catch(e){}
+    }
+    return events;
+  }
+
   const suggestions = $derived.by<SuggestionItem[]>(() => {
     const trimmed = query.trim();
     
@@ -241,6 +290,86 @@
 
     const lower = trimmed.toLowerCase();
     const results: SuggestionItem[] = [];
+
+    const localEvents = getStoredEventsAndReminders();
+    let dashboardRes: SuggestionItem[] = [];
+
+    const dateMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.?(\d{2,4})?$/);
+    if (dateMatch) {
+       const d = parseInt(dateMatch[1]);
+       const m = parseInt(dateMatch[2]);
+       let y = dateMatch[3] ? parseInt(dateMatch[3]) : new Date().getFullYear();
+       if (y < 100) y += 2000;
+       
+       const matchedEvents = localEvents.filter(e => {
+          if (!e.date || isNaN(e.date.getTime())) return false;
+          return e.date.getDate() === d && (e.date.getMonth() + 1) === m && e.date.getFullYear() === y;
+       });
+       
+       dashboardRes = matchedEvents.map((e, i) => {
+          const uniqueId = `dash-evt-${i}`;
+          
+          let dateStr = e.date.toLocaleDateString('de-DE');
+          if (e.type === 'CALENDAR' || (e.date.getHours() !== 0 || e.date.getMinutes() !== 0)) {
+              dateStr += ` ${e.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+          }
+
+          return {
+            id: uniqueId,
+            title: e.title,
+            description: e.desc,
+            subtitle: `${dateStr} • ${e.list}`,
+            badge: e.type,
+            expandable: !!e.desc,
+            action: () => {
+               if (e.desc) expandedItemId = expandedItemId === uniqueId ? null : uniqueId;
+            }
+         }
+       });
+    } else {
+       const now = new Date();
+       now.setHours(0, 0, 0, 0);
+
+       const matchedEvents = localEvents.filter(e => {
+          const matchesKeyword = e.title.toLowerCase().includes(lower) || (e.desc && e.desc.toLowerCase().includes(lower));
+          if (!matchesKeyword) return false;
+
+          // Exclude past events/reminders if they have a date before today
+          if (e.date && !isNaN(e.date.getTime())) {
+             const eventDate = new Date(e.date);
+             eventDate.setHours(0, 0, 0, 0);
+             if (eventDate < now) return false;
+          }
+          return true;
+       });
+
+       dashboardRes = matchedEvents.slice(0, 5).map((e, i) => {
+          const uniqueId = `dash-evt-kw-${i}`;
+          
+          let dateStr = '';
+          if (e.date && !isNaN(e.date.getTime())) {
+              dateStr = e.date.toLocaleDateString('de-DE');
+              if (e.type === 'CALENDAR' || (e.date.getHours() !== 0 || e.date.getMinutes() !== 0)) {
+                  dateStr += ` ${e.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+              }
+              dateStr += ' • ';
+          }
+
+          return {
+            id: uniqueId,
+            title: e.title,
+            description: e.desc,
+            subtitle: `${dateStr}${e.list}`,
+            badge: e.type,
+            expandable: !!e.desc,
+            action: () => {
+               if (e.desc) expandedItemId = expandedItemId === uniqueId ? null : uniqueId;
+            }
+         }
+       });
+    }
+    
+    results.push(...dashboardRes);
 
     if (smartAnswer) {
       results.push(smartAnswer);
@@ -617,21 +746,26 @@
 					onclick={() => item.action()}
 			>
 				<div class="flex min-w-0 flex-col pr-2">
-      <span class="break-words text-[12px] font-semibold leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? 'line-clamp-3' : ''}">
+      <span class="whitespace-pre-wrap break-words text-[12px] font-semibold leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
         {item.title}
+        {#if item.description && expandedItemId === item.id}
+          <div class="font-normal mt-1.5 opacity-80">{item.description}</div>
+        {/if}
       </span>
-					<span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : (item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-500')}">
+					<span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : getBadgeColor(item.badge)}">
         {#if copiedId === item.id}
           <Check size={10} strokeWidth={3} /> Copied!
-        {:else if item.expandable}
-          {expandedItemId === item.id ? 'Click to collapse' : 'Click to read more'}
         {:else}
           {item.subtitle}
+          {#if item.expandable}
+            <span class="opacity-50 mx-1">•</span>
+            {expandedItemId === item.id ? 'Click to collapse' : 'Click to read more'}
+          {/if}
         {/if}
       </span>
 				</div>
 				<div class="flex items-center gap-2">
-					<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-400'}">
+					<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {getBadgeColor(item.badge)}">
 						{item.badge}
 					</div>
 					{#if item.onDelete}

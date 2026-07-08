@@ -28,7 +28,7 @@
 
 <dialog
 		bind:this={dialogEl}
-		class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm"
+		class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl outline-none backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm"
 		onclose={() => (show = false)}
 >
 	<div class="flex flex-col gap-5 p-6 max-h-[85vh] bg-neutral-800 text-slate-200">

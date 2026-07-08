@@ -562,7 +562,7 @@
 
 <dialog
 		bind:this={sketchDialog}
-		class="m-0 h-[85vh] w-[90vw] max-w-5xl rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl backdrop:bg-black/80 backdrop:backdrop-blur-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 outline-none select-none"
+		class="m-0 h-[85vh] w-[90vw] max-w-5xl rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 outline-none select-none"
 		onclose={closeExpanded}
 >
 	<div class="flex h-full flex-col bg-neutral-800" onpaste={handlePaste} oncopy={handleCopy} onkeydown={handleKeyDown} tabindex="-1">

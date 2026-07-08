@@ -87,9 +87,9 @@
 						title={fav.name}
 				>
 					<div
-							class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-lg border border-black/20"
+							class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-lg border border-black/20 bg-neutral-900"
 							style="
-           background-color: {fav.color};
+           {fav.color && fav.color !== '#232323' ? `background-color: ${fav.color};` : ''}
            width: {effectiveMode === 'list' ? '24px' : '44px'};
            height: {effectiveMode === 'list' ? '24px' : '44px'};
          "

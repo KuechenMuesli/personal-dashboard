@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@layer base {
+  .theme-test {
+    --color-neutral-800: red;
+  }
+}

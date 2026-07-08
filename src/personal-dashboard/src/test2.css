@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@layer base {
+  .theme-test {
+    --color-white: red;
+  }
+}

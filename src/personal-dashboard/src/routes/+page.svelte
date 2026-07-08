@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import type { StoredWidget } from '../types/stored-widget';
-  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X} from "lucide-svelte";
+  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette} from "lucide-svelte";
 
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 } },
@@ -28,7 +28,34 @@
   let resizingId = $state<string | null>(null);
   let isEditing = $state(false);
   let showPickerDialog = $state(false);
+  let showGlobalSettings = $state(false);
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
+  
+  const THEMES = [
+    { id: 'theme-default', name: 'Default Dark', colors: ['#121212', '#262626', '#3b82f6'] },
+    { id: 'theme-oled', name: 'OLED Black', colors: ['#000000', '#0a0a0a', '#38bdf8'] },
+    { id: 'theme-midnight', name: 'Midnight Blue', colors: ['#020617', '#0f172a', '#818cf8'] },
+    { id: 'theme-hacker', name: 'Hacker Green', colors: ['#050505', '#022c22', '#10b981'] },
+    { id: 'theme-sunset', name: 'Crimson Sunset', colors: ['#2a111a', '#3a1623', '#f43f5e'] },
+    { id: 'theme-light', name: 'Modern Light', colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
+    { id: 'theme-paper', name: 'Solarized Paper', colors: ['#fdf6e3', '#eee8d5', '#268bd2'] }
+  ];
+  let globalTheme = $state('theme-default');
+
+  onMount(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) dashboardLayout = JSON.parse(saved);
+    
+    const savedTheme = localStorage.getItem('dashboard-theme');
+    if (savedTheme) globalTheme = savedTheme;
+  });
+
+  $effect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.className = globalTheme;
+      localStorage.setItem('dashboard-theme', globalTheme);
+    }
+  });
 
   let containerWidth = $state(0);
   let columns = $derived(containerWidth < 640 ? 2 : 9);
@@ -466,6 +493,14 @@
 			</button>
 
 			<button
+					class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
+					onclick={() => debounceAction(() => showGlobalSettings = true)}
+					title="Global Settings"
+			>
+				<Palette size={20} />
+			</button>
+
+			<button
 					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
 					onclick={() => debounceAction(() => showPickerDialog = true)}
 			><Plus size={20} /></button>
@@ -501,5 +536,26 @@
 				<span class="pointer-events-none mt-3 text-sm font-medium text-center text-neutral-300">{config.name}</span>
 			</button>
 		{/each}
+	</div>
+</SettingsDialog>
+
+<SettingsDialog title="Global Settings" bind:show={showGlobalSettings}>
+	<div class="space-y-4">
+		<h4 class="text-xs font-bold uppercase tracking-widest text-neutral-500">Theme Settings</h4>
+		<div class="grid grid-cols-2 gap-3">
+			{#each THEMES as theme}
+				<button 
+					class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between h-[80px] {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}" 
+					onclick={() => globalTheme = theme.id}
+				>
+					<div class="font-bold text-sm text-slate-200">{theme.name}</div>
+					<div class="flex gap-1.5 mt-2 bg-black/20 p-1.5 rounded-lg w-fit border border-black/20">
+						{#each theme.colors as c}
+							<div class="w-4 h-4 rounded-full border border-black/40 shadow-sm" style="background-color: {c}"></div>
+						{/each}
+					</div>
+				</button>
+			{/each}
+		</div>
 	</div>
 </SettingsDialog>

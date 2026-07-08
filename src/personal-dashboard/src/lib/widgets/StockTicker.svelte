@@ -439,7 +439,7 @@
 	</div>
 </SettingsDialog>
 
-<dialog bind:this={detailDialog} class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0 bg-neutral-900 text-white rounded-xl shadow-2xl p-0 border border-black/40 outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm w-[95vw] max-w-5xl h-[80vh] overflow-hidden" onclose={() => showDetailDialog = false}>
+<dialog bind:this={detailDialog} class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0 bg-neutral-900 text-white rounded-xl shadow-2xl p-0 border border-black/40 outline-none backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm w-[95vw] max-w-5xl h-[80vh] overflow-hidden" onclose={() => showDetailDialog = false}>
 	{#if selectedStock}
 		<div class="flex flex-col w-full h-full">
 			<div class="flex justify-between items-center shrink-0 p-4 border-b border-black/40 bg-neutral-900">

@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { Plus, X, Search, ChevronUp, ChevronDown } from "lucide-svelte";
+  import { Plus, X, Search, ChevronUp, ChevronDown, GripVertical } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import WidgetTabs from "$lib/components/WidgetTabs.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import DraggableList from "$lib/components/DraggableList.svelte";
 
   let { id, isEditing, width, height, showSettings = $bindable(false) } = $props<{
     id: string; isEditing?: boolean; width?: number; height?: number; showSettings?: boolean;
@@ -50,6 +51,7 @@
 
   // Detail Modal
   let selectedStock = $state<StockData | null>(null);
+  let draggedIndex = $state<number | null>(null);
   let showDetailDialog = $state(false);
   let detailDialog: HTMLDialogElement;
   let tvContainer = $state<HTMLDivElement | null>(null);
@@ -261,13 +263,7 @@
     searchResults = [];
   }
 
-  function move(index: number, direction: 'up' | 'down') {
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= stocks.length) return;
-    const item = stocks[index];
-    stocks.splice(index, 1);
-    stocks.splice(newIndex, 0, item);
-  }
+  // move is replaced by drag and drop
 
   function formatCurrency(val: number, currency: string) {
     return new Intl.NumberFormat(navigator.language, {
@@ -408,16 +404,15 @@
 
 		<div class="space-y-2">
 			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Active Tickers</label>
-			<div class="flex max-h-[250px] flex-col gap-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
-				{#each stocks as stock, i}
-					<div class="flex items-center gap-2 bg-neutral-900 p-2 rounded-xl border border-black/40">
-						<div class="flex flex-col gap-1 shrink-0">
-							<button disabled={i === 0} onclick={() => move(i, 'up')} class="text-neutral-500 disabled:opacity-20 hover:text-blue-400 transition-colors">
-								<ChevronUp size={14} strokeWidth={2.5} />
-							</button>
-							<button disabled={i === stocks.length - 1} onclick={() => move(i, 'down')} class="text-neutral-500 disabled:opacity-20 hover:text-blue-400 transition-colors">
-								<ChevronDown size={14} strokeWidth={2.5} />
-							</button>
+			<DraggableList 
+				bind:items={stocks} 
+				handleClass="drag-handle"
+				listClass="flex max-h-[250px] flex-col gap-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+				itemClass="flex items-center gap-2 bg-neutral-900 p-2 rounded-xl border border-black/40"
+			>
+				{#snippet children(stock, i)}
+						<div class="drag-handle cursor-grab active:cursor-grabbing text-neutral-500 hover:text-white transition-colors shrink-0 px-1">
+							<GripVertical size={16} strokeWidth={2.5} />
 						</div>
 
 						<div class="flex flex-col min-w-0 flex-1 ml-1">
@@ -428,12 +423,11 @@
 						<button class="p-2 text-neutral-600 hover:text-red-500 transition-colors shrink-0 bg-black/20 rounded-lg" onclick={() => stocks.splice(i, 1)}>
 							<X size={16} strokeWidth={2.5} />
 						</button>
-					</div>
-				{/each}
+				{/snippet}
+			</DraggableList>
 				{#if stocks.length === 0}
 					<div class="text-[10px] text-neutral-500 italic text-center py-4">No tickers configured. Search above to add some.</div>
 				{/if}
-			</div>
 		</div>
 
 	</div>

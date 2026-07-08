@@ -454,8 +454,8 @@
 								isEditing={isEditing}
 								width={sw.width}
 								height={sw.height}
-								onDragStart={(e) => handleInternalDrag(e, sw.id)}
-								onResizeStart={(e) => handleInternalResize(e, sw.id)}
+								onDragStart={(e: any) => handleInternalDrag(e, sw.id)}
+								onResizeStart={(e: any) => handleInternalResize(e, sw.id)}
 								onAddNote={() => addWidget('note')}
 								onDelete={() => debounceAction(() => deleteWidget(sw.id))}
 								bind:showSettings={sw.showSettings}

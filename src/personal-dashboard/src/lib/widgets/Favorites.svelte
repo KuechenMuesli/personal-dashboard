@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { ChevronUp, ChevronDown, Plus, X } from "lucide-svelte";
+  import { ChevronUp, ChevronDown, Plus, X, GripVertical } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import WidgetTabs from "$lib/components/WidgetTabs.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import DraggableList from "$lib/components/DraggableList.svelte";
 
   let { id, isEditing, height, width, showSettings = $bindable(false) } = $props<{
     id: string;
@@ -26,6 +28,7 @@
   let favorites = $state<Favorite[]>([]);
   let displayMode = $state<"grid" | "list" | "auto">("auto");
   let failedImages = $state(new Set<string>());
+  let draggedIndex = $state<number | null>(null);
 
   const isAutoCompact = $derived(height === 1 || (favorites.length > width * 1.5 && width < 4));
   const effectiveMode = $derived(displayMode === "auto" ? (isAutoCompact ? "list" : "grid") : displayMode);
@@ -61,13 +64,7 @@
     failedImages.add(url);
   }
 
-  function move(index: number, direction: 'up' | 'down') {
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= favorites.length) return;
-    const item = favorites[index];
-    favorites.splice(index, 1);
-    favorites.splice(newIndex, 0, item);
-  }
+  // move is replaced by drag and drop
 </script>
 
 <WidgetCard bind:showSettings={showSettings} isConfigured={true} padding={false} transparent={true}>
@@ -141,30 +138,38 @@
 			</button>
 		</div>
 
-		<div class="flex max-h-[300px] flex-col gap-2 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
-			{#each favorites as fav, i}
-				<div class="flex items-center gap-2 bg-neutral-900 p-2 rounded-xl border border-black/40">
-
-					<div class="flex flex-col gap-1">
-						<button disabled={i === 0} onclick={() => move(i, 'up')} class="text-neutral-500 disabled:opacity-20 hover:text-blue-400 transition-colors">
-							<ChevronUp size={14} strokeWidth={2.5} />
-						</button>
-						<button disabled={i === favorites.length - 1} onclick={() => move(i, 'down')} class="text-neutral-500 disabled:opacity-20 hover:text-blue-400 transition-colors">
-							<ChevronDown size={14} strokeWidth={2.5} />
-						</button>
+		<DraggableList 
+			bind:items={favorites} 
+			handleClass="drag-handle"
+			listClass="flex max-h-[300px] flex-col gap-2 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent"
+			itemClass="flex items-center gap-2 bg-neutral-900 p-2 rounded-xl border border-black/40"
+		>
+			{#snippet children(fav, i)}
+					<div class="drag-handle cursor-grab active:cursor-grabbing text-neutral-500 hover:text-white transition-colors shrink-0 px-1">
+						<GripVertical size={16} strokeWidth={2.5} />
 					</div>
 
-					<input type="color" bind:value={fav.color} class="h-8 w-8 shrink-0 cursor-pointer rounded border border-black/40 bg-neutral-900" />
+					<div class="relative flex items-center shrink-0 group">
+						<input type="color" bind:value={fav.color} class="h-8 w-8 cursor-pointer rounded border border-black/40 bg-neutral-900" />
+						{#if fav.color !== '#232323'}
+							<button 
+								class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+								onclick={() => fav.color = '#232323'}
+								title="Reset color"
+							>
+								<X size={10} strokeWidth={3} />
+							</button>
+						{/if}
+					</div>
+
 					<input type="text" bind:value={fav.name} placeholder="Name" class="w-20 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
 					<input type="text" bind:value={fav.url} placeholder="https://..." class="flex-1 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
 
 					<button class="p-1 text-neutral-600 hover:text-red-500 transition-colors" onclick={() => favorites.splice(i, 1)}>
 						<X size={16} strokeWidth={2.5} />
 					</button>
-
-				</div>
-			{/each}
-		</div>
+			{/snippet}
+		</DraggableList>
 
 	</div>
 </SettingsDialog>

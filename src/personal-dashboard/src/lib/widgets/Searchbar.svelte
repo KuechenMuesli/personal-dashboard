@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import {Check, Plus, Search, X} from "lucide-svelte";
+  import {Check, Plus, Search, X, Trash2} from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
 
@@ -97,8 +97,12 @@
   let dropdownStyle = $state("");
   let copiedId = $state<string | null>(null);
 
-  const activeEngine = $derived.by(() => {
-    const trimmed = query.trim();
+  let webSuggestions = $state<string[]>([]);
+  let searchHistory = $state<string[]>([]);
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function getEngineForQuery(q: string) {
+    const trimmed = q.trim();
     const defaultEngine = engines.find(e => e.isDefault) || INITIAL_ENGINES[0];
     if (!trimmed) return defaultEngine;
 
@@ -110,7 +114,9 @@
       if (trimmed.includes(engine.key)) return engine;
     }
     return defaultEngine;
-  });
+  }
+
+  const activeEngine = $derived(getEngineForQuery(query));
 
   function formatNumber(num: number): string {
     if (Number.isInteger(num)) return num.toString();
@@ -216,7 +222,13 @@
 
   const suggestions = $derived.by<SuggestionItem[]>(() => {
     const trimmed = query.trim();
-    if (!trimmed || trimmed.startsWith('!')) return [];
+    
+    if (!trimmed) {
+      return searchHistory.slice(0, 6).map((h, i) => ({
+        id: `hist-recent-${i}`, title: h, subtitle: 'Recent Search', badge: 'HISTORY',
+        action: () => { handleSearch(h); }
+      }));
+    }
 
     const lower = trimmed.toLowerCase();
     const results: SuggestionItem[] = [];
@@ -246,15 +258,58 @@
       });
     }
 
+    const histRes = searchHistory
+      .filter(h => h.toLowerCase().includes(lower) && h !== trimmed)
+      .slice(0, 3)
+      .map((h, i) => ({
+        id: `hist-match-${i}`, title: h, subtitle: 'Search History', badge: 'HISTORY',
+        action: () => { handleSearch(h); }
+      }));
+    results.push(...histRes);
+
     const favs = allFavorites
       .filter(f => f.name.toLowerCase().includes(lower) || f.url.toLowerCase().includes(lower))
-      .slice(0, 5)
+      .slice(0, 3)
       .map((f, i) => ({
         id: `fav-${i}`, title: f.name, subtitle: f.url, badge: 'FAV',
         action: () => { window.location.href = f.url; }
       }));
 
-    return [...results, ...favs];
+    const webRes = webSuggestions
+      .filter(w => w.toLowerCase() !== lower && !searchHistory.some(h => h.toLowerCase() === w.toLowerCase()))
+      .slice(0, 4)
+      .map((w, i) => ({
+        id: `web-${i}`, title: w, subtitle: 'Suggestion', badge: 'WEB',
+        action: () => { handleSearch(w); }
+      }));
+
+    return [...results, ...favs, ...webRes].slice(0, 8);
+  });
+
+  $effect(() => {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.startsWith('!')) {
+      webSuggestions = [];
+      return;
+    }
+    
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      const callbackName = 'googleSuggestCb_' + Math.round(Math.random() * 1000000);
+      (window as any)[callbackName] = (data: any) => {
+         if (data && data[1]) {
+            webSuggestions = data[1].map((i: any) => typeof i === 'string' ? i : i[0] || i).slice(0, 5);
+         }
+         delete (window as any)[callbackName];
+         const script = document.getElementById(callbackName);
+         if (script) script.remove();
+      };
+      
+      const script = document.createElement('script');
+      script.id = callbackName;
+      script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(trimmed)}&jsonp=${callbackName}`;
+      document.body.appendChild(script);
+    }, 150);
   });
 
   $effect(() => { query; selectedIndex = -1; });
@@ -296,6 +351,7 @@
 
     window.addEventListener('keydown', handleGlobalKey);
     loadFavorites();
+    loadHistory();
     window.addEventListener('storage', loadFavorites);
 
     return () => {
@@ -320,6 +376,25 @@
     allFavorites = Array.from(unique.values());
   }
 
+  function loadHistory() {
+    try {
+      const hist = localStorage.getItem(`search-history-${id}`);
+      if (hist) searchHistory = JSON.parse(hist);
+    } catch(e) {}
+  }
+
+  function saveHistory(q: string) {
+    if (!q) return;
+    const filtered = searchHistory.filter(h => h !== q);
+    searchHistory = [q, ...filtered].slice(0, 15);
+    localStorage.setItem(`search-history-${id}`, JSON.stringify(searchHistory));
+  }
+
+  function clearHistory() {
+    searchHistory = [];
+    localStorage.removeItem(`search-history-${id}`);
+  }
+
   $effect(() => {
     if (!engines.length) {
       const saved = localStorage.getItem(`search-settings-${id}`);
@@ -337,20 +412,26 @@
     showSettings = false;
   }
 
-  function handleSearch() {
-    const trimmed = query.trim();
+  function handleSearch(overrideQuery?: string | Event) {
+    const q = typeof overrideQuery === 'string' ? overrideQuery : query;
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    
+    saveHistory(trimmed);
+    if (typeof overrideQuery === 'string') query = overrideQuery;
+
+    const engine = getEngineForQuery(trimmed);
     const isUrlExpression = /^(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/i;
 
-    if (activeEngine.isDefault && trimmed.match(isUrlExpression)) {
+    if (engine.isDefault && trimmed.match(isUrlExpression)) {
       const url = trimmed.match(/^https?:\/\//) ? trimmed : `https://${trimmed}`;
       window.location.href = encodeURI(url);
       return;
     }
-    if (!trimmed) return;
 
-    const targetUrl = activeEngine.isDefault
-      ? activeEngine.url.replace("{query}", encodeURIComponent(trimmed))
-      : activeEngine.url.replace("{query}", encodeURIComponent(trimmed.replace(activeEngine.key, "").trim()));
+    const targetUrl = engine.isDefault
+      ? engine.url.replace("{query}", encodeURIComponent(trimmed))
+      : engine.url.replace("{query}", encodeURIComponent(trimmed.replace(engine.key, "").trim()));
 
     if (targetUrl) window.location.href = targetUrl;
   }
@@ -451,7 +532,16 @@
 >
 	<div class="flex flex-col gap-4">
 
-		<div class="flex justify-end">
+		<div class="flex justify-between items-center">
+			<button
+					class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-red-400 hover:bg-red-500/20 transition-colors border border-transparent hover:border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+					onclick={clearHistory}
+					disabled={searchHistory.length === 0}
+					title="Clear Search History"
+			>
+				<Trash2 size={12} strokeWidth={2.5} /> Clear History
+			</button>
+
 			<button
 					class="flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-black/60 transition-colors border border-black/20"
 					onclick={() => engines.push({key: '!', name: 'New', url: ''})}

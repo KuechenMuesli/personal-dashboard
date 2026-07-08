@@ -4,6 +4,7 @@
   import { Clock, MapPin, FileText, Pencil, X } from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import WidgetTabs from "$lib/components/WidgetTabs.svelte";
 
   interface StoredCalendar {
     id: string;
@@ -263,18 +264,15 @@
 </script>
 
 {#snippet calendarHeader()}
-	<button
-			class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'today' ? 'bg-white/10 text-slate-200 shadow-sm' : 'text-neutral-500 hover:text-white'}"
-			onclick={() => { viewMode = 'today'; saveSettingsLocally(); expandedEventId = null; }}
-	>Today</button>
-	<button
-			class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'upcoming' ? 'bg-white/10 text-slate-200 shadow-sm' : 'text-neutral-500 hover:text-white'}"
-			onclick={() => { viewMode = 'upcoming'; saveSettingsLocally(); expandedEventId = null; }}
-	>Upcoming</button>
-	<button
-			class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {viewMode === 'grouped' ? 'bg-white/10 text-slate-200 shadow-sm' : 'text-neutral-500 hover:text-white'}"
-			onclick={() => { viewMode = 'grouped'; saveSettingsLocally(); expandedEventId = null; }}
-	>Grouped</button>
+	<WidgetTabs
+		options={[
+			{ value: 'today', label: 'Today' },
+			{ value: 'upcoming', label: 'Upcoming' },
+			{ value: 'grouped', label: 'Grouped' }
+		]}
+		bind:selected={viewMode as any}
+		onChange={() => { saveSettingsLocally(); expandedEventId = null; }}
+	/>
 {/snippet}
 
 {#snippet eventItem(event: CalendarEvent, dateLabel: string, showCalName: boolean)}

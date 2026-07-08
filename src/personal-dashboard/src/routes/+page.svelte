@@ -18,7 +18,7 @@
 		colorPicker:			{ name: "Color Picker", load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 } },
 		newtorkMetrics:   { name: "Network Metrics", load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 } ,},
 		calendar:					{ name: "Calendar", load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 } },
-
+		stockTicker:      { name: "Stocks", load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 } },
   }
 
   const STORAGE_KEY = "dashboard-layout";

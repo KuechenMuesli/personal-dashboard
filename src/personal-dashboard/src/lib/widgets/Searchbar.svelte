@@ -579,10 +579,32 @@
          const targetUrl = encodeURIComponent(`https://api.duckduckgo.com/?q=${encodeURIComponent(trimmed)}&format=json&kl=${lang}`);
          fetch(`/api/proxy?target=${targetUrl}`)
           .then(res => res.json())
-          .then(data => {
+          .then(async data => {
             let answerText = data.AbstractText;
-            if (!answerText && data.RelatedTopics && data.RelatedTopics.length > 0) {
-              answerText = data.RelatedTopics[0].Text;
+            
+            // If it's a disambiguation page (Type 'D') or we don't have text yet, try to fetch the first real topic
+            if (!answerText && data.Type === 'D' && data.RelatedTopics && data.RelatedTopics.length > 0) {
+               const firstTopic = data.RelatedTopics[0];
+               const match = firstTopic.FirstURL?.match(/duckduckgo\.com\/([^?]+)/);
+               if (match && match[1]) {
+                  const newQuery = decodeURIComponent(match[1].replace(/_/g, ' '));
+                  try {
+                    const tUrl = encodeURIComponent(`https://api.duckduckgo.com/?q=${encodeURIComponent(newQuery)}&format=json&kl=${lang}`);
+                    const res2 = await fetch(`/api/proxy?target=${tUrl}`);
+                    const data2 = await res2.json();
+                    if (data2.AbstractText) {
+                       answerText = data2.AbstractText;
+                    } else {
+                       answerText = firstTopic.Text;
+                    }
+                  } catch(e) {
+                    answerText = firstTopic.Text;
+                  }
+               } else {
+                  answerText = firstTopic.Text;
+               }
+            } else if (!answerText && data.RelatedTopics && data.RelatedTopics.length > 0) {
+               answerText = data.RelatedTopics[0].Text;
             }
             if (answerText) {
               // DuckDuckGo facts can be slightly long; we make them expandable

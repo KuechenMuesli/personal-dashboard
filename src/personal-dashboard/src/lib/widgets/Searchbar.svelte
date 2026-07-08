@@ -576,7 +576,8 @@
       } else if (!weatherMatch && !timeMatch && trimmed !== lastSmartQuery && trimmed.length > 3) {
          lastSmartQuery = trimmed;
          const lang = navigator.language.toLowerCase();
-         fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(trimmed)}&format=json&kl=${lang}`)
+         const targetUrl = encodeURIComponent(`https://api.duckduckgo.com/?q=${encodeURIComponent(trimmed)}&format=json&kl=${lang}`);
+         fetch(`https://dashboard-proxy.paul-simon.dev/?target=${targetUrl}`)
           .then(res => res.json())
           .then(data => {
             let answerText = data.AbstractText;
@@ -793,7 +794,7 @@
 					onclick={() => item.action()}
 			>
 				<div class="flex min-w-0 flex-col pr-2">
-      <span class="whitespace-pre-wrap flex items-start break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
+      <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
         {#if item.icon}
           <svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />
         {/if}

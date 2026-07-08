@@ -379,7 +379,7 @@
 							bind:value={searchQuery}
 							oninput={handleSearchInput}
 							placeholder="Search AAPL, BTC-USD..."
-							class="w-full bg-transparent text-sm text-white outline-none placeholder:text-neutral-600"
+							class="w-full bg-transparent text-sm text-white outline-none placeholder:text-neutral-600 border-none focus:ring-0 p-0"
 					/>
 					{#if isSearching}
 						<div class="w-3 h-3 rounded-full border-2 border-neutral-500 border-t-transparent animate-spin"></div>

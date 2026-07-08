@@ -26,6 +26,8 @@
     subtitle: string;
     badge: string;
     action: () => void;
+    expandable?: boolean;
+    onDelete?: () => void;
   }
 
   const INITIAL_ENGINES: Engine[] = [
@@ -99,6 +101,9 @@
 
   let webSuggestions = $state<string[]>([]);
   let searchHistory = $state<string[]>([]);
+  let smartAnswer = $state<SuggestionItem | null>(null);
+  let lastSmartQuery = $state("");
+  let expandedItemId = $state<string | null>(null);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
   function getEngineForQuery(q: string) {
@@ -226,12 +231,20 @@
     if (!trimmed) {
       return searchHistory.slice(0, 6).map((h, i) => ({
         id: `hist-recent-${i}`, title: h, subtitle: 'Recent Search', badge: 'HISTORY',
-        action: () => { handleSearch(h); }
+        action: () => { handleSearch(h); },
+        onDelete: () => {
+          searchHistory = searchHistory.filter(item => item !== h);
+          localStorage.setItem(`search-history-${id}`, JSON.stringify(searchHistory));
+        }
       }));
     }
 
     const lower = trimmed.toLowerCase();
     const results: SuggestionItem[] = [];
+
+    if (smartAnswer) {
+      results.push(smartAnswer);
+    }
 
     const mathRes = evaluateMath(trimmed);
     if (mathRes !== null) {
@@ -263,7 +276,11 @@
       .slice(0, 3)
       .map((h, i) => ({
         id: `hist-match-${i}`, title: h, subtitle: 'Search History', badge: 'HISTORY',
-        action: () => { handleSearch(h); }
+        action: () => { handleSearch(h); },
+        onDelete: () => {
+          searchHistory = searchHistory.filter(item => item !== h);
+          localStorage.setItem(`search-history-${id}`, JSON.stringify(searchHistory));
+        }
       }));
     results.push(...histRes);
 
@@ -283,18 +300,22 @@
         action: () => { handleSearch(w); }
       }));
 
-    return [...results, ...favs, ...webRes].slice(0, 8);
+    return [...favs, ...results, ...webRes].slice(0, 8);
   });
 
   $effect(() => {
     const trimmed = query.trim();
     if (!trimmed || trimmed.startsWith('!')) {
       webSuggestions = [];
+      smartAnswer = null;
+      lastSmartQuery = "";
+      expandedItemId = null;
       return;
     }
     
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
+      // 1. Google Web Suggestions
       const callbackName = 'googleSuggestCb_' + Math.round(Math.random() * 1000000);
       (window as any)[callbackName] = (data: any) => {
          if (data && data[1]) {
@@ -309,7 +330,98 @@
       script.id = callbackName;
       script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(trimmed)}&jsonp=${callbackName}`;
       document.body.appendChild(script);
-    }, 150);
+
+      // 2. Smart Answers (Weather / Time / DuckDuckGo)
+      const weatherMatch = trimmed.match(/^(?:(?:wetter|weather)\s+(?:in\s+)?(.+))|(?:(.+)\s+(?:wetter|weather))$/i);
+      const timeMatch = trimmed.match(/^(?:(?:uhrzeit|time|wie sp[aä]t|how late)\s+(?:ist es\s+)?(?:in\s+)?(.+))|(?:(.+)\s+(?:uhrzeit|time))$/i);
+
+      const weatherLoc = weatherMatch ? (weatherMatch[1] || weatherMatch[2]) : null;
+      const timeLoc = timeMatch ? (timeMatch[1] || timeMatch[2]) : null;
+
+      if (weatherLoc && weatherLoc !== lastSmartQuery) {
+        lastSmartQuery = weatherLoc;
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherLoc)}&count=1&language=de`)
+          .then(res => res.json())
+          .then(geoData => {
+             const geo = geoData.results?.[0];
+             if (geo) {
+               return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current=temperature_2m,weather_code,is_day&timezone=${encodeURIComponent(geo.timezone || 'auto')}`)
+                 .then(res => res.json())
+                 .then(data => {
+                    if (data.current) {
+                      const c = data.current;
+                      const getWmoEmoji = (code: number, isDay: number) => {
+                         if (code === 0) return isDay ? '☀️' : '🌙';
+                         if (code === 1 || code === 2) return isDay ? '⛅' : '☁️';
+                         if (code === 3) return '☁️';
+                         if ([45, 48].includes(code)) return '🌫️';
+                         if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+                         if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
+                         if ([95, 96, 99].includes(code)) return '⛈️';
+                         return '🌡️';
+                      };
+                      const emoji = getWmoEmoji(c.weather_code, c.is_day);
+                      const temp = Math.round(c.temperature_2m);
+                      const sign = temp > 0 ? '+' : '';
+                      const answer = `${geo.name}: ${emoji} ${sign}${temp}°C`;
+                      smartAnswer = {
+                        id: 'smart-weather', title: answer, subtitle: 'Copy to clipboard', badge: 'WEATHER',
+                        action: async () => {
+                          await navigator.clipboard.writeText(answer);
+                          copiedId = 'smart-weather';
+                          setTimeout(() => copiedId = null, 1500);
+                        }
+                      };
+                    } else smartAnswer = null;
+                 });
+             } else smartAnswer = null;
+          }).catch(() => smartAnswer = null);
+      } else if (timeLoc && timeLoc !== lastSmartQuery) {
+        lastSmartQuery = timeLoc;
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(timeLoc)}&count=1&language=de`)
+          .then(res => res.json())
+          .then(geoData => {
+             const geo = geoData.results?.[0];
+             if (geo && geo.timezone) {
+               try {
+                 const timeStr = new Date().toLocaleTimeString("de-DE", { timeZone: geo.timezone, timeStyle: "short" });
+                 const answer = `${geo.name}: ${timeStr} Uhr`;
+                 smartAnswer = {
+                   id: 'smart-time', title: answer, subtitle: 'Copy to clipboard', badge: 'TIME',
+                   action: async () => {
+                     await navigator.clipboard.writeText(answer);
+                     copiedId = 'smart-time';
+                     setTimeout(() => copiedId = null, 1500);
+                   }
+                 };
+               } catch(e) { smartAnswer = null; }
+             } else smartAnswer = null;
+          }).catch(() => smartAnswer = null);
+      } else if (!weatherMatch && !timeMatch && trimmed !== lastSmartQuery && trimmed.length > 3) {
+         lastSmartQuery = trimmed;
+         const lang = navigator.language.toLowerCase();
+         fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(trimmed)}&format=json&kl=${lang}`)
+          .then(res => res.json())
+          .then(data => {
+            let answerText = data.AbstractText;
+            if (!answerText && data.RelatedTopics && data.RelatedTopics.length > 0) {
+              answerText = data.RelatedTopics[0].Text;
+            }
+            if (answerText) {
+              // DuckDuckGo facts can be slightly long; we make them expandable
+              smartAnswer = {
+                 id: 'smart-fact', title: answerText, subtitle: 'Fact via DuckDuckGo', badge: 'FACT',
+                 expandable: true,
+                 action: () => {
+                   expandedItemId = expandedItemId === 'smart-fact' ? null : 'smart-fact';
+                 }
+               };
+            } else {
+              smartAnswer = null;
+            }
+          }).catch(() => smartAnswer = null);
+      }
+    }, 250);
   });
 
   $effect(() => { query; selectedIndex = -1; });
@@ -500,23 +612,38 @@
 	>
 		{#each suggestions as item, i}
 			<button
-					class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors {i === selectedIndex ? 'bg-black/40' : 'hover:bg-black/20'}"
+					onmousedown={(e) => e.preventDefault()}
+					class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors group {i === selectedIndex ? 'bg-black/40' : 'hover:bg-black/20'}"
 					onclick={() => item.action()}
 			>
 				<div class="flex min-w-0 flex-col pr-2">
-      <span class="truncate text-[12px] font-semibold {i === selectedIndex ? 'text-white' : 'text-slate-300'}">
+      <span class="break-words text-[12px] font-semibold leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? 'line-clamp-3' : ''}">
         {item.title}
       </span>
 					<span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : (item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-500')}">
         {#if copiedId === item.id}
           <Check size={10} strokeWidth={3} /> Copied!
+        {:else if item.expandable}
+          {expandedItemId === item.id ? 'Click to collapse' : 'Click to read more'}
         {:else}
           {item.subtitle}
         {/if}
       </span>
 				</div>
-				<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-400'}">
-					{item.badge}
+				<div class="flex items-center gap-2">
+					<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {item.badge === 'FAV' ? 'text-neutral-500' : 'text-emerald-400'}">
+						{item.badge}
+					</div>
+					{#if item.onDelete}
+						<button 
+							onmousedown={(e) => e.preventDefault()} 
+							onclick={(e) => { e.stopPropagation(); item.onDelete!(); }} 
+							class="text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+							aria-label="Delete from history"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+						</button>
+					{/if}
 				</div>
 			</button>
 		{/each}

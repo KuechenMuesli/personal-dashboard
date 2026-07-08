@@ -794,12 +794,7 @@
 					onclick={() => item.action()}
 			>
 				<div class="flex min-w-0 flex-col pr-2">
-      <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
-        {#if item.icon}
-          <svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />
-        {/if}
-        <span>{item.title}</span>
-      </span>
+      <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">{#if item.icon}<svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />{/if}<span>{item.title}</span></span>
         {#if item.description && expandedItemId === item.id}
           <div class="text-[12px] font-normal mt-1.5 opacity-80 whitespace-pre-wrap">{item.description}</div>
         {/if}

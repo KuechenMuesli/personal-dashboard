@@ -442,7 +442,13 @@
 	</div>
 {/if}
 
-<SettingsDialog title="Search Shortcuts" bind:show={showSettings} onSave={saveSettings}>
+<SettingsDialog 
+	title="Search Shortcuts" 
+	bind:show={showSettings} 
+	data={[engines]} 
+	onRevert={(r: any) => { engines = r[0]; }} 
+	onSave={saveSettings}
+>
 	<div class="flex flex-col gap-4">
 
 		<div class="flex justify-end">

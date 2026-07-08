@@ -199,7 +199,13 @@
 	</div>
 </WidgetCard>
 
-<SettingsDialog title="Reminders Settings" bind:show={showSettings} onSave={saveSettings}>
+<SettingsDialog 
+	title="Reminders Settings" 
+	bind:show={showSettings} 
+	data={[webhookUrl]} 
+	onRevert={(r: any) => { webhookUrl = r[0]; }} 
+	onSave={saveSettings}
+>
 	<div class="space-y-4">
 		<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="webhook-url">Webhook URL</label>
 		<input id="webhook-url" type="url" bind:value={webhookUrl} placeholder="https://trmnl.com/api/..." class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-xs font-mono text-white outline-none focus:border-blue-500" />

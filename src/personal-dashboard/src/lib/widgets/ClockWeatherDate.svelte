@@ -183,7 +183,13 @@
 	</div>
 </WidgetCard>
 
-<SettingsDialog title="General Info Settings" bind:show={showSettings} onSave={saveSettings}>
+<SettingsDialog 
+	title="General Info Settings" 
+	bind:show={showSettings} 
+	data={[city, showClock, showDate, showWeather, hour12]} 
+	onRevert={(r: any) => { city = r[0]; showClock = r[1]; showDate = r[2]; showWeather = r[3]; hour12 = r[4]; }} 
+	onSave={saveSettings}
+>
 	<div class="space-y-4">
 		<div class="space-y-1.5">
 			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="city">City</label>

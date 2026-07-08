@@ -288,9 +288,11 @@
 </WidgetCard>
 
 <SettingsDialog
-		title="Parcel Settings"
-		bind:show={showSettings}
-		onSave={saveSettings}
+	title="17TRACK Settings"
+	bind:show={showSettings}
+	data={[apiKey]}
+	onRevert={(r: any) => { apiKey = r[0]; }}
+	onSave={saveSettings}
 >
 	<div class="space-y-4">
 		<div class="space-y-2">

@@ -115,7 +115,13 @@
 	</div>
 </WidgetCard>
 
-<SettingsDialog title="Edit Favorites" bind:show={showSettings} onSave={saveSettings}>
+<SettingsDialog 
+	title="Edit Favorites" 
+	bind:show={showSettings} 
+	data={[favorites, displayMode]} 
+	onRevert={(r: any) => { favorites = r[0]; displayMode = r[1]; }} 
+	onSave={saveSettings}
+>
 	<div class="flex flex-col gap-5">
 
 		<div class="flex items-center justify-between">

@@ -72,7 +72,13 @@
 	</div>
 </WidgetCard>
 
-<SettingsDialog title="Webview Settings" bind:show={showSettings} onSave={saveSettings}>
+<SettingsDialog 
+	title="Webview Settings" 
+	bind:show={showSettings} 
+	data={[url, title]} 
+	onRevert={(r: any) => { url = r[0]; title = r[1]; }} 
+	onSave={saveSettings}
+>
 	<div class="space-y-4">
 		<div class="space-y-1.5">
 			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="wv-title">Widget Label</label>

@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { slide } from "svelte/transition";
-  import { Clock, MapPin, FileText, Pencil, X } from "lucide-svelte";
+  import { Clock, MapPin, FileText, Pencil, X, GripVertical } from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import WidgetTabs from "$lib/components/WidgetTabs.svelte";
+  import DraggableList from "$lib/components/DraggableList.svelte";
 
   interface StoredCalendar {
     id: string;
@@ -407,6 +408,8 @@
 <SettingsDialog
 		title="Calendar Settings"
 		bind:show={showSettings}
+		data={[storedConfigs, viewMode] as any}
+		onRevert={(restored) => { storedConfigs = restored[0]; viewMode = restored[1]; }}
 		onSave={saveAndCloseSettings}
 >
 	<div class="space-y-6">
@@ -416,12 +419,19 @@
 			{#if storedConfigs.length === 0}
 				<div class="text-sm text-neutral-600 italic rounded-lg border border-black/40 border-dashed p-4 text-center">No calendars added yet.</div>
 			{:else}
-				<div class="flex flex-col gap-2">
-					{#each storedConfigs as config}
-						<div class="flex items-center justify-between gap-3 rounded-lg bg-neutral-900 p-2.5 border border-black/40 {editingCalId === config.id ? 'ring-1 ring-blue-500' : ''}">
+				<DraggableList 
+					bind:items={storedConfigs} 
+					handleClass="drag-handle"
+					listClass="flex flex-col gap-2"
+					itemClass="flex items-center justify-between gap-3 rounded-lg bg-neutral-900 p-2.5 border border-black/40"
+				>
+					{#snippet children(config, i)}
 							<div class="flex items-center gap-2 overflow-hidden">
+								<div class="drag-handle cursor-grab active:cursor-grabbing text-neutral-500 hover:text-white transition-colors shrink-0 px-1">
+									<GripVertical size={16} strokeWidth={2.5} />
+								</div>
 								<div class="w-3 h-3 rounded-full shrink-0" style="background-color: {config.color}"></div>
-								<span class="font-medium text-sm truncate text-slate-200">{config.name}</span>
+								<span class="font-medium text-sm truncate text-slate-200 {editingCalId === config.id ? 'text-blue-400' : ''}">{config.name}</span>
 							</div>
 							<div class="flex items-center gap-1">
 								<button
@@ -439,9 +449,8 @@
 									<X size={12} strokeWidth={2.5} />
 								</button>
 							</div>
-						</div>
-					{/each}
-				</div>
+					{/snippet}
+				</DraggableList>
 			{/if}
 		</div>
 

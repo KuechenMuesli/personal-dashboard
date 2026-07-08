@@ -206,7 +206,13 @@
 	</div>
 </WidgetCard>
 
-<SettingsDialog title="TRMNL Sync" bind:show={showSettings} onSave={saveSettings}>
+<SettingsDialog 
+	title="TRMNL Sync" 
+	bind:show={showSettings} 
+	data={[accessToken, userApiKey, deviceId]} 
+	onRevert={(r: any) => { accessToken = r[0]; userApiKey = r[1]; deviceId = r[2]; }} 
+	onSave={saveSettings}
+>
 	<div class="space-y-4">
 		<div class="space-y-1.5">
 			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="trmnl-token">Device Access Token</label>

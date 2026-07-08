@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import type { StoredWidget } from '../types/stored-widget';
   import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X} from "lucide-svelte";
 
@@ -22,11 +23,11 @@
 
   const STORAGE_KEY = "dashboard-layout";
 
-  let dashboardLayout = $state<(StoredWidget & { showSettings?: boolean })[]>([]);
+  let dashboardLayout = $state<(StoredWidget & { showSettings: boolean })[]>([]);
   let draggingId = $state<string | null>(null);
   let resizingId = $state<string | null>(null);
   let isEditing = $state(false);
-  let pickerDialog: HTMLDialogElement;
+  let showPickerDialog = $state(false);
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
 
   let containerWidth = $state(0);
@@ -77,7 +78,7 @@
   $effect(() => {
     if (containerWidth > 0 && containerWidth < 640 && isEditing) {
       isEditing = false;
-      if (pickerDialog?.open) pickerDialog.close();
+      showPickerDialog = false;
     }
   });
 
@@ -169,7 +170,7 @@
 
     dashboardLayout.push(newWidget);
     save();
-    if (pickerDialog?.open) pickerDialog.close();
+    showPickerDialog = false;
   }
 
   function deleteWidget(id: string) {
@@ -219,13 +220,6 @@
     window.addEventListener('touchend', stopInteraction);
   }
 
-  function handleInternalDrag(e: MouseEvent | TouchEvent, id: string) {
-    startInteraction(e, id, 'drag');
-  }
-
-  function handleInternalResize(e: MouseEvent | TouchEvent, id: string) {
-    startInteraction(e, id, 'resize');
-  }
 
   function handleMove(e: MouseEvent | TouchEvent) {
     const container = document.getElementById('grid-container');
@@ -279,12 +273,23 @@
         save();
       }
     }
+    if (draggingId) {
+      dashboardLayout = dashboardLayout.map(w => ({...w, tempX: undefined, tempY: undefined}));
+    }
     draggingId = null;
     resizingId = null;
     window.removeEventListener('mousemove', handleMove);
     window.removeEventListener('mouseup', stopInteraction);
     window.removeEventListener('touchmove', handleMove);
     window.removeEventListener('touchend', stopInteraction);
+  }
+
+  function handleInternalDrag(e: MouseEvent | TouchEvent, id: string) {
+    startInteraction(e, id, 'drag');
+  }
+
+  function handleInternalResize(e: MouseEvent | TouchEvent, id: string) {
+    startInteraction(e, id, 'resize');
   }
 
   function debounceAction(fn: () => void) {
@@ -416,6 +421,7 @@
 				<div class="h-full w-full overflow-hidden">
 					{#await widgetDef.load() then module}
 						{@const Widget = module.default}
+						<!-- @ts-ignore: Dynamic widget prop injection mismatch -->
 						<Widget
 								id={sw.id}
 								isEditing={isEditing}
@@ -461,7 +467,7 @@
 
 			<button
 					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
-					onclick={() => debounceAction(() => pickerDialog.showModal())}
+					onclick={() => debounceAction(() => showPickerDialog = true)}
 			><Plus size={20} /></button>
 		{/if}
 
@@ -479,36 +485,21 @@
 	</div>
 {/if}
 
-<dialog
-		bind:this={pickerDialog}
-		class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-800 bg-neutral-900 p-0 text-white shadow-2xl outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm"
->
-	<div class="flex flex-col gap-4 p-6">
-		<header class="flex items-center justify-between">
-			<h3 class="text-xl font-semibold">Add Widget</h3>
+<SettingsDialog title="Add Widget" bind:show={showPickerDialog}>
+	<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
+		{#each Object.entries(widgets) as [type, config]}
 			<button
-					class="text-3xl text-neutral-500 hover:text-white px-2"
-					onclick={() => debounceAction(() => pickerDialog.close())}
+					class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all active:border-blue-500 active:bg-neutral-800 hover:border-blue-500"
+					onclick={() => debounceAction(() => addWidget(type))}
 			>
-				&times;
+				<div class="pointer-events-none flex flex-1 items-center justify-center w-full">
+					<div
+							class="rounded-md border-2 border-blue-500/50 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
+							style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
+					></div>
+				</div>
+				<span class="pointer-events-none mt-3 text-sm font-medium text-center text-neutral-300">{config.name}</span>
 			</button>
-		</header>
-
-		<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
-			{#each Object.entries(widgets) as [type, config]}
-				<button
-						class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all active:border-blue-500 active:bg-neutral-800 hover:border-blue-500"
-						onclick={() => debounceAction(() => addWidget(type))}
-				>
-					<div class="pointer-events-none flex flex-1 items-center justify-center w-full">
-						<div
-								class="rounded-md border-2 border-blue-500/50 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
-								style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
-						></div>
-					</div>
-					<span class="pointer-events-none mt-3 text-sm font-medium text-center text-neutral-300">{config.name}</span>
-				</button>
-			{/each}
-		</div>
+		{/each}
 	</div>
-</dialog>
+</SettingsDialog>

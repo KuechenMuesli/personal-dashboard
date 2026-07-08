@@ -87,7 +87,8 @@
   let query = $state("");
   let engines = $state<Engine[]>([]);
   let allFavorites = $state<Favorite[]>([]);
-  let dialogEl: HTMLDialogElement;
+  let dialogEl = $state<HTMLDialogElement | null>(null);
+
   let searchInput = $state<HTMLInputElement | null>(null);
   let wrapperEl = $state<HTMLDivElement | null>(null);
 
@@ -281,10 +282,11 @@
     }
   });
 
-  onMount(async () => {
-    await tick();
-    const firstSearch = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
-    if (firstSearch) firstSearch.focus();
+  onMount(() => {
+    tick().then(() => {
+      const firstSearch = document.querySelector('input[placeholder="Search..."]') as HTMLInputElement;
+      if (firstSearch) firstSearch.focus();
+    });
 
     const handleGlobalKey = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') ||

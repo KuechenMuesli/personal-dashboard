@@ -3,13 +3,17 @@
   import { Plus, X, GripHorizontal, PenLine, Eye } from 'lucide-svelte';
   import WidgetCard from '$lib/components/WidgetCard.svelte';
 
-  let { id, isEditing, onAddNote, onDelete, onDragStart, onResizeStart } = $props<{
+  let { id, isEditing, onAddNote, onDelete, onDragStart, onResizeStart, width, height, showSettings, hidden } = $props<{
     id: string,
-    isEditing: boolean,
+    isEditing?: boolean,
     onAddNote?: () => void,
     onDelete?: () => void,
     onDragStart?: (e: MouseEvent | TouchEvent) => void,
-    onResizeStart?: (e: MouseEvent | TouchEvent) => void
+    onResizeStart?: (e: MouseEvent | TouchEvent) => void,
+    width?: number,
+    height?: number,
+    showSettings?: boolean,
+    hidden?: boolean
   }>();
 
   let content = $state("");
@@ -124,7 +128,6 @@
 				<X size={14} strokeWidth={2.5} />
 			</button>
 		</div>
-
 		<div class="relative flex-grow overflow-hidden">
 			{#if isMarkdownMode}
 				<div class="prose prose-invert h-full w-full overflow-auto p-3.5 text-[13px] leading-relaxed text-slate-200
@@ -149,7 +152,6 @@
 					class="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize touch-none bg-gradient-to-br from-transparent from-50% to-black/30 to-50% transition-colors hover:to-black/50"
 			></div>
 		</div>
-
 	</div>
 </WidgetCard>
 

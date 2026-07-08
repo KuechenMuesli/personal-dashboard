@@ -577,7 +577,7 @@
          lastSmartQuery = trimmed;
          const lang = navigator.language.toLowerCase();
          const targetUrl = encodeURIComponent(`https://api.duckduckgo.com/?q=${encodeURIComponent(trimmed)}&format=json&kl=${lang}`);
-         fetch(`https://dashboard-proxy.paul-simon.dev/?target=${targetUrl}`)
+         fetch(`/api/proxy?target=${targetUrl}`)
           .then(res => res.json())
           .then(data => {
             let answerText = data.AbstractText;

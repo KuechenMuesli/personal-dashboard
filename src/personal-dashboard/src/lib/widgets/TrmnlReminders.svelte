@@ -9,7 +9,7 @@
     id: string; isEditing: boolean; height: number; width: number; showSettings: boolean;
   }>();
 
-  const PROXY_URL = "https://dashboard-proxy.paul-simon.dev/";
+  const PROXY_URL = "/api/proxy";
   const COOLDOWN_MS = 10 * 60 * 1000;
 
   interface ReminderData {

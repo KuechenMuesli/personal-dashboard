@@ -58,7 +58,7 @@
   let newCalName = $state("");
   let newCalColor = $state("#3b82f6");
 
-  const PROXY_URL = "https://dashboard-proxy.paul-simon.dev/";
+  const PROXY_URL = "/api/proxy";
 
   const isHeight1 = $derived(height === 1);
   const isLarge = $derived(height >= 3);

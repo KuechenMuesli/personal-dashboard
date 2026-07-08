@@ -26,7 +26,7 @@
     error?: boolean;
   }
 
-  const PROXY_URL = "https://dashboard-proxy.paul-simon.dev/?target=";
+  const PROXY_URL = "/api/proxy?target=";
   const UPDATE_INTERVAL = 5 * 60 * 1000;
 
   let stocks = $state<StockConfig[]>([

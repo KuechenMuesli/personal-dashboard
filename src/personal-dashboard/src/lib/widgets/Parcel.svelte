@@ -18,7 +18,7 @@
     hidden: boolean;
   }>();
 
-  const PROXY_URL = "https://dashboard-proxy.paul-simon.dev/";
+  const PROXY_URL = "/api/proxy";
   const TARGET_API_BASE = "https://api.parcel.app/external";
   const COOLDOWN_MS = 5 * 60 * 1000;
 

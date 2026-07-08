@@ -29,6 +29,8 @@
     expandable?: boolean;
     description?: string;
     icon?: any;
+    url?: string;
+    sourceName?: string;
     onDelete?: () => void;
   }
 
@@ -581,6 +583,8 @@
           .then(res => res.json())
           .then(async data => {
             let answerText = data.AbstractText;
+            let sourceUrl = data.AbstractURL;
+            let sourceName = data.AbstractSource || 'DuckDuckGo';
             
             // If it's a disambiguation page (Type 'D') or we don't have text yet, try to fetch the first real topic
             if (!answerText && data.Type === 'D' && data.RelatedTopics && data.RelatedTopics.length > 0) {
@@ -594,23 +598,48 @@
                     const data2 = await res2.json();
                     if (data2.AbstractText) {
                        answerText = data2.AbstractText;
+                       sourceUrl = data2.AbstractURL || firstTopic.FirstURL;
+                       sourceName = data2.AbstractSource || 'Wikipedia';
                     } else {
-                       answerText = firstTopic.Text;
+                       const wikiLang = lang.split('-')[0] || 'de';
+                       const wikiUrl = encodeURIComponent(`https://${wikiLang}.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=1&explaintext=1&redirects=1&titles=${encodeURIComponent(newQuery)}`);
+                       const wikiRes = await fetch(`/api/proxy?target=${wikiUrl}`);
+                       const wikiData = await wikiRes.json();
+                       const pages = wikiData.query?.pages;
+                       if (pages) {
+                         const pageId = Object.keys(pages)[0];
+                         if (pageId && pageId !== "-1" && pages[pageId].extract) {
+                            answerText = pages[pageId].extract;
+                            sourceUrl = `https://${wikiLang}.wikipedia.org/wiki/${encodeURIComponent(newQuery)}`;
+                            sourceName = 'Wikipedia';
+                         } else {
+                            answerText = firstTopic.Text;
+                            sourceUrl = firstTopic.FirstURL;
+                         }
+                       } else {
+                         answerText = firstTopic.Text;
+                         sourceUrl = firstTopic.FirstURL;
+                       }
                     }
                   } catch(e) {
                     answerText = firstTopic.Text;
+                    sourceUrl = firstTopic.FirstURL;
                   }
                } else {
                   answerText = firstTopic.Text;
+                  sourceUrl = firstTopic.FirstURL;
                }
             } else if (!answerText && data.RelatedTopics && data.RelatedTopics.length > 0) {
                answerText = data.RelatedTopics[0].Text;
+               sourceUrl = data.RelatedTopics[0].FirstURL;
             }
             if (answerText) {
               // DuckDuckGo facts can be slightly long; we make them expandable
               smartAnswer = {
-                 id: 'smart-fact', title: answerText, subtitle: 'Fact via DuckDuckGo', badge: 'FACT',
+                 id: 'smart-fact', title: answerText, subtitle: `Mehr auf ${sourceName} lesen`, badge: 'FACT',
                  expandable: true,
+                 url: sourceUrl,
+                 sourceName: sourceName,
                  action: () => {
                    expandedItemId = expandedItemId === 'smart-fact' ? null : 'smart-fact';
                  }
@@ -818,13 +847,33 @@
 				<div class="flex min-w-0 flex-col pr-2">
       <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">{#if item.icon}<svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />{/if}<span>{item.title}</span></span>
         {#if item.description && expandedItemId === item.id}
-          <div class="text-[12px] font-normal mt-1.5 opacity-80 whitespace-pre-wrap">{item.description}</div>
+          <div class="text-[12px] font-normal mt-1.5 opacity-80 whitespace-pre-wrap">
+             {item.description}
+          </div>
         {/if}
 					<span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : getBadgeColor(item.badge)}">
         {#if copiedId === item.id}
           <Check size={10} strokeWidth={3} /> Copied!
         {:else}
-          {item.subtitle}
+          {#if item.badge === 'FACT'}
+            <Search size={10} strokeWidth={3} />
+          {:else if item.badge === 'HISTORY'}
+            <Search size={10} strokeWidth={3} />
+          {:else if item.badge === 'CALENDAR'}
+            <Search size={10} strokeWidth={3} />
+          {:else if item.badge === 'WEATHER'}
+            <Sun size={10} strokeWidth={3} />
+          {/if}
+          {#if item.url}
+             <a href={item.url} target="_blank" rel="noopener noreferrer" 
+                onmousedown={(e) => e.stopPropagation()} 
+                onclick={(e) => e.stopPropagation()} 
+                class="hover:underline hover:text-blue-300 transition-colors z-10 relative">
+               {item.subtitle} ↗
+             </a>
+          {:else}
+             {item.subtitle}
+          {/if}
           {#if item.expandable}
             <span class="opacity-50 mx-1">•</span>
             {expandedItemId === item.id ? 'Click to collapse' : 'Click to read more'}

@@ -12,6 +12,8 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
         "https://api.parcel.app/external", // For Parcel (GET & POST)
         "https://api.17track.net/", // For Parcel fallback
         "https://usetrmnl.com/api/", // For TRMNL
+        "https://de.wikipedia.org/w/api.php", // For DuckDuckGo fallback
+        "https://en.wikipedia.org/w/api.php",
     ];
 
     let isAllowed = false;

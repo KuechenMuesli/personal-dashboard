@@ -381,7 +381,7 @@
 <WidgetCard bind:showSettings={showSettings} isConfigured={true} padding={false} transparent={true}>
 	<div class="flex h-full w-full items-center px-2 sm:px-3 font-sans">
 		<div bind:this={wrapperEl} class="relative w-full">
-			<div class="flex h-10 w-full overflow-hidden rounded-xl border border-neutral-600 bg-[#1c1c1c] shadow-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 transition-all">
+			<div class="flex h-10 w-full overflow-hidden rounded-xl border border-neutral-600 bg-neutral-900 shadow-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 transition-all">
 
 				<div class="flex items-center pl-3 pr-1 text-neutral-500 bg-black/20">
 					<Search size={14} strokeWidth={2.5} />
@@ -415,7 +415,7 @@
 	<div
 			use:portal
 			style={dropdownStyle}
-			class="overflow-hidden rounded-xl border border-black/40 bg-[#1c1c1c] shadow-2xl font-sans z-[99999]"
+			class="overflow-hidden rounded-xl border border-black/40 bg-neutral-900 shadow-2xl font-sans z-[99999]"
 	>
 		{#each suggestions as item, i}
 			<button

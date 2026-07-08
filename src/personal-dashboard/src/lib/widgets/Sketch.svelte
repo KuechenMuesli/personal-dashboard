@@ -598,7 +598,7 @@
 			</div>
 		</header>
 
-		<div class="relative flex-grow bg-[#0f0f0f] p-4 sm:p-6">
+		<div class="relative flex-grow bg-neutral-950 p-4 sm:p-6">
 			<div class="relative h-full w-full bg-neutral-800 shadow-2xl overflow-hidden rounded-xl border border-black/40">
 				<canvas
 						bind:this={dialogCanvas}

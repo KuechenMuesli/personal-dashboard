@@ -78,6 +78,7 @@
           "interval": "D",
           "timezone": "Etc/UTC",
           "theme": "dark",
+          "backgroundColor": "rgba(23, 23, 23, 1)",
           "style": "1",
           "locale": "en",
           "enable_publishing": false,
@@ -314,7 +315,7 @@
 				</div>
 			{:else}
 				{#each stockDataList as data}
-					<button onclick={() => openDetail(data)} class="flex-1 min-w-[120px] flex items-center justify-between bg-[#262626] rounded-xl {isCompact ? 'p-1.5 sm:p-2' : 'p-2.5 sm:p-3'} border border-transparent hover:border-black/40 transition-all shadow-sm group">
+					<button onclick={() => openDetail(data)} class="flex-1 min-w-[120px] flex items-center justify-between bg-neutral-800 rounded-xl {isCompact ? 'p-1.5 sm:p-2' : 'p-2.5 sm:p-3'} border border-transparent hover:border-black/40 transition-all shadow-sm group">
 						<div class="flex flex-col overflow-hidden mr-2 text-left">
 							<span class="{isCompact ? 'text-[10px] sm:text-xs' : 'text-xs sm:text-sm'} font-bold text-white tracking-tight truncate">{data.symbol}</span>
 							<span class="{isCompact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'} text-neutral-400 truncate">{data.name}</span>
@@ -387,7 +388,7 @@
 				</div>
 
 				{#if searchResults.length > 0}
-					<div class="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-[#1c1c1c] border border-black/40 rounded-lg shadow-2xl z-50 scrollbar-thin">
+					<div class="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-neutral-900 border border-black/40 rounded-lg shadow-2xl z-50 scrollbar-thin">
 						{#each searchResults as quote}
 							<button
 									onclick={() => addStock(quote)}
@@ -441,7 +442,7 @@
 <dialog bind:this={detailDialog} class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0 bg-neutral-900 text-white rounded-xl shadow-2xl p-0 border border-black/40 outline-none backdrop:bg-black/80 backdrop:backdrop-blur-sm w-[95vw] max-w-5xl h-[80vh] overflow-hidden" onclose={() => showDetailDialog = false}>
 	{#if selectedStock}
 		<div class="flex flex-col w-full h-full">
-			<div class="flex justify-between items-center shrink-0 p-4 border-b border-black/40 bg-[#1e222d]">
+			<div class="flex justify-between items-center shrink-0 p-4 border-b border-black/40 bg-neutral-900">
 				<div>
 					<h2 class="text-lg font-bold">{selectedStock.name} ({selectedStock.symbol})</h2>
 				</div>
@@ -450,7 +451,7 @@
 				</button>
 			</div>
 
-			<div class="flex-grow w-full bg-[#131722]" id="tv_chart_{id}" bind:this={tvContainer}></div>
+			<div class="flex-grow w-full bg-neutral-900" id="tv_chart_{id}" bind:this={tvContainer}></div>
 		</div>
 	{/if}
 </dialog>

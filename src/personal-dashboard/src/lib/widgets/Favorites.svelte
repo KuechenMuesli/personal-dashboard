@@ -83,7 +83,7 @@
 				<a
 						href={fav.url}
 						class="group flex items-center no-underline transition-all active:scale-95 w-full overflow-hidden
-               {effectiveMode === 'list' ? 'gap-2.5 bg-[#262626] hover:bg-[#1c1c1c] border border-transparent hover:border-black/40 p-1.5 rounded-lg' : 'flex-col gap-1'}"
+               {effectiveMode === 'list' ? 'gap-2.5 bg-neutral-800 hover:bg-neutral-900 border border-transparent hover:border-black/40 p-1.5 rounded-lg' : 'flex-col gap-1'}"
 						title={fav.name}
 				>
 					<div

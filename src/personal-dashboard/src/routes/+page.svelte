@@ -383,7 +383,7 @@
 
 <div
 		id="grid-container"
-		class="relative h-screen w-screen overflow-x-hidden overflow-y-auto bg-neutral-900 font-sans text-slate-200"
+		class="relative h-screen w-screen overflow-x-hidden overflow-y-auto font-sans text-slate-200"
 		bind:clientWidth={containerWidth}
 >
 	{#if isEditing}

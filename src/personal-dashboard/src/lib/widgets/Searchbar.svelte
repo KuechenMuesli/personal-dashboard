@@ -278,6 +278,83 @@
     return events;
   }
 
+  function parseNaturalDateRange(query: string): { start: Date, end: Date } | null {
+    const q = query.toLowerCase().trim();
+    if (!q) return null;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const addDays = (d: Date, days: number) => new Date(d.getTime() + days * 86400000);
+    const getNextDayOfWeek = (dayOfWeek: number) => {
+       const d = new Date(today);
+       const diff = dayOfWeek - d.getDay();
+       const daysToAdd = diff <= 0 ? diff + 7 : diff;
+       return addDays(d, daysToAdd);
+    };
+
+    let start = today;
+    let end = today;
+
+    if (['heute', 'today'].includes(q)) return { start, end };
+    if (['morgen', 'tomorrow'].includes(q)) { start = addDays(today, 1); return { start, end: start }; }
+    if (['übermorgen', 'day after tomorrow'].includes(q)) { start = addDays(today, 2); return { start, end: start }; }
+
+    if (['wochenende', 'dieses wochenende', 'this weekend', 'weekend'].includes(q)) {
+        const sat = getNextDayOfWeek(6);
+        return { start: sat, end: addDays(sat, 1) };
+    }
+    if (['nächstes wochenende', 'next weekend'].includes(q)) {
+        const nextSat = addDays(getNextDayOfWeek(6), 7);
+        return { start: nextSat, end: addDays(nextSat, 1) };
+    }
+
+    if (['diese woche', 'this week'].includes(q)) {
+        const sun = getNextDayOfWeek(0);
+        return { start: today, end: sun };
+    }
+    if (['nächste woche', 'next week', 'kommende woche'].includes(q)) {
+        const nextMon = getNextDayOfWeek(1);
+        return { start: nextMon, end: addDays(nextMon, 6) };
+    }
+
+    if (['diesen monat', 'this month'].includes(q)) {
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return { start: today, end: lastDay };
+    }
+    if (['nächster monat', 'nächsten monat', 'next month'].includes(q)) {
+        const firstDay = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+        return { start: firstDay, end: lastDay };
+    }
+
+    const weekdays: Record<string, number> = {
+        'sonntag': 0, 'sunday': 0, 'so': 0, 'sun': 0,
+        'montag': 1, 'monday': 1, 'mo': 1, 'mon': 1,
+        'dienstag': 2, 'tuesday': 2, 'di': 2, 'tue': 2,
+        'mittwoch': 3, 'wednesday': 3, 'mi': 3, 'wed': 3,
+        'donnerstag': 4, 'thursday': 4, 'do': 4, 'thu': 4,
+        'freitag': 5, 'friday': 5, 'fr': 5, 'fri': 5,
+        'samstag': 6, 'saturday': 6, 'sa': 6, 'sat': 6
+    };
+
+    if (weekdays[q] !== undefined) {
+        start = getNextDayOfWeek(weekdays[q]);
+        return { start, end: start };
+    }
+
+    const parts = q.split(' ');
+    if (parts.length === 2 && ['nächster', 'nächsten', 'next', 'kommender', 'kommenden'].includes(parts[0])) {
+        const day = weekdays[parts[1]];
+        if (day !== undefined) {
+            start = addDays(getNextDayOfWeek(day), 7);
+            return { start, end: start };
+        }
+    }
+
+    return null;
+  }
+
   const suggestions = $derived.by<SuggestionItem[]>(() => {
     const trimmed = query.trim();
 
@@ -299,16 +376,37 @@
     let dashboardRes: SuggestionItem[] = [];
 
     const dateMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.?(\d{2,4})?$/);
+    const naturalDateRange = parseNaturalDateRange(trimmed);
+
+    let searchDateStart: Date | null = null;
+    let searchDateEnd: Date | null = null;
+
     if (dateMatch) {
        const d = parseInt(dateMatch[1]);
        const m = parseInt(dateMatch[2]);
        let y = dateMatch[3] ? parseInt(dateMatch[3]) : new Date().getFullYear();
        if (y < 100) y += 2000;
+       
+       searchDateStart = new Date(y, m - 1, d);
+       searchDateEnd = new Date(y, m - 1, d, 23, 59, 59, 999);
+    } else if (naturalDateRange) {
+       searchDateStart = naturalDateRange.start;
+       searchDateEnd = new Date(naturalDateRange.end);
+       searchDateEnd.setHours(23, 59, 59, 999);
+    }
+
+    if (searchDateStart && searchDateEnd) {
+       const todayStart = new Date();
+       todayStart.setHours(0, 0, 0, 0);
+       
+       if (searchDateStart < todayStart) searchDateStart = todayStart;
 
        const matchedEvents = localEvents.filter(e => {
           if (!e.date || isNaN(e.date.getTime())) return false;
-          return e.date.getDate() === d && (e.date.getMonth() + 1) === m && e.date.getFullYear() === y;
+          return e.date >= searchDateStart! && e.date <= searchDateEnd!;
        });
+
+       matchedEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
 
        dashboardRes = matchedEvents.map((e, i) => {
           const uniqueId = `dash-evt-${i}`;
@@ -327,6 +425,14 @@
             expandable: !!e.desc,
             action: () => {
                if (e.desc) expandedItemId = expandedItemId === uniqueId ? null : uniqueId;
+            },
+            onCopy: async () => {
+               try {
+                 const textToCopy = `${e.title}\n${dateStr} • ${e.list}${e.desc ? '\n\n' + e.desc : ''}`.trim();
+                 await navigator.clipboard.writeText(textToCopy);
+                 copiedId = uniqueId;
+                 setTimeout(() => copiedId = null, 1500);
+               } catch (err) {}
             }
          }
        });

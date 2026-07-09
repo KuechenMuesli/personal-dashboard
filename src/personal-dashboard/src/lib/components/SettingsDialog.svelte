@@ -61,9 +61,8 @@
     oncancel={handleCancel}
 >
   <div class="relative flex flex-col gap-5 p-6 max-h-[85vh] bg-neutral-800 text-slate-200 rounded-2xl">
-    <header class="flex items-center justify-between shrink-0">
+    <header class="flex items-center justify-between shrink-0 mb-2">
       <h3 class="text-lg font-bold">{title}</h3>
-      <button class="text-2xl text-neutral-500 hover:text-white leading-none transition-colors" onclick={handleCancel}>&times;</button>
     </header>
 
     <div class="flex-grow overflow-y-auto space-y-4 scrollbar-thin pr-2">
@@ -71,9 +70,11 @@
     </div>
 
     <footer class="flex justify-end gap-2 shrink-0 border-t border-black/20 pt-4 mt-2">
-      <button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={handleCancel}>Cancel</button>
       {#if onSave}
+        <button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={handleCancel}>Cancel</button>
         <button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={handleSave}>Save</button>
+      {:else}
+        <button class="rounded-lg bg-neutral-700 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-600 transition-colors shadow-lg shadow-black/20" onclick={handleCancel}>Close</button>
       {/if}
     </footer>
   </div>

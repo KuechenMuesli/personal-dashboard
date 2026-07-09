@@ -5,20 +5,20 @@
   import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette} from "lucide-svelte";
 
   export const widgets = {
-    searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 } },
-    favorites:        { name: "Favorites", load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 4 } },
-    note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }},
-    parcel:           { name: "Parcel Tracker", load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 } },
-    trmnl:            { name: "TRMNL Current Screen", load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 } },
-    trmnlReminders:		{ name: "TRMNL Reminders", load: () => import("$lib/widgets/TrmnlReminders.svelte"), defaultSize: { width: 1, height: 4}},
-    clockWeatherDate: { name: "Clock & Weather", load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 } },
-    embed:            { name: "Web Embed", load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 } },
-    TimerStopwatch:   { name: "Timer / Stopwatch", load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 } },
-    sketch:           { name: "Whiteboard", load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 } },
-		colorPicker:			{ name: "Color Picker", load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 } },
-		newtorkMetrics:   { name: "Network Metrics", load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 } ,},
-		calendar:					{ name: "Calendar", load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 } },
-		stockTicker:      { name: "Stocks", load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 } },
+    searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
+    favorites:        { name: "Favorites", load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false },
+    parcel:           { name: "Parcel Tracker", load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true },
+    trmnl:            { name: "TRMNL Current Screen", load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true },
+    trmnlReminders:   { name: "TRMNL Reminders", load: () => import("$lib/widgets/TrmnlReminders.svelte"), defaultSize: { width: 1, height: 4 }, hasSettings: true },
+    clockWeatherDate: { name: "Clock & Weather", load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true },
+    embed:            { name: "Web Embed", load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true },
+    TimerStopwatch:   { name: "Timer / Stopwatch", load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    sketch:           { name: "Whiteboard", load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false },
+    colorPicker:      { name: "Color Picker", load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    newtorkMetrics:   { name: "Network Metrics", load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    calendar:         { name: "Calendar", load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    stockTicker:      { name: "Stocks", load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
   }
 
   const STORAGE_KEY = "dashboard-layout";
@@ -416,12 +416,14 @@
 
 				{#if isEditing}
 					<div class="absolute top-0 left-0 right-0 z-50 flex items-center gap-1 border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
+						{#if widgetDef.hasSettings}
 						<button
 								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
 								onclick={() => debounceAction(() => toggleSettings(sw.id))}
 						>
 							<Settings size={16} strokeWidth={1} />
 						</button>
+						{/if}
 						<GripHorizontal
 								size={16}
 								strokeWidth={1}
@@ -539,7 +541,13 @@
 	</div>
 </SettingsDialog>
 
-<SettingsDialog title="Global Settings" bind:show={showGlobalSettings}>
+<SettingsDialog 
+	title="Global Settings" 
+	bind:show={showGlobalSettings}
+	data={[globalTheme]}
+	onRevert={(r) => globalTheme = r[0]}
+	onSave={() => showGlobalSettings = false}
+>
 	<div class="space-y-4">
 		<h4 class="text-xs font-bold uppercase tracking-widest text-neutral-500">Theme Settings</h4>
 		<div class="grid grid-cols-2 gap-3">

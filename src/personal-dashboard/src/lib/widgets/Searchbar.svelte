@@ -248,7 +248,7 @@
   function getStoredEventsAndReminders() {
     const calsStr = localStorage.getItem('global-calendar-events');
     const remStr = localStorage.getItem('global-reminders');
-    
+
     let events: any[] = [];
     if (calsStr) {
       try {
@@ -261,7 +261,7 @@
         });
       } catch(e){}
     }
-    
+
     if (remStr) {
       try {
         const rems = JSON.parse(remStr);
@@ -279,7 +279,7 @@
 
   const suggestions = $derived.by<SuggestionItem[]>(() => {
     const trimmed = query.trim();
-    
+
     if (!trimmed) {
       return searchHistory.slice(0, 6).map((h, i) => ({
         id: `hist-recent-${i}`, title: h, subtitle: 'Recent Search', badge: 'HISTORY',
@@ -303,15 +303,15 @@
        const m = parseInt(dateMatch[2]);
        let y = dateMatch[3] ? parseInt(dateMatch[3]) : new Date().getFullYear();
        if (y < 100) y += 2000;
-       
+
        const matchedEvents = localEvents.filter(e => {
           if (!e.date || isNaN(e.date.getTime())) return false;
           return e.date.getDate() === d && (e.date.getMonth() + 1) === m && e.date.getFullYear() === y;
        });
-       
+
        dashboardRes = matchedEvents.map((e, i) => {
           const uniqueId = `dash-evt-${i}`;
-          
+
           let dateStr = e.date.toLocaleDateString('de-DE');
           if (e.type === 'CALENDAR' || (e.date.getHours() !== 0 || e.date.getMinutes() !== 0)) {
               dateStr += ` ${e.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
@@ -364,7 +364,7 @@
 
            const nextEvent = group[0];
            const futureEvents = group.slice(1);
-           
+
            let description = nextEvent.desc || '';
            if (futureEvents.length > 0) {
                const futureDates = futureEvents.slice(0, 5).map(e => {
@@ -374,7 +374,7 @@
                    }
                    return `• ${dStr}`;
                });
-               
+
                const moreText = futureEvents.length > 5 ? `\n...und ${futureEvents.length - 5} weitere Termine` : '';
                const recurrenceInfo = `\n\nWeitere Termine:\n${futureDates.join('\n')}${moreText}`;
                description = description ? description + recurrenceInfo : recurrenceInfo.trim();
@@ -394,7 +394,7 @@
 
        dashboardRes = consolidatedEvents.slice(0, 5).map((e, i) => {
           const uniqueId = `dash-evt-kw-${i}`;
-          
+
           let dateStr = '';
           if (e.date && !isNaN(e.date.getTime())) {
               dateStr = e.date.toLocaleDateString('de-DE');
@@ -417,7 +417,7 @@
          }
        });
     }
-    
+
     results.push(...dashboardRes);
 
     if (smartAnswer) {
@@ -490,7 +490,7 @@
       expandedItemId = null;
       return;
     }
-    
+
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       // 1. Google Web Suggestions
@@ -503,7 +503,7 @@
          const script = document.getElementById(callbackName);
          if (script) script.remove();
       };
-      
+
       const script = document.createElement('script');
       script.id = callbackName;
       script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(trimmed)}&jsonp=${callbackName}`;
@@ -585,7 +585,7 @@
             let answerText = data.AbstractText;
             let sourceUrl = data.AbstractURL;
             let sourceName = data.AbstractSource || 'DuckDuckGo';
-            
+
             // If it's a disambiguation page (Type 'D') or we don't have text yet, try to fetch the first real topic
             if (!answerText && data.Type === 'D' && data.RelatedTopics && data.RelatedTopics.length > 0) {
                const firstTopic = data.RelatedTopics[0];
@@ -756,7 +756,7 @@
     const q = typeof overrideQuery === 'string' ? overrideQuery : query;
     const trimmed = q.trim();
     if (!trimmed) return;
-    
+
     saveHistory(trimmed);
     if (typeof overrideQuery === 'string') query = overrideQuery;
 
@@ -800,7 +800,7 @@
 </script>
 
 <WidgetCard bind:showSettings={showSettings} isConfigured={true} padding={false} transparent={true}>
-	<div class="flex h-full w-full items-center px-2 sm:px-3 font-sans">
+	<div class="flex h-full w-full items-center px-1 font-sans">
 		<div bind:this={wrapperEl} class="relative w-full">
 			<div class="flex h-10 w-full overflow-hidden rounded-xl border border-neutral-600 bg-neutral-900 shadow-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50 transition-all">
 
@@ -865,9 +865,9 @@
             <Sun size={10} strokeWidth={3} />
           {/if}
           {#if item.url}
-             <a href={item.url} target="_blank" rel="noopener noreferrer" 
-                onmousedown={(e) => e.stopPropagation()} 
-                onclick={(e) => e.stopPropagation()} 
+             <a href={item.url} target="_blank" rel="noopener noreferrer"
+                onmousedown={(e) => e.stopPropagation()}
+                onclick={(e) => e.stopPropagation()}
                 class="hover:underline hover:text-blue-300 transition-colors z-10 relative">
                {item.subtitle} ↗
              </a>
@@ -886,9 +886,9 @@
 						{item.badge}
 					</div>
 					{#if item.onDelete}
-						<button 
-							onmousedown={(e) => e.preventDefault()} 
-							onclick={(e) => { e.stopPropagation(); item.onDelete!(); }} 
+						<button
+							onmousedown={(e) => e.preventDefault()}
+							onclick={(e) => { e.stopPropagation(); item.onDelete!(); }}
 							class="text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
 							aria-label="Delete from history"
 						>
@@ -901,11 +901,11 @@
 	</div>
 {/if}
 
-<SettingsDialog 
-	title="Search Shortcuts" 
-	bind:show={showSettings} 
-	data={[engines]} 
-	onRevert={(r: any) => { engines = r[0]; }} 
+<SettingsDialog
+	title="Search Shortcuts"
+	bind:show={showSettings}
+	data={[engines]}
+	onRevert={(r: any) => { engines = r[0]; }}
 	onSave={saveSettings}
 >
 	<div class="flex flex-col gap-4">

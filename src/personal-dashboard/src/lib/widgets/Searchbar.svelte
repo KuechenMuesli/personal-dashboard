@@ -693,9 +693,12 @@
     });
 
     const handleGlobalKey = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') ||
-        e.ctrlKey || e.metaKey || e.altKey || isEditing) return;
-      if (e.key.length === 1) searchInput?.focus();
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') || isEditing) return;
+      
+      const isPaste = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v';
+      if (!isPaste && (e.ctrlKey || e.metaKey || e.altKey)) return;
+      
+      if (e.key.length === 1 || isPaste) searchInput?.focus();
     };
 
     window.addEventListener('keydown', handleGlobalKey);

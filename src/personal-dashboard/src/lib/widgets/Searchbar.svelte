@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import {Check, Plus, Search, X, Trash2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Thermometer, Moon} from "lucide-svelte";
+  import {Check, Plus, Search, X, Trash2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Thermometer, Moon, Copy} from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
 
@@ -32,6 +32,7 @@
     url?: string;
     sourceName?: string;
     onDelete?: () => void;
+    onCopy?: () => void;
   }
 
   const INITIAL_ENGINES: Engine[] = [
@@ -413,6 +414,14 @@
             expandable: !!e.desc,
             action: () => {
                if (e.desc) expandedItemId = expandedItemId === uniqueId ? null : uniqueId;
+            },
+            onCopy: async () => {
+               try {
+                 const textToCopy = `${e.title}\n${dateStr}${e.list}${e.desc ? '\n\n' + e.desc : ''}`.trim();
+                 await navigator.clipboard.writeText(textToCopy);
+                 copiedId = uniqueId;
+                 setTimeout(() => copiedId = null, 1500);
+               } catch (err) {}
             }
          }
        });
@@ -847,7 +856,7 @@
 				<div class="flex min-w-0 flex-col pr-2">
       <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">{#if item.icon}<svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />{/if}<span>{item.title}</span></span>
         {#if item.description && expandedItemId === item.id}
-          <div class="text-[12px] font-normal mt-1.5 opacity-80 whitespace-pre-wrap">
+          <div class="text-[12px] font-normal mt-1.5 text-neutral-400 leading-relaxed whitespace-pre-wrap">
              {item.description}
           </div>
         {/if}
@@ -881,19 +890,33 @@
         {/if}
       </span>
 				</div>
-				<div class="flex items-center gap-2">
-					<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {getBadgeColor(item.badge)}">
+				<div class="flex items-center shrink-0 relative justify-end">
+					<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {getBadgeColor(item.badge)} transition-opacity duration-200 {item.onCopy || item.onDelete ? 'group-hover:opacity-0' : ''}">
 						{item.badge}
 					</div>
-					{#if item.onDelete}
-						<button
-							onmousedown={(e) => e.preventDefault()}
-							onclick={(e) => { e.stopPropagation(); item.onDelete!(); }}
-							class="text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
-							aria-label="Delete from history"
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-						</button>
+					{#if item.onCopy || item.onDelete}
+						<div class="absolute right-0 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+							{#if item.onCopy}
+								<div
+									onmousedown={(e) => e.preventDefault()}
+									onclick={(e) => { e.stopPropagation(); item.onCopy!(); }}
+									class="text-neutral-500 hover:text-white p-1 transition-colors cursor-pointer"
+									title="Copy details"
+								>
+									<Copy size={12} strokeWidth={2.5} />
+								</div>
+							{/if}
+							{#if item.onDelete}
+								<div
+									onmousedown={(e) => e.preventDefault()}
+									onclick={(e) => { e.stopPropagation(); item.onDelete!(); }}
+									class="text-neutral-500 hover:text-red-400 p-1 transition-colors cursor-pointer"
+									title="Delete from history"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+								</div>
+							{/if}
+						</div>
 					{/if}
 				</div>
 			</button>

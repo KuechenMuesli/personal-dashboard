@@ -1,6 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
+const cache = new Map<string, { body: ArrayBuffer, contentType: string, timestamp: number }>();
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 Minuten Cache
+
 async function handleProxy(request: Request, url: URL, fetch: any) {
     const targetUrl = url.searchParams.get('target');
     if (!targetUrl) throw error(400, "Missing target URL");
@@ -11,7 +14,8 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
         "https://query1.finance.yahoo.com/",
         "https://api.parcel.app/external", // For Parcel (GET & POST)
         "https://api.17track.net/", // For Parcel fallback
-        "https://usetrmnl.com/api/", // For TRMNL
+        "https://usetrmnl.com/", // For TRMNL
+        "https://trmnl.com/", // For TRMNL alternative
         "https://de.wikipedia.org/w/api.php", // For DuckDuckGo fallback
         "https://en.wikipedia.org/w/api.php",
     ];
@@ -33,6 +37,21 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
         throw error(403, "Target URL is not permitted by proxy rules.");
     }
 
+    // Check In-Memory Cache for GET requests
+    if (request.method === 'GET') {
+        const cached = cache.get(targetUrl);
+        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+            return new Response(cached.body, {
+                status: 200,
+                headers: {
+                    'Content-Type': cached.contentType,
+                    'Cache-Control': 'public, max-age=60',
+                    'X-Proxy-Cache': 'HIT'
+                }
+            });
+        }
+    }
+
     try {
         const options: RequestInit = {
             method: request.method,
@@ -47,6 +66,27 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
         }
 
         const response = await fetch(targetUrl, options);
+        
+        // Cache successful GET responses
+        if (request.method === 'GET' && response.ok) {
+            const bodyBuffer = await response.arrayBuffer();
+            const contentType = response.headers.get('Content-Type') || 'application/json';
+            
+            cache.set(targetUrl, {
+                body: bodyBuffer,
+                contentType,
+                timestamp: Date.now()
+            });
+
+            return new Response(bodyBuffer, {
+                status: response.status,
+                headers: {
+                    'Content-Type': contentType,
+                    'Cache-Control': 'public, max-age=60',
+                    'X-Proxy-Cache': 'MISS'
+                }
+            });
+        }
         
         return new Response(response.body, {
             status: response.status,

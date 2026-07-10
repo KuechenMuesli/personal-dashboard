@@ -2,7 +2,10 @@
   import { onMount } from "svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import type { StoredWidget } from '../types/stored-widget';
-  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette} from "lucide-svelte";
+  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, Cloud, CloudOff} from "lucide-svelte";
+
+  let { data } = $props();
+  let session = $derived(data.session);
 
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
@@ -529,6 +532,18 @@
 					onclick={() => debounceAction(() => showPickerDialog = true)}
 			><Plus size={20} /></button>
 		{/if}
+
+		<a
+				href="/login"
+				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105 {session ? 'bg-blue-600' : 'bg-neutral-800 border border-neutral-600'}"
+				title={session ? "Cloud Sync Active" : "Login to Sync"}
+		>
+			{#if session}
+				<Cloud size={20} />
+			{:else}
+				<CloudOff size={20} class="text-neutral-400" />
+			{/if}
+		</a>
 
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105

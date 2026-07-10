@@ -19,25 +19,18 @@ export const handle: Handle = async ({ event, resolve }) => {
   )
 
   event.locals.safeGetSession = async () => {
+    // For pure optimistic UI speed, we only read the session from cookies.
+    // We skip the network request to getUser() here to save ~200ms on initial load.
+    // Secure API routes can still manually call supabase.auth.getUser() if needed.
     const { data: { session } } = await event.locals.supabase.auth.getSession()
     if (!session) return { session: null, user: null }
 
-    const { data: { user }, error } = await event.locals.supabase.auth.getUser()
-    if (error) return { session: null, user: null }
-
-    return { session, user }
+    return { session, user: session.user }
   }
 
-  // Check auth for protected routes (everything except /login)
-  const { session } = await event.locals.safeGetSession()
-  if (!session && !event.url.pathname.startsWith('/login')) {
-    throw redirect(303, '/login')
-  }
-
-  if (session && event.url.pathname.startsWith('/login')) {
-    throw redirect(303, '/')
-  }
-
+  // Optimistic UI: Wir blockieren den initialen Render nicht mehr.
+  // Die Session wird nur noch lazy in den Layouts geladen, wenn sie gebraucht wird.
+  
   return resolve(event, {
     filterSerializedResponseHeaders(name) {
       return name === 'content-range' || name === 'x-supabase-api-version'

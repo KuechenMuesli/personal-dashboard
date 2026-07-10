@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, getContext } from "svelte";
   import { Plus, X, Search, ChevronUp, ChevronDown, GripVertical } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import WidgetTabs from "$lib/components/WidgetTabs.svelte";
@@ -115,6 +115,19 @@
 
   const currentRangeDef = $derived(RANGES.find(r => r.value === range) || RANGES[0]);
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
+
+  $effect(() => {
+    const secrets = getSecrets();
+    if (secrets[id]) {
+      const parsed = secrets[id];
+      if (parsed.stocks) stocks = parsed.stocks;
+      if (parsed.targetCurrency) targetCurrency = parsed.targetCurrency;
+      if (parsed.range) range = parsed.range;
+      if (parsed.displayMode) displayMode = parsed.displayMode;
+    }
+  });
+
   $effect(() => {
     if (range && isLoaded) fetchAllData();
   });
@@ -139,10 +152,18 @@
     }
   }
 
-  function saveSettings() {
+  async function saveSettings() {
     localStorage.setItem(`stock-settings-${id}`, JSON.stringify({ stocks, targetCurrency, range, displayMode }));
     showSettings = false;
     fetchAllData();
+    
+    try {
+      await fetch('/api/secrets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: id, key: { stocks, targetCurrency, range, displayMode } })
+      });
+    } catch (e) {}
   }
 
   async function fetchAllData() {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, getContext } from "svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import { Sun, Cloud, CloudRain, Snowflake, CloudLightning, Settings } from "lucide-svelte";
@@ -16,6 +16,8 @@
     showSettings: boolean;
   }>();
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
+
   let currentTime = $state(new Date());
   let weather = $state<{ temp: number; code: number } | null>(null);
   let dialogEl = $state<HTMLDialogElement | null>(null);
@@ -29,6 +31,41 @@
 
   let unit = $state<"celsius" | "fahrenheit">("celsius");
   let hour12 = $state(false);
+  let isLoaded = $state(false);
+
+  $effect(() => {
+    const secrets = getSecrets();
+    if (!isLoaded) {
+      if (secrets[id]) {
+        const parsed = secrets[id];
+        city = parsed.city || "";
+        lat = parsed.lat || null;
+        lon = parsed.lon || null;
+        showClock = parsed.showClock ?? true;
+        showDate = parsed.showDate ?? true;
+        showWeather = parsed.showWeather ?? true;
+        unit = parsed.unit || "celsius";
+        hour12 = parsed.hour12 ?? false;
+      } else {
+        const saved = localStorage.getItem(`general-settings-${id}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            city = parsed.city || "";
+            lat = parsed.lat || null;
+            lon = parsed.lon || null;
+            showClock = parsed.showClock ?? true;
+            showDate = parsed.showDate ?? true;
+            showWeather = parsed.showWeather ?? true;
+            unit = parsed.unit || "celsius";
+            hour12 = parsed.hour12 ?? false;
+          } catch (e) { console.error(e); }
+        }
+      }
+      isLoaded = true;
+      if (lat && lon) fetchWeather();
+    }
+  });
 
   const isHeight1 = $derived(height === 1);
   const isHeight2 = $derived(height === 2);
@@ -57,23 +94,7 @@
   }));
 
   onMount(() => {
-    const saved = localStorage.getItem(`general-settings-${id}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        city = parsed.city || "";
-        lat = parsed.lat || null;
-        lon = parsed.lon || null;
-        showClock = parsed.showClock ?? true;
-        showDate = parsed.showDate ?? true;
-        showWeather = parsed.showWeather ?? true;
-        unit = parsed.unit || "celsius";
-        hour12 = parsed.hour12 ?? false;
-      } catch (e) { console.error(e); }
-    }
-
     const timer = setInterval(() => (currentTime = new Date()), 1000);
-    if (lat && lon) fetchWeather();
     const weatherTimer = setInterval(fetchWeather, 30 * 60 * 1000);
 
     return () => {
@@ -108,11 +129,20 @@
         }
       } catch (e) { console.error("Geocoding failed", e); }
     }
-    localStorage.setItem(`general-settings-${id}`, JSON.stringify({
-      city, lat, lon, showClock, showDate, showWeather, unit, hour12
-    }));
+    
+    const settings = { city, lat, lon, showClock, showDate, showWeather, unit, hour12 };
+    
+    localStorage.setItem(`general-settings-${id}`, JSON.stringify(settings));
     showSettings = false;
     fetchWeather();
+    
+    try {
+      await fetch('/api/secrets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: id, key: settings })
+      });
+    } catch (e) {}
   }
 
   function getWeatherLabel(code: number) {

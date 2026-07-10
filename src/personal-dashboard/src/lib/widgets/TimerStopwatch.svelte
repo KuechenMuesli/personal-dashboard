@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, getContext } from "svelte";
   import { Play, Pause, Timer, Clock } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
 
   let { id, height, width } = $props<{ id: string; height: number; width: number }>();
+
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
 
   let mode = $state<"timer" | "stopwatch">("timer");
   let isRunning = $state(false);
@@ -31,17 +33,18 @@
   let inputSEl = $state<HTMLInputElement | null>(null);
   
   let wheelAccumulator = 0;
+  let isLoaded = $state(false);
 
   const isCompact = $derived(height <= 2);
   const isLarge = $derived(height >= 3);
   const isNarrow = $derived(width <= 1);
   const isFinished = $derived(mode === "timer" && !isRunning && targetTimestamp !== null && (targetTimestamp - Date.now() <= 0));
 
-  onMount(() => {
-    const saved = localStorage.getItem(`timer-settings-${id}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
+  $effect(() => {
+    const secrets = getSecrets();
+    if (!isLoaded) {
+      if (secrets[id]) {
+        const parsed = secrets[id];
         mode = parsed.mode || "timer";
         isRunning = parsed.isRunning || false;
         targetTimestamp = parsed.targetTimestamp || null;
@@ -50,16 +53,43 @@
         inputMs = parsed.inputMs || (5 * 60 * 1000);
         if (isRunning) startLogic();
         else updateDisplay();
-      } catch (e) { console.error(e); }
-    } else {
-      updateDisplay();
+      } else {
+        const saved = localStorage.getItem(`timer-settings-${id}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            mode = parsed.mode || "timer";
+            isRunning = parsed.isRunning || false;
+            targetTimestamp = parsed.targetTimestamp || null;
+            startTimestamp = parsed.startTimestamp || null;
+            elapsedBeforePause = parsed.elapsedBeforePause || 0;
+            inputMs = parsed.inputMs || (5 * 60 * 1000);
+            if (isRunning) startLogic();
+            else updateDisplay();
+          } catch (e) { console.error(e); }
+        } else {
+          updateDisplay();
+        }
+      }
+      isLoaded = true;
     }
   });
 
+  onMount(() => {
+    return () => clearInterval(interval);
+  });
+
   function saveState() {
-    localStorage.setItem(`timer-settings-${id}`, JSON.stringify({
+    const state = {
       mode, isRunning, targetTimestamp, startTimestamp, elapsedBeforePause, inputMs
-    }));
+    };
+    localStorage.setItem(`timer-settings-${id}`, JSON.stringify(state));
+    
+    fetch('/api/secrets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service: id, key: state })
+    }).catch(() => {});
   }
 
   function updateDisplay() {

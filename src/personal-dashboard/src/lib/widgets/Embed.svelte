@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, getContext } from "svelte";
   import { Settings } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
@@ -12,8 +12,19 @@
     showSettings: boolean;
   }>();
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
+
   let url = $state("");
   let title = $state("Web View");
+
+  $effect(() => {
+    const secrets = getSecrets();
+    if (secrets[id]) {
+      const parsed = secrets[id];
+      url = parsed.url || "";
+      title = parsed.title || "Web View";
+    }
+  });
 
   onMount(() => {
     const saved = localStorage.getItem(`webview-settings-${id}`);
@@ -26,9 +37,17 @@
     }
   });
 
-  function saveSettings() {
+  async function saveSettings() {
     localStorage.setItem(`webview-settings-${id}`, JSON.stringify({ url, title }));
     showSettings = false;
+    
+    try {
+      await fetch('/api/secrets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: id, key: { url, title } })
+      });
+    } catch (e) {}
   }
 </script>
 

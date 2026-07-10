@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getContext } from "svelte";
   import { ChevronUp, ChevronDown, Plus, X, GripVertical, Search, Pencil } from "lucide-svelte";
   import * as icons from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
@@ -57,22 +58,39 @@
 
   const listColumns = $derived(width >= 5 ? 3 : width >= 2 ? 2 : 1);
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
+
   $effect(() => {
-    if (!favorites.length) {
-      const saved = localStorage.getItem(`favorites-settings-${id}`);
-      const parsed = saved ? JSON.parse(saved) : null;
-      if (parsed) {
-        favorites = parsed.favorites || [...DEFAULT_FAVORITES];
-        displayMode = parsed.displayMode || "auto";
-      } else {
-        favorites = [...DEFAULT_FAVORITES];
-      }
+    const secrets = getSecrets();
+    if (secrets[id]) {
+        favorites = secrets[id].favorites || [...DEFAULT_FAVORITES];
+        displayMode = secrets[id].displayMode || "auto";
+    } else {
+        const saved = localStorage.getItem(`favorites-settings-${id}`);
+        const parsed = saved ? JSON.parse(saved) : null;
+        if (parsed) {
+          favorites = parsed.favorites || [...DEFAULT_FAVORITES];
+          displayMode = parsed.displayMode || "auto";
+        } else if (favorites.length === 0) {
+          favorites = [...DEFAULT_FAVORITES];
+        }
     }
   });
 
-  function saveSettings() {
+  async function saveSettings() {
     localStorage.setItem(`favorites-settings-${id}`, JSON.stringify({ favorites, displayMode }));
     showSettings = false;
+    
+    // Save to cloud
+    try {
+      await fetch('/api/secrets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: id, key: { favorites, displayMode } })
+      });
+    } catch (e) {
+      console.error("Failed to sync favorites to cloud", e);
+    }
   }
 
   function getIcon(url: string) {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getContext } from 'svelte';
   import { marked } from 'marked';
   import { Plus, X, GripHorizontal, PenLine, Eye } from 'lucide-svelte';
   import WidgetCard from '$lib/components/WidgetCard.svelte';
@@ -16,19 +17,39 @@
     hidden?: boolean
   }>();
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
+
   let content = $state("");
   let isMarkdownMode = $state(false);
   let saveTimeout: ReturnType<typeof setTimeout>;
+  let isLoaded = $state(false);
 
   $effect(() => {
-    const savedContent = localStorage.getItem(`note-settings-${id}`);
-    if (savedContent) content = savedContent;
+    const secrets = getSecrets();
+    if (!isLoaded) {
+      if (secrets[id]) {
+        content = secrets[id].content || "";
+        isMarkdownMode = secrets[id].isMarkdownMode || false;
+      } else {
+        const savedContent = localStorage.getItem(`note-settings-${id}`);
+        if (savedContent) content = savedContent;
 
-    const savedMode = localStorage.getItem(`note-mode-${id}`);
-    if (savedMode !== null) {
-      isMarkdownMode = savedMode === 'true';
+        const savedMode = localStorage.getItem(`note-mode-${id}`);
+        if (savedMode !== null) {
+          isMarkdownMode = savedMode === 'true';
+        }
+      }
+      isLoaded = true;
     }
   });
+
+  function saveToCloud() {
+    fetch('/api/secrets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service: id, key: { content, isMarkdownMode } })
+    }).catch(console.error);
+  }
 
   function handleInput(e: Event) {
     const target = e.target as HTMLTextAreaElement;
@@ -36,6 +57,7 @@
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
       localStorage.setItem(`note-settings-${id}`, content);
+      saveToCloud();
     }, 500);
   }
 
@@ -70,6 +92,7 @@
   function toggleMode() {
     isMarkdownMode = !isMarkdownMode;
     localStorage.setItem(`note-mode-${id}`, String(isMarkdownMode));
+    saveToCloud();
   }
 
   function handleDelete() {

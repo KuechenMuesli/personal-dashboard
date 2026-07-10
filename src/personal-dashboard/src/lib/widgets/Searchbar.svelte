@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount, tick, getContext } from "svelte";
   import {Check, Plus, Search, X, Trash2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Thermometer, Moon, Copy} from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
@@ -659,6 +659,25 @@
     allFavorites = Array.from(unique.values());
   }
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
+  let isLoaded = $state(false);
+
+  $effect(() => {
+    const secrets = getSecrets();
+    if (!isLoaded) {
+      if (secrets[id]) {
+        const parsed = secrets[id];
+        engines = parsed.engines || [...INITIAL_ENGINES];
+        searchHistory = parsed.searchHistory || [];
+      } else {
+        const saved = localStorage.getItem(`search-settings-${id}`);
+        engines = saved ? JSON.parse(saved) : [...INITIAL_ENGINES];
+        loadHistory();
+      }
+      isLoaded = true;
+    }
+  });
+
   function loadHistory() {
     try {
       const hist = localStorage.getItem(`search-history-${id}`);
@@ -666,24 +685,27 @@
     } catch(e) {}
   }
 
+  function saveToCloud() {
+    fetch('/api/secrets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service: id, key: { engines, searchHistory } })
+    }).catch(console.error);
+  }
+
   function saveHistory(q: string) {
     if (!q) return;
     const filtered = searchHistory.filter(h => h !== q);
     searchHistory = [q, ...filtered].slice(0, 15);
     localStorage.setItem(`search-history-${id}`, JSON.stringify(searchHistory));
+    saveToCloud();
   }
 
   function clearHistory() {
     searchHistory = [];
     localStorage.removeItem(`search-history-${id}`);
+    saveToCloud();
   }
-
-  $effect(() => {
-    if (!engines.length) {
-      const saved = localStorage.getItem(`search-settings-${id}`);
-      engines = saved ? JSON.parse(saved) : [...INITIAL_ENGINES];
-    }
-  });
 
   $effect(() => {
     if (showSettings) dialogEl?.showModal();
@@ -693,6 +715,7 @@
   function saveSettings() {
     localStorage.setItem(`search-settings-${id}`, JSON.stringify(engines));
     showSettings = false;
+    saveToCloud();
   }
 
   function handleSearch(overrideQuery?: string | Event) {

@@ -3,6 +3,8 @@
   import {Check, Plus, Search, X, Trash2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Thermometer, Moon, Copy} from "lucide-svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import SuggestionList from "$lib/components/SuggestionList.svelte";
+  import { evaluateMath, evaluateConversion, getStoredEventsAndReminders, parseNaturalDateRange } from "$lib/utils/searchUtils";
 
   let { id, isEditing, showSettings = $bindable(false) } = $props<{
     id: string; isEditing: boolean; showSettings: boolean;
@@ -45,52 +47,6 @@
     { key: "!y", name: "Youtube", url: "https://www.youtube.com/results?search_query={query}" },
   ];
 
-  const UNIT_CATEGORIES: Record<string, { factors: Record<string, number> }> = {
-    length: {
-      factors: { m: 1, km: 1000, cm: 0.01, mm: 0.001, in: 0.0254, ft: 0.3048, yd: 0.9144, mi: 1609.344 }
-    },
-    weight: {
-      factors: { g: 1, kg: 1000, mg: 0.001, oz: 28.349523, lb: 453.59237, lbs: 453.59237 }
-    },
-    volume: {
-      factors: { l: 1, ml: 0.001, gal: 3.78541, floz: 0.0295735 }
-    },
-    time: {
-      factors: { ms: 0.001, s: 1, sec: 1, min: 60, h: 3600, hr: 3600, d: 86400, day: 86400, w: 604800, wk: 604800, mo: 2592000, month: 2592000, y: 31536000, yr: 31536000, year: 31536000 }
-    }
-  };
-
-  const TEMPERATURE: Record<string, Record<string, (v: number) => number>> = {
-    c: { c: v=>v, f: v=>(v*9/5)+32, k: v=>v+273.15 },
-    f: { c: v=>(v-32)*5/9, f: v=>v, k: v=>(v-32)*5/9+273.15 },
-    k: { c: v=>v-273.15, f: v=>(v-273.15)*9/5+32, k: v=>v }
-  };
-
-  function getUnitInfo(unit: string) {
-    if (TEMPERATURE[unit]) return { category: 'temperature' };
-    for (const [category, data] of Object.entries(UNIT_CATEGORIES)) {
-      if (data.factors[unit]) return { category, factor: data.factors[unit] };
-    }
-    return null;
-  }
-
-  function getAllCategoryUnits(unit: string): string[] {
-    const info = getUnitInfo(unit);
-    if (!info) return [];
-    if (info.category === 'temperature') {
-      return Object.keys(TEMPERATURE[unit]).filter(u => u !== unit);
-    }
-    return Object.keys(UNIT_CATEGORIES[info.category].factors).filter(u => u !== unit);
-  }
-
-  const PREDICTIONS: Record<string, string[]> = {
-    kg: ['lb', 'g'], g: ['oz', 'kg'], mg: ['g'], oz: ['g'], lb: ['kg'], lbs: ['kg'],
-    m: ['ft', 'cm'], cm: ['in', 'm'], mm: ['in', 'cm'], in: ['cm'], ft: ['m'], yd: ['m'], mi: ['km'], km: ['mi'],
-    c: ['f'], f: ['c'],
-    l: ['gal', 'ml'], ml: ['l', 'floz'], gal: ['l'],
-    ms: ['s'], s: ['min', 'ms'], sec: ['min'], min: ['s', 'h'], h: ['min', 'd'], hr: ['min'], d: ['h', 'w'], day: ['h'], w: ['d', 'mo'], mo: ['w', 'y'], y: ['mo']
-  };
-
   let query = $state("");
   let engines = $state<Engine[]>([]);
   let allFavorites = $state<Favorite[]>([]);
@@ -128,233 +84,11 @@
 
   const activeEngine = $derived(getEngineForQuery(query));
 
-  function formatNumber(num: number): string {
-    if (Number.isInteger(num)) return num.toString();
-    return Number(num.toPrecision(7)).toString().replace('.', ',');
-  }
 
-  function evaluateMath(input: string): string | null {
-    let s = input.toLowerCase().replace(/,/g, '.').trim();
-    const mathKeywords = ['sqrt', 'sin', 'cos', 'tan', 'log', 'abs', 'pi'];
 
-    const hasOperator = /[\+\-\*\/\^\%]/.test(s);
-    const hasKeyword = mathKeywords.some(kw => s.includes(kw));
 
-    if (!hasOperator && !hasKeyword) return null;
 
-    s = s.replace(/\^/g, '**');
-    mathKeywords.forEach(kw => {
-      const regex = new RegExp(`\\b${kw}\\b`, 'g');
-      s = s.replace(regex, kw === 'pi' ? 'Math.PI' : `Math.${kw}`);
-    });
 
-    const securityCheck = s.replace(/Math\.(sqrt|sin|cos|tan|log|abs|PI)/g, '');
-    if (!/^[\d\+\-\*\/\(\)\.\s\%]+$/.test(securityCheck)) return null;
-
-    try {
-      const res = new Function(`return ${s}`)();
-      if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
-        return formatNumber(res);
-      }
-    } catch { return null; }
-    return null;
-  }
-
-  function calculateConversion(val: number, fromUnit: string, toUnit: string): string | null {
-    const fromInfo = getUnitInfo(fromUnit);
-    const toInfo = getUnitInfo(toUnit);
-
-    if (!fromInfo || !toInfo || fromInfo.category !== toInfo.category) return null;
-
-    let res: number;
-    if (fromInfo.category === 'temperature') {
-      res = TEMPERATURE[fromUnit][toUnit](val);
-    } else {
-      const valueInBase = val * fromInfo.factor!;
-      res = valueInBase / toInfo.factor!;
-    }
-
-    return formatNumber(res);
-  }
-
-  function evaluateConversion(input: string): { val: string, unit: string }[] {
-    const results: { val: string, unit: string }[] = [];
-    const trimmed = input.trim();
-
-    const explicitMatch = trimmed.match(/^([\d\.\,]+)\s*([a-zA-Z]+)\s+(in|to)\s*([a-zA-Z]*)$/i);
-    if (explicitMatch) {
-      const val = parseFloat(explicitMatch[1].replace(',', '.'));
-      const fromUnit = explicitMatch[2].toLowerCase();
-      const targetPrefix = explicitMatch[4].toLowerCase();
-
-      if (!isNaN(val)) {
-        const allUnits = getAllCategoryUnits(fromUnit);
-
-        let targetUnits = targetPrefix
-          ? allUnits.filter(u => u.startsWith(targetPrefix))
-          : allUnits;
-
-        targetUnits.sort((a, b) => a.length - b.length);
-
-        const seenValues = new Set<string>();
-
-        for (const toUnit of targetUnits) {
-          const res = calculateConversion(val, fromUnit, toUnit);
-          if (res !== null && !seenValues.has(res)) {
-            seenValues.add(res);
-            results.push({ val: res, unit: toUnit });
-          }
-        }
-      }
-      return results;
-    }
-
-    const implicitMatch = trimmed.match(/^([\d\.\,]+)\s*([a-zA-Z]+)$/i);
-    if (implicitMatch) {
-      const val = parseFloat(implicitMatch[1].replace(',', '.'));
-      const fromUnit = implicitMatch[2].toLowerCase();
-
-      if (!isNaN(val) && PREDICTIONS[fromUnit]) {
-        const seenValues = new Set<string>();
-
-        for (const toUnit of PREDICTIONS[fromUnit]) {
-          const res = calculateConversion(val, fromUnit, toUnit);
-          if (res !== null && !seenValues.has(res)) {
-            seenValues.add(res);
-            results.push({ val: res, unit: toUnit });
-          }
-        }
-      }
-    }
-
-    return results;
-  }
-
-  function getBadgeColor(badge: string) {
-    switch (badge) {
-      case 'FAV': return 'text-yellow-500';
-      case 'CALENDAR': return 'text-purple-400';
-      case 'REMINDER': return 'text-orange-400';
-      case 'HISTORY': return 'text-slate-400';
-      case 'WEB': return 'text-blue-400';
-      case 'FACT': return 'text-emerald-400';
-      case 'CALC': return 'text-pink-400';
-      case 'CONV': return 'text-cyan-400';
-      case 'WEATHER': return 'text-sky-400';
-      case 'TIME': return 'text-indigo-400';
-      case 'TRANSLATE': return 'text-violet-400';
-      default: return 'text-emerald-400';
-    }
-  }
-
-  function getStoredEventsAndReminders() {
-    const calsStr = localStorage.getItem('global-calendar-events');
-    const remStr = localStorage.getItem('global-reminders');
-
-    let events: any[] = [];
-    if (calsStr) {
-      try {
-        const cals = JSON.parse(calsStr);
-        cals.forEach((c: any) => {
-           c.events.forEach((e: any) => {
-              const fullDesc = [e.location, e.description].filter(Boolean).join('\n\n');
-              events.push({ type: 'CALENDAR', title: e.title, desc: fullDesc, date: new Date(e.start), list: c.name });
-           });
-        });
-      } catch(e){}
-    }
-
-    if (remStr) {
-      try {
-        const rems = JSON.parse(remStr);
-        ['today', 'future', 'overdue'].forEach(k => {
-           if (rems[k]) {
-             rems[k].forEach((r: any) => {
-                events.push({ type: 'REMINDER', title: r.n, desc: r.o, date: r.d ? new Date(r.d) : null, list: r.l });
-             });
-           }
-        });
-      } catch(e){}
-    }
-    return events;
-  }
-
-  function parseNaturalDateRange(query: string): { start: Date, end: Date } | null {
-    const q = query.toLowerCase().trim();
-    if (!q) return null;
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    const addDays = (d: Date, days: number) => new Date(d.getTime() + days * 86400000);
-    const getNextDayOfWeek = (dayOfWeek: number) => {
-       const d = new Date(today);
-       const diff = dayOfWeek - d.getDay();
-       const daysToAdd = diff <= 0 ? diff + 7 : diff;
-       return addDays(d, daysToAdd);
-    };
-
-    let start = today;
-    let end = today;
-
-    if (['heute', 'today'].includes(q)) return { start, end };
-    if (['morgen', 'tomorrow'].includes(q)) { start = addDays(today, 1); return { start, end: start }; }
-    if (['übermorgen', 'day after tomorrow'].includes(q)) { start = addDays(today, 2); return { start, end: start }; }
-
-    if (['wochenende', 'dieses wochenende', 'this weekend', 'weekend'].includes(q)) {
-        const sat = getNextDayOfWeek(6);
-        return { start: sat, end: addDays(sat, 1) };
-    }
-    if (['nächstes wochenende', 'next weekend'].includes(q)) {
-        const nextSat = addDays(getNextDayOfWeek(6), 7);
-        return { start: nextSat, end: addDays(nextSat, 1) };
-    }
-
-    if (['diese woche', 'this week'].includes(q)) {
-        const sun = getNextDayOfWeek(0);
-        return { start: today, end: sun };
-    }
-    if (['nächste woche', 'next week', 'kommende woche'].includes(q)) {
-        const nextMon = getNextDayOfWeek(1);
-        return { start: nextMon, end: addDays(nextMon, 6) };
-    }
-
-    if (['diesen monat', 'this month'].includes(q)) {
-        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        return { start: today, end: lastDay };
-    }
-    if (['nächster monat', 'nächsten monat', 'next month'].includes(q)) {
-        const firstDay = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        const lastDay = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-        return { start: firstDay, end: lastDay };
-    }
-
-    const weekdays: Record<string, number> = {
-        'sonntag': 0, 'sunday': 0, 'so': 0, 'sun': 0,
-        'montag': 1, 'monday': 1, 'mo': 1, 'mon': 1,
-        'dienstag': 2, 'tuesday': 2, 'di': 2, 'tue': 2,
-        'mittwoch': 3, 'wednesday': 3, 'mi': 3, 'wed': 3,
-        'donnerstag': 4, 'thursday': 4, 'do': 4, 'thu': 4,
-        'freitag': 5, 'friday': 5, 'fr': 5, 'fri': 5,
-        'samstag': 6, 'saturday': 6, 'sa': 6, 'sat': 6
-    };
-
-    if (weekdays[q] !== undefined) {
-        start = getNextDayOfWeek(weekdays[q]);
-        return { start, end: start };
-    }
-
-    const parts = q.split(' ');
-    if (parts.length === 2 && ['nächster', 'nächsten', 'next', 'kommender', 'kommenden'].includes(parts[0])) {
-        const day = weekdays[parts[1]];
-        if (day !== undefined) {
-            start = addDays(getNextDayOfWeek(day), 7);
-            return { start, end: start };
-        }
-    }
-
-    return null;
-  }
 
   const suggestions = $derived.by<SuggestionItem[]>(() => {
     const trimmed = query.trim();
@@ -843,10 +577,7 @@
 
   $effect(() => { query; selectedIndex = -1; });
 
-  function portal(node: HTMLElement) {
-    document.body.appendChild(node);
-    return { destroy() { node.remove(); } };
-  }
+
 
   function updateDropdownPosition() {
     if (!wrapperEl) return;
@@ -1025,86 +756,13 @@
 </WidgetCard>
 
 {#if isFocused && suggestions.length > 0}
-	<div
-			use:portal
-			style={dropdownStyle}
-			class="overflow-hidden rounded-xl border border-black/40 bg-neutral-900 shadow-2xl font-sans z-[99999]"
-	>
-		{#each suggestions as item, i}
-			<button
-					onmousedown={(e) => e.preventDefault()}
-					class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors group {i === selectedIndex ? 'bg-black/40' : 'hover:bg-black/20'}"
-					onclick={() => item.action()}
-			>
-				<div class="flex min-w-0 flex-col pr-2">
-      <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">{#if item.icon}<svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />{/if}<span>{item.title}</span></span>
-        {#if item.description && expandedItemId === item.id}
-          <div class="text-[12px] font-normal mt-1.5 text-neutral-400 leading-relaxed whitespace-pre-wrap">
-             {item.description}
-          </div>
-        {/if}
-					<span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : getBadgeColor(item.badge)}">
-        {#if copiedId === item.id}
-          <Check size={10} strokeWidth={3} /> Copied!
-        {:else}
-          {#if item.badge === 'FACT'}
-            <Search size={10} strokeWidth={3} />
-          {:else if item.badge === 'HISTORY'}
-            <Search size={10} strokeWidth={3} />
-          {:else if item.badge === 'CALENDAR'}
-            <Search size={10} strokeWidth={3} />
-          {:else if item.badge === 'WEATHER'}
-            <Sun size={10} strokeWidth={3} />
-          {/if}
-          {#if item.url}
-             <a href={item.url} target="_blank" rel="noopener noreferrer"
-                onmousedown={(e) => e.stopPropagation()}
-                onclick={(e) => e.stopPropagation()}
-                class="hover:underline hover:text-blue-300 transition-colors z-10 relative">
-               {item.subtitle} ↗
-             </a>
-          {:else}
-             {item.subtitle}
-          {/if}
-          {#if item.expandable}
-            <span class="opacity-50 mx-1">•</span>
-            {expandedItemId === item.id ? 'Click to collapse' : 'Click to read more'}
-          {/if}
-        {/if}
-      </span>
-				</div>
-				<div class="flex items-center shrink-0 relative justify-end">
-					<div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {getBadgeColor(item.badge)} transition-opacity duration-200 {item.onCopy || item.onDelete ? 'group-hover:opacity-0' : ''}">
-						{item.badge}
-					</div>
-					{#if item.onCopy || item.onDelete}
-						<div class="absolute right-0 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							{#if item.onCopy}
-								<div
-									onmousedown={(e) => e.preventDefault()}
-									onclick={(e) => { e.stopPropagation(); item.onCopy!(); }}
-									class="text-neutral-500 hover:text-white p-1 transition-colors cursor-pointer"
-									title="Copy details"
-								>
-									<Copy size={12} strokeWidth={2.5} />
-								</div>
-							{/if}
-							{#if item.onDelete}
-								<div
-									onmousedown={(e) => e.preventDefault()}
-									onclick={(e) => { e.stopPropagation(); item.onDelete!(); }}
-									class="text-neutral-500 hover:text-red-400 p-1 transition-colors cursor-pointer"
-									title="Delete from history"
-								>
-									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-								</div>
-							{/if}
-						</div>
-					{/if}
-				</div>
-			</button>
-		{/each}
-	</div>
+  <SuggestionList
+    {suggestions}
+    {selectedIndex}
+    {expandedItemId}
+    {copiedId}
+    {dropdownStyle}
+  />
 {/if}
 
 <SettingsDialog

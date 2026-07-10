@@ -72,7 +72,8 @@
 
     try {
       const targetUrl = encodeURIComponent(webhookUrl);
-      const res = await fetch(`${PROXY_URL}?target=${targetUrl}`);
+      const url = `${PROXY_URL}?target=${targetUrl}${force ? '&force=true' : ''}`;
+      const res = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const json = await res.json();
       if (json && json.merge_variables) {

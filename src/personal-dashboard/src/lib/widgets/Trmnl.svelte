@@ -80,7 +80,8 @@
 
     try {
       const fetchDisplay = fetch(`https://trmnl.com/api/display/current`, {
-        headers: { "access-token": accessToken }
+        headers: { "access-token": accessToken },
+        cache: force ? 'no-cache' : 'default'
       }).then(res => {
         if (res.status === 429) throw new Error("Rate limit hit");
         if (!res.ok) throw new Error(`Display API Error: ${res.status}`);
@@ -88,7 +89,8 @@
       });
 
       const fetchDevice = (deviceId && userApiKey) ? fetch(`https://trmnl.com/api/devices/${deviceId}`, {
-        headers: { "Authorization": `Bearer ${userApiKey}` }
+        headers: { "Authorization": `Bearer ${userApiKey}` },
+        cache: force ? 'no-cache' : 'default'
       }).then(res => {
         if (res.ok) return res.json();
         console.warn(`Device API returned ${res.status}`);

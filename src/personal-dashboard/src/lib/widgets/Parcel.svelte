@@ -110,8 +110,13 @@
 
     isLoading = true;
     try {
-      const res = await fetch(fetchEndpoint, {
-        headers: { "api-key": apiKey }
+      const url = `${fetchEndpoint}${force ? '&force=true' : ''}`;
+      const headers: Record<string, string> = { "api-key": apiKey };
+      if (force) headers['Cache-Control'] = 'no-cache';
+
+      const res = await fetch(url, {
+        headers,
+        cache: force ? 'no-cache' : 'default'
       });
       if (res.status === 429) return;
       if (!res.ok) throw new Error(`API Error: ${res.status}`);

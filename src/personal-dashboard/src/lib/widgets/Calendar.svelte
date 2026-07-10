@@ -117,14 +117,14 @@
     localStorage.setItem(`calendar-viewmode-${id}`, viewMode);
   }
 
-  async function fetchAllCalendars() {
+  async function fetchAllCalendars(force = false) {
     isLoading = true;
     const loadedCalendars: Calendar[] = [];
 
     for (const config of storedConfigs) {
       try {
-        const proxiedUrl = `${PROXY_URL}?target=${encodeURIComponent(config.url)}`;
-        const response = await fetch(proxiedUrl);
+        const url = `${PROXY_URL}?target=${encodeURIComponent(config.url)}${force ? '&force=true' : ''}`;
+        const response = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
 
         if (!response.ok) continue;
 
@@ -188,7 +188,7 @@
   async function saveAndCloseSettings() {
     saveSettingsLocally();
     showSettings = false;
-    await fetchAllCalendars();
+    await fetchAllCalendars(true);
   }
 
   function parseICS(icsData: string): CalendarEvent[] {

@@ -12,6 +12,7 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
     const allowedPrefixes = [
         "https://api.duckduckgo.com/",
         "https://query1.finance.yahoo.com/",
+        "https://query2.finance.yahoo.com/",
         "https://api.parcel.app/external", // For Parcel (GET & POST)
         "https://api.17track.net/", // For Parcel fallback
         "https://usetrmnl.com/", // For TRMNL
@@ -37,8 +38,10 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
         throw error(403, "Target URL is not permitted by proxy rules.");
     }
 
+    const forceRefresh = url.searchParams.get('force') === 'true' || request.headers.get('cache-control') === 'no-cache';
+
     // Check In-Memory Cache for GET requests
-    if (request.method === 'GET') {
+    if (request.method === 'GET' && !forceRefresh) {
         const cached = cache.get(targetUrl);
         if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
             return new Response(cached.body, {
@@ -53,12 +56,17 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
     }
 
     try {
+        const headers: Record<string, string> = {};
+        const forwardHeaders = ['content-type', 'user-agent', 'accept', 'accept-language'];
+        for (const h of forwardHeaders) {
+            if (request.headers.has(h)) {
+                headers[h] = request.headers.get(h)!;
+            }
+        }
+
         const options: RequestInit = {
             method: request.method,
-            headers: {
-                // Forward content-type if present
-                ...(request.headers.get('content-type') ? { 'Content-Type': request.headers.get('content-type')! } : {})
-            }
+            headers
         };
 
         if (request.method !== 'GET' && request.method !== 'HEAD') {

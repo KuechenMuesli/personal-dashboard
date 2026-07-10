@@ -157,6 +157,21 @@
 
 <style>
   textarea::-webkit-scrollbar-track { margin: 8px 0; }
-  :global(.prose h1) { font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; color: #fff; }
+  :global(.prose) { color: inherit !important; }
+  :global(.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6) { 
+    color: inherit !important; 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+  }
+  :global(.prose h1) { font-size: 1.25rem; margin-top: 0.5rem; }
+  :global(.prose h2) { font-size: 1.1rem; }
+  :global(.prose p, .prose ul, .prose ol, .prose li, .prose blockquote, .prose strong, .prose em, .prose a, .prose code, .prose pre) { 
+    color: inherit !important; 
+  }
+  :global(.prose a) { text-decoration: underline; opacity: 0.9; }
+  :global(.prose blockquote) { 
+    border-left-color: currentColor !important; 
+    opacity: 0.8; 
+  }
   :global(.prose p) { margin-bottom: 0.75rem; }
 </style>

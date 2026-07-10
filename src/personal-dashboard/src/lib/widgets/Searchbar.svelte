@@ -121,7 +121,7 @@
        const m = parseInt(dateMatch[2]);
        let y = dateMatch[3] ? parseInt(dateMatch[3]) : new Date().getFullYear();
        if (y < 100) y += 2000;
-       
+
        searchDateStart = new Date(y, m - 1, d);
        searchDateEnd = new Date(y, m - 1, d, 23, 59, 59, 999);
     } else if (naturalDateRange) {
@@ -133,7 +133,7 @@
     if (searchDateStart && searchDateEnd) {
        const todayStart = new Date();
        todayStart.setHours(0, 0, 0, 0);
-       
+
        if (searchDateStart < todayStart) searchDateStart = todayStart;
 
        const matchedEvents = localEvents.filter(e => {
@@ -358,7 +358,10 @@
       script.id = callbackName;
       script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(trimmed)}&jsonp=${callbackName}`;
       document.body.appendChild(script);
+    }, 200);
 
+    clearTimeout((window as any).smartDebounceTimer);
+    (window as any).smartDebounceTimer = setTimeout(() => {
       // 2. Smart Answers (Weather / Time / DuckDuckGo / Translate)
       const weatherMatch = trimmed.match(/^(?:(?:wetter|weather)\s+(?:in\s+)?(.+))|(?:(.+)\s+(?:wetter|weather))$/i);
       const timeMatch = trimmed.match(/^(?:(?:uhrzeit|time|wie sp[aä]t|how late)\s+(?:ist es\s+)?(?:in\s+)?(.+))|(?:(.+)\s+(?:uhrzeit|time))$/i);
@@ -378,7 +381,7 @@
          const codes = ['en','es','fr','de','it','pt','nl','ru','zh','ja','ko','ar','hi','tr','pl','sv','fi','da','no','el','cs','hu','ro','th','vi','id','uk','bg','hr','sk','sl','sr','et','lv','lt','he','fa'];
          const customAliases: Record<string, string> = { 'gb': 'en', 'us': 'en', 'uk': 'en', 'jp': 'ja', 'cn': 'zh', 'kr': 'ko', 'sp': 'es', 'gr': 'el' };
          const lookupWord = customAliases[lastWord] || lastWord;
-         
+
          try {
             const displayNamesLocal = new Intl.DisplayNames([navigator.language], { type: 'language' });
             const displayNamesEn = new Intl.DisplayNames(['en'], { type: 'language' });
@@ -486,9 +489,9 @@
                  const translatedText = data[0].map((s: any) => s[0]).join('');
                  const capitalizedLang = translationCandidate!.langName.charAt(0).toUpperCase() + translationCandidate!.langName.slice(1);
                  smartAnswer = {
-                   id: 'smart-translate', 
-                   title: translatedText, 
-                   subtitle: `Übersetzt auf ${capitalizedLang}`, 
+                   id: 'smart-translate',
+                   title: translatedText,
+                   subtitle: `Übersetzt auf ${capitalizedLang}`,
                    badge: 'TRANSLATE',
                    action: async () => {
                      await navigator.clipboard.writeText(translatedText);
@@ -605,10 +608,10 @@
 
     const handleGlobalKey = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') || isEditing) return;
-      
+
       const isPaste = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v';
       if (!isPaste && (e.ctrlKey || e.metaKey || e.altKey)) return;
-      
+
       if (e.key.length === 1 || isPaste) searchInput?.focus();
     };
 

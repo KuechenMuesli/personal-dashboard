@@ -31,10 +31,10 @@
   let inputSEl = $state<HTMLInputElement | null>(null);
   
   let wheelAccumulator = 0;
-  let isTouchpad = false;
 
   const isCompact = $derived(height <= 2);
   const isLarge = $derived(height >= 3);
+  const isNarrow = $derived(width <= 1);
   const isFinished = $derived(mode === "timer" && !isRunning && targetTimestamp !== null && (targetTimestamp - Date.now() <= 0));
 
   onMount(() => {
@@ -91,23 +91,11 @@
   function adjustWheel(e: WheelEvent, unit: 'h' | 'm' | 's') {
     if (isRunning || mode !== 'timer') return;
     e.preventDefault();
-    
-    // Heuristic for touchpad vs mouse wheel detection
-    if (e.deltaY !== 0) {
-      if (Math.abs(e.deltaY) < 50 || e.deltaX !== 0) {
-        isTouchpad = true;
-      } else if (Math.abs(e.deltaY) >= 100 && e.deltaX === 0) {
-        isTouchpad = false;
-      }
-    }
 
     wheelAccumulator += e.deltaY;
     if (Math.abs(wheelAccumulator) < 25) return;
     
-    let dir = wheelAccumulator < 0 ? 1 : -1;
-    if (isTouchpad) {
-      dir = -dir; // Invert direction for touchpads based on user feedback
-    }
+    const dir = wheelAccumulator < 0 ? 1 : -1;
     
     wheelAccumulator = 0;
 
@@ -226,7 +214,7 @@
 <WidgetCard isConfigured={true} padding={false}>
 	<div class="flex h-full w-full font-sans text-slate-200 overflow-hidden transition-all duration-500
     {isFinished ? 'bg-red-900/80 animate-pulse' : 'bg-transparent'}
-    {isCompact ? 'items-center px-2' : 'flex-col px-3 py-2'}">
+    {isCompact ? (isNarrow ? 'items-center justify-center px-1' : 'items-center px-2') : 'flex-col px-3 py-2'}">
 
 		{#if isLarge}
 			<div class="flex h-8 w-full shrink-0 items-center justify-between border-b border-black/20 mb-2">
@@ -240,15 +228,15 @@
 			</div>
 		{/if}
 
-		<div class="flex w-full {isCompact ? 'justify-between items-center' : 'flex-col items-center justify-around flex-1'}">
+		<div class="flex w-full {isCompact ? 'justify-between items-center' : 'flex-col items-center justify-around flex-1'} {isNarrow && isCompact ? 'gap-1' : ''}">
 
 			<div class="flex items-center">
-				<div class="font-normal tabular-nums tracking-tight {isLarge ? 'text-2xl' : 'text-base'} flex items-center transition-colors {mode !== 'timer' || isRunning ? 'opacity-80' : ''}">
+				<div class="font-normal tabular-nums tracking-tight {isLarge ? 'text-2xl' : (isNarrow ? 'text-sm' : 'text-base')} flex items-center transition-colors {mode !== 'timer' || isRunning ? 'opacity-80' : ''}">
 					{#if mode === 'timer'}
 						{#if isEditingTime}
-							<input bind:this={inputHEl} bind:value={editH} oninput={(e) => handlePartInput(e, 'h')} onblur={handlePartBlur} onkeydown={(e) => handlePartKeyDown(e, 'h')} class="bg-black/30 text-white font-inherit {isLarge ? 'text-2xl' : 'text-base'} tabular-nums tracking-tight rounded outline-none text-center border-none focus:ring-1 ring-blue-500/50 p-0 m-0 w-[1.4em] h-[1.2em] leading-none" /><span class="opacity-50 w-[0.5em] text-center inline-block">:</span><!--
-							--><input bind:this={inputMEl} bind:value={editM} oninput={(e) => handlePartInput(e, 'm')} onblur={handlePartBlur} onkeydown={(e) => handlePartKeyDown(e, 'm')} class="bg-black/30 text-white font-inherit {isLarge ? 'text-2xl' : 'text-base'} tabular-nums tracking-tight rounded outline-none text-center border-none focus:ring-1 ring-blue-500/50 p-0 m-0 w-[1.4em] h-[1.2em] leading-none" /><span class="opacity-50 w-[0.5em] text-center inline-block">:</span><!--
-							--><input bind:this={inputSEl} bind:value={editS} oninput={(e) => handlePartInput(e, 's')} onblur={handlePartBlur} onkeydown={(e) => handlePartKeyDown(e, 's')} class="bg-black/30 text-white font-inherit {isLarge ? 'text-2xl' : 'text-base'} tabular-nums tracking-tight rounded outline-none text-center border-none focus:ring-1 ring-blue-500/50 p-0 m-0 w-[1.4em] h-[1.2em] leading-none" />
+							<input bind:this={inputHEl} bind:value={editH} oninput={(e) => handlePartInput(e, 'h')} onblur={handlePartBlur} onkeydown={(e) => handlePartKeyDown(e, 'h')} class="bg-black/30 text-white font-inherit {isLarge ? 'text-2xl' : (isNarrow ? 'text-sm' : 'text-base')} tabular-nums tracking-tight rounded outline-none text-center border-none focus:ring-1 ring-blue-500/50 p-0 m-0 w-[1.4em] h-[1.2em] leading-none" /><span class="opacity-50 w-[0.5em] text-center inline-block">:</span><!--
+							--><input bind:this={inputMEl} bind:value={editM} oninput={(e) => handlePartInput(e, 'm')} onblur={handlePartBlur} onkeydown={(e) => handlePartKeyDown(e, 'm')} class="bg-black/30 text-white font-inherit {isLarge ? 'text-2xl' : (isNarrow ? 'text-sm' : 'text-base')} tabular-nums tracking-tight rounded outline-none text-center border-none focus:ring-1 ring-blue-500/50 p-0 m-0 w-[1.4em] h-[1.2em] leading-none" /><span class="opacity-50 w-[0.5em] text-center inline-block">:</span><!--
+							--><input bind:this={inputSEl} bind:value={editS} oninput={(e) => handlePartInput(e, 's')} onblur={handlePartBlur} onkeydown={(e) => handlePartKeyDown(e, 's')} class="bg-black/30 text-white font-inherit {isLarge ? 'text-2xl' : (isNarrow ? 'text-sm' : 'text-base')} tabular-nums tracking-tight rounded outline-none text-center border-none focus:ring-1 ring-blue-500/50 p-0 m-0 w-[1.4em] h-[1.2em] leading-none" />
 						{:else}
 							<span class="{isRunning ? '' : 'cursor-ns-resize hover:text-blue-400'} transition-colors rounded inline-block text-center w-[1.4em] h-[1.2em] leading-none" onwheel={(e) => adjustWheel(e, 'h')} onclick={() => startEditingTime('h')} role="presentation">{hStr}</span><span class="opacity-50 w-[0.5em] text-center inline-block">:</span><!--
 							--><span class="{isRunning ? '' : 'cursor-ns-resize hover:text-blue-400'} transition-colors rounded inline-block text-center w-[1.4em] h-[1.2em] leading-none" onwheel={(e) => adjustWheel(e, 'm')} onclick={() => startEditingTime('m')} role="presentation">{mStr}</span><span class="opacity-50 w-[0.5em] text-center inline-block">:</span><!--
@@ -262,11 +250,11 @@
 
 			<div class="flex items-center gap-0.5">
 				{#if isCompact}
-					<button onclick={cycleMode} disabled={isRunning} class="flex h-7 w-7 items-center justify-center rounded-lg bg-black/20 text-neutral-400 hover:bg-black/40 hover:text-white transition-colors disabled:opacity-50 shrink-0" title="Switch Mode">
+					<button onclick={cycleMode} disabled={isRunning} class="flex {isNarrow ? 'h-6 w-6' : 'h-7 w-7'} items-center justify-center rounded-lg bg-black/20 text-neutral-400 hover:bg-black/40 hover:text-white transition-colors disabled:opacity-50 shrink-0" title="Switch Mode">
 						{#if mode === 'timer'}
-							<Timer size={12} strokeWidth={2.5} />
+							<Timer size={isNarrow ? 10 : 12} strokeWidth={2.5} />
 						{:else}
-							<Clock size={12} strokeWidth={2.5} />
+							<Clock size={isNarrow ? 10 : 12} strokeWidth={2.5} />
 						{/if}
 					</button>
 				{/if}
@@ -275,12 +263,12 @@
 						onclick={toggle}
 						class="flex shrink-0 items-center justify-center rounded-lg transition-all active:scale-90
 					{isFinished ? 'bg-white text-red-900 shadow-lg' : 'bg-black/30 text-slate-200 hover:bg-black/40 hover:text-white'}
-					{isLarge ? 'h-10 w-10 mt-2' : 'h-7 w-7'}"
+					{isLarge ? 'h-10 w-10 mt-2' : (isNarrow ? 'h-6 w-6' : 'h-7 w-7')}"
 				>
 					{#if isRunning}
-						<Pause size={isLarge ? 16 : 12} strokeWidth={2.5} fill="currentColor" />
+						<Pause size={isLarge ? 16 : (isNarrow ? 10 : 12)} strokeWidth={2.5} fill="currentColor" />
 					{:else}
-						<Play size={isLarge ? 16 : 12} strokeWidth={2.5} fill="currentColor" class="ml-0.5" />
+						<Play size={isLarge ? 16 : (isNarrow ? 10 : 12)} strokeWidth={2.5} fill="currentColor" class="ml-0.5" />
 					{/if}
 				</button>
 			</div>

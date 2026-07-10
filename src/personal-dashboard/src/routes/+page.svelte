@@ -58,7 +58,7 @@
   });
 
   let containerWidth = $state(0);
-  let columns = $derived(containerWidth < 640 ? 2 : 9);
+  let columns = $derived(containerWidth < 640 ? 2 : containerWidth < 1024 ? 3 : 9);
   let colPixelWidth = $derived(containerWidth / columns);
   const ROW_HEIGHT = 50;
   const PREVIEW_UNIT_W = 16;
@@ -74,7 +74,14 @@
 
     let packedLayout: (typeof dashboardLayout[0])[] = [];
 
-    const sorted = [...dashboardLayout].sort((a, b) => a.y - b.y || a.x - b.x);
+    const sorted = [...dashboardLayout].sort((a, b) => {
+      const pA = a.type === 'searchbar' ? 0 : a.type === 'favorites' ? 1 : 2;
+      const pB = b.type === 'searchbar' ? 0 : b.type === 'favorites' ? 1 : 2;
+      
+      if (pA !== pB) return pA - pB;
+      
+      return a.y - b.y || a.x - b.x;
+    });
 
     for (const w of sorted) {
       const mobileWidget = { ...w, width: Math.min(w.width, columns) };
@@ -99,11 +106,26 @@
       }
     }
 
+    let expanded = true;
+    while (expanded) {
+      expanded = false;
+      for (const w of packedLayout) {
+        if (w.x + w.width < columns) {
+          const potentialRect = { x: w.x + w.width, y: w.y, width: 1, height: w.height };
+          const hasCollision = packedLayout.some(existing => existing !== w && isOverlapping(potentialRect, existing));
+          if (!hasCollision) {
+            w.width += 1;
+            expanded = true;
+          }
+        }
+      }
+    }
+
     return packedLayout;
   });
 
   $effect(() => {
-    if (containerWidth > 0 && containerWidth < 640 && isEditing) {
+    if (columns < 9 && isEditing) {
       isEditing = false;
       showPickerDialog = false;
     }
@@ -478,7 +500,7 @@
 	{/each}
 </div>
 
-{#if containerWidth >= 640}
+{#if columns >= 9}
 	<div class="fixed bottom-8 right-8 z-[1000] flex flex-col gap-4">
 		{#if isEditing}
 			<label class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105">

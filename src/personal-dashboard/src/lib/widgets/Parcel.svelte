@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, getContext } from "svelte";
   import { page } from "$app/stores";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
@@ -18,6 +18,8 @@
     showSettings: boolean;
     hidden: boolean;
   }>();
+
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
 
   const PROXY_URL = "/api/proxy";
   const TARGET_API_BASE = "https://api.parcel.app/external";
@@ -66,6 +68,13 @@
   );
 
   $effect(() => {
+    const secrets = getSecrets();
+    if (secrets[id] && typeof secrets[id] === 'string') {
+        apiKey = secrets[id];
+    }
+  });
+
+  $effect(() => {
     if (isEditing || showSettings) {
       hidden = false;
     } else {
@@ -83,20 +92,22 @@
     return () => clearInterval(refreshTimer);
   });
 
+  $effect(() => {
+    if (isConfigured && deliveries.length === 0 && !isLoading) {
+       const timeSinceLastFetch = Date.now() - lastFetched;
+       if (timeSinceLastFetch > COOLDOWN_MS) fetchDeliveries();
+    }
+  });
+
   function loadSettings() {
     const saved = localStorage.getItem(`parcel-settings-${id}`);
     const cachedData = localStorage.getItem(`parcel-cache-${id}`);
 
-    const serverApiKey = $page.data.secrets?.[id];
-
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        apiKey = serverApiKey || parsed.apiKey || "";
         filterMode = parsed.filterMode || "recent";
       } catch (e) { console.error(e); }
-    } else {
-        apiKey = serverApiKey || "";
     }
 
     if (cachedData) {
@@ -184,11 +195,9 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ service: id, key: apiKey })
             });
-            localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ filterMode }));
         } catch (e) { console.error("Failed to save secret", e); }
-    } else {
-        localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ apiKey, filterMode }));
     }
+    localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ filterMode }));
     showSettings = false;
     fetchDeliveries(true);
   }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, getContext } from "svelte";
   import { slide } from "svelte/transition";
   import { page } from "$app/stores";
   import { RefreshCw, ListTodo, AlertCircle, Clock, CheckCircle2, Circle } from "lucide-svelte";
@@ -9,6 +9,8 @@
   let { id, isEditing, height, width, showSettings = $bindable(false) } = $props<{
     id: string; isEditing: boolean; height: number; width: number; showSettings: boolean;
   }>();
+
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
 
   const PROXY_URL = "/api/proxy";
   const COOLDOWN_MS = 10 * 60 * 1000;
@@ -36,19 +38,14 @@
   const isWide = $derived(width >= 3);
   const isCompact = $derived(height <= 2);
 
-  onMount(() => {
-    const serverSecrets = $page.data.secrets?.[id];
-    const savedSettings = localStorage.getItem(`reminders-settings-${id}`);
-    
-    if (serverSecrets && serverSecrets.webhookUrl !== undefined) {
-        webhookUrl = serverSecrets.webhookUrl || "";
-    } else if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        webhookUrl = parsed.webhookUrl || "";
-      } catch (e) { console.error(e); }
+  $effect(() => {
+    const secrets = getSecrets();
+    if (secrets[id] && secrets[id].webhookUrl !== undefined) {
+        webhookUrl = secrets[id].webhookUrl || "";
     }
+  });
 
+  onMount(() => {
     const cache = localStorage.getItem(`reminders-cache-${id}`);
     if (cache) {
       try {
@@ -63,6 +60,13 @@
       if (!reminders || isStale) fetchReminders();
     }
     refreshTimer = setInterval(() => fetchReminders(), COOLDOWN_MS);
+  });
+
+  $effect(() => {
+    if (isConfigured && !reminders && !isLoading) {
+       const timeSinceLastFetch = Date.now() - lastFetched;
+       if (timeSinceLastFetch > COOLDOWN_MS) fetchReminders();
+    }
   });
 
   onDestroy(() => clearInterval(refreshTimer));
@@ -107,8 +111,6 @@
             });
             localStorage.removeItem(`reminders-settings-${id}`);
         } catch (e) { console.error("Failed to save TRMNL Reminders secrets", e); }
-    } else {
-        localStorage.setItem(`reminders-settings-${id}`, JSON.stringify({ webhookUrl }));
     }
     showSettings = false;
     fetchReminders(true);

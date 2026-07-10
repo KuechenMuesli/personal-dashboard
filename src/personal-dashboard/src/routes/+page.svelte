@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, setContext } from "svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import type { StoredWidget } from '../types/stored-widget';
   import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut} from "lucide-svelte";
@@ -7,6 +7,10 @@
   let { data } = $props();
   let session = $derived(data.session);
   let supabase = $derived(data.supabase);
+
+  // Global secrets state accessible by widgets
+  let globalSecrets = $state<Record<string, any>>({});
+  setContext('secrets', () => globalSecrets);
 
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
@@ -64,16 +68,28 @@
 
     // 2. Background Sync
     if (session && supabase) {
-      const { data: dbData } = await supabase
-        .from('layouts')
-        .select(`
-          id, theme, updated_at,
-          widgets ( id, type, x, y, w, h )
-        `)
-        .eq('user_id', session.user.id)
-        .order('is_active', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [layoutsRes, secretsRes] = await Promise.all([
+        supabase
+          .from('layouts')
+          .select(`
+            id, theme, updated_at,
+            widgets ( id, type, x, y, w, h )
+          `)
+          .eq('user_id', session.user.id)
+          .order('is_active', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('user_secrets')
+          .select('secrets')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+      ]);
+
+      const dbData = layoutsRes.data;
+      if (secretsRes.data?.secrets) {
+         globalSecrets = secretsRes.data.secrets;
+      }
 
       if (dbData) {
         currentLayoutId = dbData.id;
@@ -83,25 +99,34 @@
 
         // If cloud is newer, OR local is missing, OR local is just the untouched default
         if (remoteTimestamp > localTimestamp || !hasLocal || isDefault) {
-          if (remoteThemeObj.dump) {
-            Object.entries(remoteThemeObj.dump).forEach(([key, value]) => {
-               localStorage.setItem(key, value as string);
-            });
-          }
           if (dbData.widgets) {
-            const layout = dbData.widgets.map((w: any) => ({
-              id: w.id, type: w.type, x: w.x, y: w.y, width: w.w, height: w.h
-            }));
+            const layout = dbData.widgets.map((w: any) => {
+              const c = w.custom_data || {};
+              if (c.calendarViewmode) localStorage.setItem(`calendar-viewmode-${w.id}`, c.calendarViewmode);
+              if (c.generalSettings) localStorage.setItem(`general-settings-${w.id}`, c.generalSettings);
+              if (c.colorpicker) localStorage.setItem(`colorpicker-${w.id}`, c.colorpicker);
+              if (c.webviewSettings) localStorage.setItem(`webview-settings-${w.id}`, c.webviewSettings);
+              if (c.favoritesSettings) localStorage.setItem(`favorites-settings-${w.id}`, c.favoritesSettings);
+              if (c.noteSettings) localStorage.setItem(`note-settings-${w.id}`, c.noteSettings);
+              if (c.noteMode) localStorage.setItem(`note-mode-${w.id}`, c.noteMode);
+              if (c.parcelSettings) localStorage.setItem(`parcel-settings-${w.id}`, c.parcelSettings);
+              if (c.searchHistory) localStorage.setItem(`search-history-${w.id}`, c.searchHistory);
+              if (c.searchSettings) localStorage.setItem(`search-settings-${w.id}`, c.searchSettings);
+              if (c.stockSettings) localStorage.setItem(`stock-settings-${w.id}`, c.stockSettings);
+              if (c.timerSettings) localStorage.setItem(`timer-settings-${w.id}`, c.timerSettings);
+
+              return { id: w.id, type: w.type, x: w.x, y: w.y, width: w.w, height: w.h, showSettings: false };
+            });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+            dashboardLayout = layout;
           }
           if (remoteThemeObj.theme) {
             localStorage.setItem('dashboard-theme', remoteThemeObj.theme);
+            globalTheme = remoteThemeObj.theme;
           }
           localStorage.setItem('dashboard-timestamp', remoteTimestamp.toString());
           localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
           localStorage.removeItem('dashboard-is-default');
-          
-          window.location.reload();
           return;
         } else if (localTimestamp > remoteTimestamp) {
           syncUp();
@@ -114,7 +139,13 @@
         }
       }
     } else {
-      // Offline mode / Not logged in
+      // User is offline or login failed
+      // Clear local state if it's not the default layout to prevent data leaks
+      if (hasLocal && !isDefault) {
+          localStorage.clear();
+          window.location.reload();
+          return;
+      }
       if (!hasLocal) {
         generateWelcomeLayout();
       }
@@ -157,19 +188,11 @@
     const timestamp = Date.now();
     localStorage.setItem('dashboard-timestamp', timestamp.toString());
 
-    const dump: Record<string, string> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && !key.startsWith('sb-') && !key.includes('auth-token') && key !== 'dashboard-layout' && key !== 'dashboard-timestamp' && key !== 'dashboard-theme') {
-        dump[key] = localStorage.getItem(key) || "";
-      }
-    }
-
     if (!currentLayoutId) {
        currentLayoutId = localStorage.getItem('dashboard-layout-id');
     }
 
-    const themeObj = { theme: globalTheme, dump };
+    const themeObj = { theme: globalTheme };
 
     if (!currentLayoutId) {
       const { data } = await supabase.from('layouts').insert({
@@ -193,15 +216,56 @@
     }
 
     if (currentLayoutId) {
-      const widgetsToUpsert = dashboardLayout.map(w => ({
-        id: w.id,
-        layout_id: currentLayoutId,
-        type: w.type,
-        x: w.x,
-        y: w.y,
-        w: w.width,
-        h: w.height
-      }));
+      const widgetsToUpsert = dashboardLayout.map(w => {
+        const custom_data: any = {};
+        
+        const calendarViewmode = localStorage.getItem(`calendar-viewmode-${w.id}`);
+        if (calendarViewmode) custom_data.calendarViewmode = calendarViewmode;
+        
+        const generalSettings = localStorage.getItem(`general-settings-${w.id}`);
+        if (generalSettings) custom_data.generalSettings = generalSettings;
+        
+        const colorpicker = localStorage.getItem(`colorpicker-${w.id}`);
+        if (colorpicker) custom_data.colorpicker = colorpicker;
+        
+        const webviewSettings = localStorage.getItem(`webview-settings-${w.id}`);
+        if (webviewSettings) custom_data.webviewSettings = webviewSettings;
+        
+        const favoritesSettings = localStorage.getItem(`favorites-settings-${w.id}`);
+        if (favoritesSettings) custom_data.favoritesSettings = favoritesSettings;
+        
+        const noteSettings = localStorage.getItem(`note-settings-${w.id}`);
+        if (noteSettings) custom_data.noteSettings = noteSettings;
+        
+        const noteMode = localStorage.getItem(`note-mode-${w.id}`);
+        if (noteMode) custom_data.noteMode = noteMode;
+        
+        const parcelSettings = localStorage.getItem(`parcel-settings-${w.id}`);
+        if (parcelSettings) custom_data.parcelSettings = parcelSettings;
+        
+        const searchHistory = localStorage.getItem(`search-history-${w.id}`);
+        if (searchHistory) custom_data.searchHistory = searchHistory;
+        
+        const searchSettings = localStorage.getItem(`search-settings-${w.id}`);
+        if (searchSettings) custom_data.searchSettings = searchSettings;
+        
+        const stockSettings = localStorage.getItem(`stock-settings-${w.id}`);
+        if (stockSettings) custom_data.stockSettings = stockSettings;
+        
+        const timerSettings = localStorage.getItem(`timer-settings-${w.id}`);
+        if (timerSettings) custom_data.timerSettings = timerSettings;
+
+        return {
+          id: w.id,
+          layout_id: currentLayoutId,
+          type: w.type,
+          x: w.x,
+          y: w.y,
+          w: w.width,
+          h: w.height,
+          custom_data
+        };
+      });
       
       // Upsert widgets
       if (widgetsToUpsert.length > 0) {

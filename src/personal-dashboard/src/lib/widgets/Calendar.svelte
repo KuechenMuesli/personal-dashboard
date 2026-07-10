@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, getContext } from "svelte";
   import { slide } from "svelte/transition";
   import { page } from "$app/stores";
   import { Clock, MapPin, FileText, Pencil, X, GripVertical } from "lucide-svelte";
@@ -46,6 +46,8 @@
     showSettings: boolean;
   }>();
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
+
   let storedConfigs = $state<StoredCalendar[]>([]);
   let calendarsData = $state<Calendar[]>([]);
   let viewMode = $state<"today" | "upcoming" | "grouped">("upcoming");
@@ -64,6 +66,13 @@
   const isHeight1 = $derived(height === 1);
   const isLarge = $derived(height >= 3);
   const isConfigured = $derived(storedConfigs.length > 0);
+
+  $effect(() => {
+    const secrets = getSecrets();
+    if (secrets[id] && Array.isArray(secrets[id])) {
+      storedConfigs = secrets[id];
+    }
+  });
 
   const upcomingEvents = $derived(() => {
     const now = new Date();
@@ -102,20 +111,16 @@
     return () => clearInterval(refreshTimer);
   });
 
+  $effect(() => {
+     if (isConfigured && calendarsData.length === 0 && !isLoading) {
+         fetchAllCalendars();
+     }
+  });
+
   function loadSettings() {
     const savedMode = localStorage.getItem(`calendar-viewmode-${id}`);
     if (savedMode === "grouped" || savedMode === "upcoming" || savedMode === "today") {
       viewMode = savedMode;
-    }
-    
-    const serverSecrets = $page.data.secrets?.[id];
-    if (serverSecrets && Array.isArray(serverSecrets)) {
-        storedConfigs = serverSecrets;
-    } else {
-        const saved = localStorage.getItem(`stored-calendars-${id}`);
-        if (saved) {
-          try { storedConfigs = JSON.parse(saved); } catch (e) { console.error(e); }
-        }
     }
   }
 
@@ -131,10 +136,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ service: id, key: storedConfigs })
             });
-            localStorage.removeItem(`stored-calendars-${id}`);
+            localStorage.removeItem(`stored-calendars-${id}`); // cleanup just in case
         } catch (e) { console.error("Failed to save calendar configs", e); }
-    } else {
-        localStorage.setItem(`stored-calendars-${id}`, JSON.stringify(storedConfigs));
     }
   }
 

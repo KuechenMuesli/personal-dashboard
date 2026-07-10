@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, getContext } from "svelte";
   import { page } from "$app/stores";
   import { RefreshCw, BatteryWarning } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
@@ -14,6 +14,7 @@
     id: string; isEditing: boolean; showSettings: boolean; hidden: boolean;
   }>();
 
+  const getSecrets = getContext<() => Record<string, any>>('secrets');
   const COOLDOWN_MS = 15 * 60 * 1000;
   const BATTERY_THRESHOLD = 20;
 
@@ -31,6 +32,15 @@
   let timeUntilNext = $derived(Math.max(0, Math.ceil((COOLDOWN_MS - (Date.now() - lastFetched)) / 1000 / 60)));
 
   $effect(() => {
+    const secrets = getSecrets();
+    if (secrets[id] && typeof secrets[id] === 'object') {
+        accessToken = secrets[id].accessToken || "";
+        userApiKey = secrets[id].userApiKey || "";
+        deviceId = secrets[id].deviceId || "";
+    }
+  });
+
+  $effect(() => {
     if (isEditing || showSettings) {
       hidden = false;
     } else {
@@ -39,22 +49,6 @@
   });
 
   onMount(() => {
-    const saved = localStorage.getItem(`trmnl-settings-${id}`);
-    const serverSecrets = $page.data.secrets?.[id];
-    
-    if (serverSecrets) {
-        accessToken = serverSecrets.accessToken || "";
-        userApiKey = serverSecrets.userApiKey || "";
-        deviceId = serverSecrets.deviceId || "";
-    } else if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        accessToken = parsed.accessToken || "";
-        userApiKey = parsed.userApiKey || "";
-        deviceId = parsed.deviceId || "";
-      } catch (e) { console.error(e); }
-    }
-
     const cache = localStorage.getItem(`trmnl-cache-${id}`);
     if (cache) {
       try {
@@ -65,10 +59,13 @@
       } catch (e) { console.error(e); }
     }
 
+  });
+
+  $effect(() => {
     if (accessToken) {
       const isStale = Date.now() - lastFetched > COOLDOWN_MS;
       if (!screenshotUrl || isStale) {
-        fetchTrmnlData();
+        if (!isLoading) fetchTrmnlData();
       }
     }
   });
@@ -158,8 +155,6 @@
             });
             localStorage.removeItem(`trmnl-settings-${id}`);
         } catch (e) { console.error("Failed to save TRMNL secrets", e); }
-    } else {
-        localStorage.setItem(`trmnl-settings-${id}`, JSON.stringify({ accessToken, userApiKey, deviceId }));
     }
     showSettings = false;
     fetchTrmnlData(true);

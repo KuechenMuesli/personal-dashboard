@@ -479,19 +479,32 @@
                } catch(e) { smartAnswer = null; }
              } else smartAnswer = null;
           }).catch(() => smartAnswer = null);
-      } else if (translationCandidate && translationCandidate.text !== lastSmartQuery) {
-         lastSmartQuery = translationCandidate.text;
+      } else if (translationCandidate && `translate:${translationCandidate.targetCode}:${translationCandidate.text}` !== lastSmartQuery) {
+         lastSmartQuery = `translate:${translationCandidate.targetCode}:${translationCandidate.text}`;
          const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${translationCandidate.targetCode}&dt=t&q=${encodeURIComponent(translationCandidate.text)}`;
          fetch(`/api/proxy?target=${encodeURIComponent(url)}`)
            .then(res => res.json())
            .then(data => {
               if (data && data[0] && data[0].length > 0) {
                  const translatedText = data[0].map((s: any) => s[0]).join('');
-                 const capitalizedLang = translationCandidate!.langName.charAt(0).toUpperCase() + translationCandidate!.langName.slice(1);
+                 
+                 const sourceCode = data[2] || 'auto';
+                 let sourceLangName = sourceCode;
+                 let targetLangName = translationCandidate!.targetCode;
+                 
+                 try {
+                    const displayNames = new Intl.DisplayNames([navigator.language], { type: 'language' });
+                    sourceLangName = displayNames.of(sourceCode) || sourceCode;
+                    targetLangName = displayNames.of(translationCandidate!.targetCode) || targetLangName;
+                 } catch(e) {}
+                 
+                 const capitalizedSource = sourceLangName.charAt(0).toUpperCase() + sourceLangName.slice(1);
+                 const capitalizedTarget = targetLangName.charAt(0).toUpperCase() + targetLangName.slice(1);
+
                  smartAnswer = {
-                   id: 'smart-translate',
-                   title: translatedText,
-                   subtitle: `Übersetzt auf ${capitalizedLang}`,
+                   id: 'smart-translate', 
+                   title: translatedText, 
+                   subtitle: `${capitalizedSource} → ${capitalizedTarget}`, 
                    badge: 'TRANSLATE',
                    action: async () => {
                      await navigator.clipboard.writeText(translatedText);

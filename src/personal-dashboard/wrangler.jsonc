@@ -10,5 +10,9 @@
   },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "PUBLIC_SUPABASE_URL": "https://hrnfmojuntnffcidihnl.supabase.co",
+    "PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_sFjAFWwI8TNQWrgkkB2mfw_tX63W9DV"
   }
 }

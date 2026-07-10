@@ -19,6 +19,7 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
         "https://trmnl.com/", // For TRMNL alternative
         "https://de.wikipedia.org/w/api.php", // For DuckDuckGo fallback
         "https://en.wikipedia.org/w/api.php",
+        "https://translate.googleapis.com/", // For Searchbar translation
     ];
 
     let isAllowed = false;

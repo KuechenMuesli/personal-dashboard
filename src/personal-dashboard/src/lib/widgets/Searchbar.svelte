@@ -242,6 +242,7 @@
       case 'CONV': return 'text-cyan-400';
       case 'WEATHER': return 'text-sky-400';
       case 'TIME': return 'text-indigo-400';
+      case 'TRANSLATE': return 'text-violet-400';
       default: return 'text-emerald-400';
     }
   }
@@ -624,9 +625,60 @@
       script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(trimmed)}&jsonp=${callbackName}`;
       document.body.appendChild(script);
 
-      // 2. Smart Answers (Weather / Time / DuckDuckGo)
+      // 2. Smart Answers (Weather / Time / DuckDuckGo / Translate)
       const weatherMatch = trimmed.match(/^(?:(?:wetter|weather)\s+(?:in\s+)?(.+))|(?:(.+)\s+(?:wetter|weather))$/i);
       const timeMatch = trimmed.match(/^(?:(?:uhrzeit|time|wie sp[aä]t|how late)\s+(?:ist es\s+)?(?:in\s+)?(.+))|(?:(.+)\s+(?:uhrzeit|time))$/i);
+
+      let translationCandidate: {text: string, targetCode: string, langName: string} | null = null;
+      const trimmedLower = trimmed.toLowerCase();
+      const translatePrefixMatch = trimmedLower.match(/^(?:translate|übersetze|übersetzen)\s+(.+)$/);
+      const translateSuffixMatch = trimmedLower.match(/^(.+?)\s+(?:übersetzung|translate)$/);
+
+      let explicitTargetCode: string | null = null;
+      let explicitLangName: string | null = null;
+      let textToTranslate = "";
+
+      const words = trimmed.split(/\s+/);
+      if (words.length >= 2) {
+         const lastWord = words[words.length - 1].toLowerCase();
+         const codes = ['en','es','fr','de','it','pt','nl','ru','zh','ja','ko','ar','hi','tr','pl','sv','fi','da','no','el','cs','hu','ro','th','vi','id','uk','bg','hr','sk','sl','sr','et','lv','lt','he','fa'];
+         const customAliases: Record<string, string> = { 'gb': 'en', 'us': 'en', 'uk': 'en', 'jp': 'ja', 'cn': 'zh', 'kr': 'ko', 'sp': 'es', 'gr': 'el' };
+         const lookupWord = customAliases[lastWord] || lastWord;
+         
+         try {
+            const displayNamesLocal = new Intl.DisplayNames([navigator.language], { type: 'language' });
+            const displayNamesEn = new Intl.DisplayNames(['en'], { type: 'language' });
+            for (const code of codes) {
+               const nameLocal = displayNamesLocal.of(code)?.toLowerCase();
+               const nameEn = displayNamesEn.of(code)?.toLowerCase();
+               if (nameLocal === lookupWord || nameEn === lookupWord || code === lookupWord) {
+                  explicitTargetCode = code;
+                  explicitLangName = lastWord;
+                  break;
+               }
+            }
+         } catch(e) {}
+
+         if (explicitTargetCode) {
+            const prep = words[words.length - 2].toLowerCase();
+            if (['auf', 'in', 'to', 'into', 'nach'].includes(prep)) {
+               textToTranslate = words.slice(0, words.length - 2).join(' ');
+            } else {
+               textToTranslate = words.slice(0, words.length - 1).join(' ');
+            }
+            textToTranslate = textToTranslate.replace(/^(?:translate|übersetze|übersetzen)\s+/i, '').trim();
+         }
+      }
+
+      if (explicitTargetCode && textToTranslate) {
+         translationCandidate = { text: textToTranslate, targetCode: explicitTargetCode, langName: explicitLangName! };
+      } else if (translatePrefixMatch || translateSuffixMatch) {
+         const text = translatePrefixMatch ? translatePrefixMatch[1] : translateSuffixMatch![1];
+         const nativeCode = navigator.language.split('-')[0];
+         let nativeLangName = nativeCode;
+         try { nativeLangName = new Intl.DisplayNames([navigator.language], { type: 'language' }).of(nativeCode) || nativeCode; } catch(e) {}
+         translationCandidate = { text, targetCode: nativeCode, langName: nativeLangName };
+      }
 
       const weatherLoc = weatherMatch ? (weatherMatch[1] || weatherMatch[2]) : null;
       const timeLoc = timeMatch ? (timeMatch[1] || timeMatch[2]) : null;
@@ -690,7 +742,29 @@
                } catch(e) { smartAnswer = null; }
              } else smartAnswer = null;
           }).catch(() => smartAnswer = null);
-      } else if (!weatherMatch && !timeMatch && trimmed !== lastSmartQuery && trimmed.length > 3) {
+      } else if (translationCandidate && translationCandidate.text !== lastSmartQuery) {
+         lastSmartQuery = translationCandidate.text;
+         const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${translationCandidate.targetCode}&dt=t&q=${encodeURIComponent(translationCandidate.text)}`;
+         fetch(`/api/proxy?target=${encodeURIComponent(url)}`)
+           .then(res => res.json())
+           .then(data => {
+              if (data && data[0] && data[0].length > 0) {
+                 const translatedText = data[0].map((s: any) => s[0]).join('');
+                 const capitalizedLang = translationCandidate!.langName.charAt(0).toUpperCase() + translationCandidate!.langName.slice(1);
+                 smartAnswer = {
+                   id: 'smart-translate', 
+                   title: translatedText, 
+                   subtitle: `Übersetzt auf ${capitalizedLang}`, 
+                   badge: 'TRANSLATE',
+                   action: async () => {
+                     await navigator.clipboard.writeText(translatedText);
+                     copiedId = 'smart-translate';
+                     setTimeout(() => copiedId = null, 1500);
+                   }
+                 };
+              } else smartAnswer = null;
+           }).catch(() => smartAnswer = null);
+      } else if (!weatherMatch && !timeMatch && !translationCandidate && trimmed !== lastSmartQuery && trimmed.length > 3) {
          lastSmartQuery = trimmed;
          const lang = navigator.language.toLowerCase();
          const targetUrl = encodeURIComponent(`https://api.duckduckgo.com/?q=${encodeURIComponent(trimmed)}&format=json&kl=${lang}`);

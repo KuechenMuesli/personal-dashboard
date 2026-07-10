@@ -6,7 +6,7 @@
 
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
-    favorites:        { name: "Favorites", load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    favorites:        { name: "Favorites", load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
     note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false },
     parcel:           { name: "Parcel Tracker", load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true },
     trmnl:            { name: "TRMNL Current Screen", load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true },
@@ -30,7 +30,7 @@
   let showPickerDialog = $state(false);
   let showGlobalSettings = $state(false);
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
-  
+
   const THEMES = [
     { id: 'theme-default', name: 'Default Dark', colors: ['#121212', '#262626', '#3b82f6'] },
     { id: 'theme-oled', name: 'OLED Black', colors: ['#000000', '#0a0a0a', '#38bdf8'] },
@@ -45,7 +45,7 @@
   onMount(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) dashboardLayout = JSON.parse(saved);
-    
+
     const savedTheme = localStorage.getItem('dashboard-theme');
     if (savedTheme) globalTheme = savedTheme;
   });
@@ -77,9 +77,9 @@
     const sorted = [...dashboardLayout].sort((a, b) => {
       const pA = a.type === 'searchbar' ? 0 : a.type === 'favorites' ? 1 : 2;
       const pB = b.type === 'searchbar' ? 0 : b.type === 'favorites' ? 1 : 2;
-      
+
       if (pA !== pB) return pA - pB;
-      
+
       return a.y - b.y || a.x - b.x;
     });
 
@@ -563,8 +563,8 @@
 	</div>
 </SettingsDialog>
 
-<SettingsDialog 
-	title="Global Settings" 
+<SettingsDialog
+	title="Global Settings"
 	bind:show={showGlobalSettings}
 	data={[globalTheme]}
 	onRevert={(r) => globalTheme = r[0]}
@@ -574,8 +574,8 @@
 		<h4 class="text-xs font-bold uppercase tracking-widest text-neutral-500">Theme Settings</h4>
 		<div class="grid grid-cols-2 gap-3">
 			{#each THEMES as theme}
-				<button 
-					class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between h-[80px] {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}" 
+				<button
+					class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between h-[80px] {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
 					onclick={() => globalTheme = theme.id}
 				>
 					<div class="font-bold text-sm text-slate-200">{theme.name}</div>

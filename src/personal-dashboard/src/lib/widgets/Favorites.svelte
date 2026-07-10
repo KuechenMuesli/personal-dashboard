@@ -180,10 +180,20 @@
 					</div>
 
 					<div class="relative flex items-center shrink-0 group">
-						<input type="color" bind:value={fav.color} class="h-8 w-8 cursor-pointer rounded border border-black/40 bg-neutral-900" />
+						<div class="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-black/40 bg-neutral-900 flex items-center justify-center">
+							{#if fav.color === '#232323'}
+								<div class="absolute inset-0 bg-neutral-800 flex items-center justify-center">
+									<div class="w-[150%] h-px bg-red-500/30 absolute -rotate-45"></div>
+								</div>
+							{:else}
+								<div class="absolute inset-0" style="background-color: {fav.color}"></div>
+							{/if}
+							<input type="color" bind:value={fav.color} class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-0" />
+						</div>
+
 						{#if fav.color !== '#232323'}
 							<button 
-								class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+								class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
 								onclick={() => fav.color = '#232323'}
 								title="Reset color"
 							>
@@ -209,10 +219,10 @@
 						</div>
 					</button>
 
-					<input type="text" bind:value={fav.name} placeholder="Name" class="w-20 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
-					<input type="text" bind:value={fav.url} placeholder="https://..." class="flex-1 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
+					<input type="text" bind:value={fav.name} placeholder="Name" class="w-20 shrink-0 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
+					<input type="text" bind:value={fav.url} placeholder="https://..." class="flex-1 min-w-0 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
 
-					<button class="p-1 text-neutral-600 hover:text-red-500 transition-colors" onclick={() => favorites.splice(i, 1)}>
+					<button class="p-1 shrink-0 text-neutral-600 hover:text-red-500 transition-colors z-10" onclick={() => favorites = favorites.filter((_, idx) => idx !== i)}>
 						<X size={16} strokeWidth={2.5} />
 					</button>
 			{/snippet}

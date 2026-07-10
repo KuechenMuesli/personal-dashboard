@@ -599,50 +599,19 @@
 {#if columns >= 9}
 	<div class="fixed bottom-8 right-8 z-[1000] flex flex-col gap-4">
 		{#if isEditing}
-			{#if session}
 			<button
-					onclick={handleLogout}
-					class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 shadow-2xl transition-all hover:scale-105 hover:text-white hover:border-neutral-500"
-					title="Logout"
-			>
-				<LogOut size={20} />
-			</button>
-			{:else}
-				<a
-						href="/login"
-						class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 shadow-2xl transition-all hover:scale-105 hover:text-white hover:border-neutral-500"
-						title="Login to Sync"
-				>
-					<LogIn size={20} />
-				</a>
-			{/if}
-
-			<label class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105">
-				<Download size={20} />
-				<input type="file" accept=".json" class="hidden" onchange={importConfig} />
-			</label>
-
-			<button
-					class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
-					onclick={exportConfig}
-					title="Export Settings"
-			>
-				<Upload size={20} />
-			</button>
-
-			<button
-					class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
-					onclick={() => debounceAction(() => showGlobalSettings = true)}
-					title="Global Settings"
-			>
-				<Palette size={20} />
-			</button>
+					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
+					onclick={() => debounceAction(() => showPickerDialog = true)}
+			><Plus size={20} /></button>
+		{/if}
 
 		<button
-				class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
-				onclick={() => debounceAction(() => showPickerDialog = true)}
-		><Plus size={20} /></button>
-	{/if}
+				class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
+				onclick={() => debounceAction(() => showGlobalSettings = true)}
+				title="Settings"
+		>
+			<Settings size={20} />
+		</button>
 
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
@@ -678,28 +647,75 @@
 </SettingsDialog>
 
 <SettingsDialog
-	title="Global Settings"
+	title="Dashboard Settings"
 	bind:show={showGlobalSettings}
 	data={[globalTheme]}
 	onRevert={(r) => globalTheme = r[0]}
 	onSave={() => showGlobalSettings = false}
 >
-	<div class="space-y-4">
-		<h4 class="text-xs font-bold uppercase tracking-widest text-neutral-500">Theme Settings</h4>
-		<div class="grid grid-cols-2 gap-3">
-			{#each THEMES as theme}
-				<button
-					class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between h-[80px] {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
-					onclick={() => { globalTheme = theme.id; if (session) syncUp(); }}
-				>
-					<div class="font-bold text-sm text-slate-200">{theme.name}</div>
-					<div class="flex gap-1.5 mt-2 bg-black/20 p-1.5 rounded-lg w-fit border border-black/20">
-						{#each theme.colors as c}
-							<div class="w-4 h-4 rounded-full border border-black/40 shadow-sm" style="background-color: {c}"></div>
-						{/each}
-					</div>
-				</button>
-			{/each}
-		</div>
+	<div class="space-y-8">
+		<!-- ACCOUNT SECTION -->
+        <div class="space-y-3">
+		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Account & Cloud</h4>
+            <div class="bg-black/20 border border-neutral-800 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                    {#if session}
+                        <div class="font-bold text-sm text-white">Logged in</div>
+                        <div class="text-xs text-neutral-400 mt-0.5">{session.user.email}</div>
+                    {:else}
+                        <div class="font-bold text-sm text-white">Local Mode</div>
+                        <div class="text-xs text-neutral-400 mt-0.5">Sign in to sync your dashboard.</div>
+                    {/if}
+                </div>
+                {#if session}
+                    <button onclick={handleLogout} class="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold rounded-lg transition-colors">
+                        Logout
+                    </button>
+                {:else}
+                    <a href="/login" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
+                        Login
+                    </a>
+                {/if}
+            </div>
+        </div>
+
+        <!-- THEME SECTION -->
+		<div class="space-y-3">
+            <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Theme</h4>
+            <div class="grid grid-cols-2 gap-3">
+                {#each THEMES as theme}
+                    <button
+                        class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between h-[80px] {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                        onclick={() => { globalTheme = theme.id; if (session) syncUp(); }}
+                    >
+                        <div class="font-bold text-sm text-slate-200">{theme.name}</div>
+                        <div class="flex gap-1.5 mt-2 bg-black/20 p-1.5 rounded-lg w-fit border border-black/20">
+                            {#each theme.colors as c}
+                                <div class="w-4 h-4 rounded-full border border-black/40 shadow-sm" style="background-color: {c}"></div>
+                            {/each}
+                        </div>
+                    </button>
+                {/each}
+            </div>
+        </div>
+
+        <!-- DATA SECTION -->
+        <div class="space-y-3">
+		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Data & Backup</h4>
+            <div class="grid grid-cols-2 gap-3">
+                <label class="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-700 bg-black/20 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center">
+                    <Download size={24} class="mb-2 text-neutral-400" />
+                    <span class="text-sm font-bold text-slate-200">Import</span>
+                    <span class="text-xs text-neutral-500 mt-1">Load from file</span>
+                    <input type="file" accept=".json" class="hidden" onchange={importConfig} />
+                </label>
+                <button onclick={exportConfig} class="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-700 bg-black/20 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center">
+                    <Upload size={24} class="mb-2 text-neutral-400" />
+                    <span class="text-sm font-bold text-slate-200">Export</span>
+                    <span class="text-xs text-neutral-500 mt-1">Save to file</span>
+                </button>
+            </div>
+        </div>
+
 	</div>
 </SettingsDialog>

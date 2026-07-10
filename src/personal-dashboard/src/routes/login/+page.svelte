@@ -1,7 +1,10 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { fade } from 'svelte/transition';
+  
   let { form } = $props();
   let loading = $state(false);
+  let isSignUp = $state(false);
 </script>
 
 <div class="min-h-screen flex items-center justify-center p-4 font-sans text-white relative" style="background-color: var(--theme-body-bg, #121212);">
@@ -11,17 +14,23 @@
   <div class="w-full max-w-[380px] bg-neutral-800/80 backdrop-blur-xl border border-black/40 rounded-[24px] shadow-2xl p-8 relative z-10">
     
     <div class="mb-8">
-      <h1 class="text-2xl font-bold tracking-tight mb-1">Welcome Back</h1>
-      <p class="text-neutral-400 text-sm">Sign in to sync your dashboard.</p>
+      <h1 class="text-2xl font-bold tracking-tight mb-1">{isSignUp ? 'Create Account' : 'Welcome Back'}</h1>
+      <p class="text-neutral-400 text-sm">{isSignUp ? 'Set up your cloud dashboard.' : 'Sign in to sync your dashboard.'}</p>
     </div>
 
     {#if form?.error}
-      <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 font-medium">
+      <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 font-medium" in:fade>
         {form.error}
       </div>
     {/if}
+    
+    {#if form?.message}
+      <div class="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs p-3 rounded-xl mb-6 font-medium" in:fade>
+        {form.message}
+      </div>
+    {/if}
 
-    <form method="POST" action="?/login" use:enhance={() => { loading = true; return async ({ update }) => { loading = false; update(); } }} class="space-y-4">
+    <form method="POST" action={isSignUp ? "?/signup" : "?/login"} use:enhance={() => { loading = true; return async ({ update }) => { loading = false; update(); } }} class="space-y-4">
       <div>
         <label for="email" class="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 ml-1">Email</label>
         <input type="email" id="email" name="email" required placeholder="you@example.com" class="w-full bg-black/20 border border-black/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-neutral-600" />
@@ -32,7 +41,7 @@
       </div>
       
       <button type="submit" disabled={loading} class="w-full bg-neutral-700/50 hover:bg-neutral-600/50 border border-black/20 text-white font-bold text-sm py-3 rounded-xl mt-6 transition-all disabled:opacity-50 active:scale-[0.98]">
-        {loading ? 'Signing in...' : 'Sign In'}
+        {loading ? (isSignUp ? 'Creating...' : 'Signing in...') : (isSignUp ? 'Sign Up' : 'Sign In')}
       </button>
     </form>
 
@@ -49,6 +58,16 @@
       <button type="button" class="flex-1 flex items-center justify-center bg-black/20 border border-black/20 hover:bg-black/40 py-3 rounded-xl transition-all active:scale-[0.98]" onclick={() => alert('GitHub SSO coming soon!')} title="GitHub">
         <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="text-white"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
       </button>
+    </div>
+
+    <div class="mt-8 text-center text-[11px] text-neutral-500 font-medium">
+      {#if isSignUp}
+        Already have an account? 
+        <button type="button" class="text-white hover:underline ml-1" onclick={() => isSignUp = false}>Sign in</button>
+      {:else}
+        Don't have an account? 
+        <button type="button" class="text-white hover:underline ml-1" onclick={() => isSignUp = true}>Sign up</button>
+      {/if}
     </div>
 
   </div>

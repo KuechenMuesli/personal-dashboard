@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { page } from "$app/stores";
   import { RefreshCw, BatteryWarning } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
@@ -30,7 +31,7 @@
   let timeUntilNext = $derived(Math.max(0, Math.ceil((COOLDOWN_MS - (Date.now() - lastFetched)) / 1000 / 60)));
 
   $effect(() => {
-    if (isEditing) {
+    if (isEditing || showSettings) {
       hidden = false;
     } else {
       hidden = (error && !screenshotUrl) || (imageError && !isLoading) || (!isLoading && !screenshotUrl);
@@ -39,7 +40,13 @@
 
   onMount(() => {
     const saved = localStorage.getItem(`trmnl-settings-${id}`);
-    if (saved) {
+    const serverSecrets = $page.data.secrets?.[id];
+    
+    if (serverSecrets) {
+        accessToken = serverSecrets.accessToken || "";
+        userApiKey = serverSecrets.userApiKey || "";
+        deviceId = serverSecrets.deviceId || "";
+    } else if (saved) {
       try {
         const parsed = JSON.parse(saved);
         accessToken = parsed.accessToken || "";
@@ -141,8 +148,19 @@
     screenshotUrl = "";
   }
 
-  function saveSettings() {
-    localStorage.setItem(`trmnl-settings-${id}`, JSON.stringify({ accessToken, userApiKey, deviceId }));
+  async function saveSettings() {
+    if ($page.data.session && (accessToken || userApiKey || deviceId)) {
+        try {
+            await fetch('/api/secrets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service: id, key: { accessToken, userApiKey, deviceId } })
+            });
+            localStorage.removeItem(`trmnl-settings-${id}`);
+        } catch (e) { console.error("Failed to save TRMNL secrets", e); }
+    } else {
+        localStorage.setItem(`trmnl-settings-${id}`, JSON.stringify({ accessToken, userApiKey, deviceId }));
+    }
     showSettings = false;
     fetchTrmnlData(true);
   }

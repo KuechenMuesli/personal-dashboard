@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { slide } from "svelte/transition";
+  import { page } from "$app/stores";
   import { Clock, MapPin, FileText, Pencil, X, GripVertical } from "lucide-svelte";
   // @ts-ignore
   import ICAL from 'ical.js';
@@ -102,19 +103,39 @@
   });
 
   function loadSettings() {
-    const saved = localStorage.getItem(`stored-calendars-${id}`);
     const savedMode = localStorage.getItem(`calendar-viewmode-${id}`);
-    if (saved) {
-      try { storedConfigs = JSON.parse(saved); } catch (e) { console.error(e); }
-    }
     if (savedMode === "grouped" || savedMode === "upcoming" || savedMode === "today") {
       viewMode = savedMode;
+    }
+    
+    const serverSecrets = $page.data.secrets?.[id];
+    if (serverSecrets && Array.isArray(serverSecrets)) {
+        storedConfigs = serverSecrets;
+    } else {
+        const saved = localStorage.getItem(`stored-calendars-${id}`);
+        if (saved) {
+          try { storedConfigs = JSON.parse(saved); } catch (e) { console.error(e); }
+        }
     }
   }
 
   function saveSettingsLocally() {
-    localStorage.setItem(`stored-calendars-${id}`, JSON.stringify(storedConfigs));
     localStorage.setItem(`calendar-viewmode-${id}`, viewMode);
+  }
+  
+  async function saveConfigsToCloud() {
+    if ($page.data.session) {
+        try {
+            await fetch('/api/secrets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service: id, key: storedConfigs })
+            });
+            localStorage.removeItem(`stored-calendars-${id}`);
+        } catch (e) { console.error("Failed to save calendar configs", e); }
+    } else {
+        localStorage.setItem(`stored-calendars-${id}`, JSON.stringify(storedConfigs));
+    }
   }
 
   async function fetchAllCalendars(force = false) {
@@ -151,19 +172,21 @@
     if (editingCalId) {
       storedConfigs = storedConfigs.map(c =>
         c.id === editingCalId
-          ? { ...c, url: newCalUrl, name: newCalName, color: newCalColor }
+          ? { ...c, url: newCalUrl.replace("webcal://", "https://").trim(), name: newCalName.trim(), color: newCalColor }
           : c
       );
       editingCalId = null;
     } else {
       storedConfigs = [...storedConfigs, {
         id: Math.random().toString(36).substr(2, 9),
-        url: newCalUrl.replace("webcal://", "https://"),
-        name: newCalName,
+        url: newCalUrl.replace("webcal://", "https://").trim(),
+        name: newCalName.trim(),
         color: newCalColor
       }];
     }
     resetForm();
+    saveConfigsToCloud();
+    fetchAllCalendars(true);
   }
 
   function editCalendar(config: StoredCalendar) {
@@ -180,9 +203,14 @@
     newCalColor = "#3b82f6";
   }
 
-  function removeCalendar(calId: string) {
+  function deleteCalendar(calId: string) {
     storedConfigs = storedConfigs.filter(c => c.id !== calId);
-    if (editingCalId === calId) resetForm();
+    saveConfigsToCloud();
+    fetchAllCalendars(true);
+  }
+
+  async function handleDragEnd() {
+    saveConfigsToCloud();
   }
 
   async function saveAndCloseSettings() {

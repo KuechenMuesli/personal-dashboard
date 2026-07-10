@@ -620,7 +620,11 @@
     });
 
     const handleGlobalKey = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') || isEditing) return;
+      if (
+        ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '') || 
+        isEditing || 
+        document.querySelector('dialog[open]')
+      ) return;
 
       const isPaste = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v';
       if (!isPaste && (e.ctrlKey || e.metaKey || e.altKey)) return;

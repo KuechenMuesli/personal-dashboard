@@ -28,6 +28,7 @@
   const STORAGE_KEY = "dashboard-layout";
 
   let dashboardLayout = $state<(StoredWidget & { showSettings: boolean })[]>([]);
+  let currentLayoutId = $state<string | null>(null);
   let draggingId = $state<string | null>(null);
   let resizingId = $state<string | null>(null);
   let isEditing = $state(false);
@@ -64,40 +65,48 @@
     // 2. Background Sync
     if (session && supabase) {
       const { data: dbData } = await supabase
-        .from('dashboard_state')
-        .select('config')
+        .from('layouts')
+        .select(`
+          id, theme, updated_at,
+          widgets ( id, type, x, y, w, h )
+        `)
         .eq('user_id', session.user.id)
+        .order('is_active', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (dbData && dbData.config) {
-        const remoteConfig = dbData.config;
+      if (dbData) {
+        currentLayoutId = dbData.id;
+        const remoteThemeObj = dbData.theme as any || {};
+        const remoteTimestamp = new Date(dbData.updated_at).getTime();
         const localTimestamp = Number(localStorage.getItem('dashboard-timestamp')) || 0;
-        const remoteTimestamp = remoteConfig.timestamp || 0;
 
         // If cloud is newer, OR local is missing, OR local is just the untouched default
         if (remoteTimestamp > localTimestamp || !hasLocal || isDefault) {
-          if (remoteConfig.dump) {
-            Object.entries(remoteConfig.dump).forEach(([key, value]) => {
+          if (remoteThemeObj.dump) {
+            Object.entries(remoteThemeObj.dump).forEach(([key, value]) => {
                localStorage.setItem(key, value as string);
             });
           }
-          if (remoteConfig.layout) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteConfig.layout));
+          if (dbData.widgets) {
+            const layout = dbData.widgets.map((w: any) => ({
+              id: w.id, type: w.type, x: w.x, y: w.y, width: w.w, height: w.h
+            }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
           }
-          if (remoteConfig.theme) {
-            localStorage.setItem('dashboard-theme', remoteConfig.theme);
+          if (remoteThemeObj.theme) {
+            localStorage.setItem('dashboard-theme', remoteThemeObj.theme);
           }
           localStorage.setItem('dashboard-timestamp', remoteTimestamp.toString());
+          localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
           localStorage.removeItem('dashboard-is-default');
           
           window.location.reload();
           return;
         } else if (localTimestamp > remoteTimestamp) {
-          // Local is newer (e.g. after import or offline edits), push to cloud
           syncUp();
         }
       } else {
-        // No cloud data exists for this user.
         if (!hasLocal) {
           generateWelcomeLayout();
         } else {
@@ -151,23 +160,66 @@
     const dump: Record<string, string> = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      // Skip Supabase auth tokens so we don't accidentally sync credentials
-      if (key && !key.startsWith('sb-') && !key.includes('auth-token')) {
+      if (key && !key.startsWith('sb-') && !key.includes('auth-token') && key !== 'dashboard-layout' && key !== 'dashboard-timestamp' && key !== 'dashboard-theme') {
         dump[key] = localStorage.getItem(key) || "";
       }
     }
 
-    const configToSave = {
-      layout: dashboardLayout.map(({ showSettings, ...rest }) => rest),
-      theme: globalTheme,
-      dump,
-      timestamp
-    };
+    if (!currentLayoutId) {
+       currentLayoutId = localStorage.getItem('dashboard-layout-id');
+    }
 
-    await supabase.from('dashboard_state').upsert({
-      user_id: session.user.id,
-      config: configToSave
-    });
+    const themeObj = { theme: globalTheme, dump };
+
+    if (!currentLayoutId) {
+      const { data } = await supabase.from('layouts').insert({
+        user_id: session.user.id,
+        name: 'Main Layout',
+        is_active: true,
+        theme: themeObj,
+        updated_at: new Date().toISOString()
+      }).select('id').single();
+      
+      if (data) {
+        currentLayoutId = data.id;
+        localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
+      }
+    } else {
+      await supabase.from('layouts').update({
+        theme: themeObj,
+        is_active: true,
+        updated_at: new Date().toISOString()
+      }).eq('id', currentLayoutId);
+    }
+
+    if (currentLayoutId) {
+      const widgetsToUpsert = dashboardLayout.map(w => ({
+        id: w.id,
+        layout_id: currentLayoutId,
+        type: w.type,
+        x: w.x,
+        y: w.y,
+        w: w.width,
+        h: w.height
+      }));
+      
+      // Upsert widgets
+      if (widgetsToUpsert.length > 0) {
+        await supabase.from('widgets').upsert(widgetsToUpsert);
+      }
+
+      // Delete widgets that are no longer in the layout
+      const currentIds = widgetsToUpsert.map(w => w.id);
+      if (currentIds.length > 0) {
+        await supabase
+          .from('widgets')
+          .delete()
+          .eq('layout_id', currentLayoutId)
+          .not('id', 'in', `(${currentIds.join(',')})`);
+      } else {
+        await supabase.from('widgets').delete().eq('layout_id', currentLayoutId);
+      }
+    }
   }
 
   $effect(() => {

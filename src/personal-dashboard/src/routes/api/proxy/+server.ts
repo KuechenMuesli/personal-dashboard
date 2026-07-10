@@ -58,7 +58,7 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
 
     try {
         const headers: Record<string, string> = {};
-        const forwardHeaders = ['content-type', 'user-agent', 'accept', 'accept-language'];
+        const forwardHeaders = ['content-type', 'user-agent', 'accept', 'accept-language', 'api-key', 'authorization', 'x-api-key'];
         for (const h of forwardHeaders) {
             if (request.headers.has(h)) {
                 headers[h] = request.headers.get(h)!;

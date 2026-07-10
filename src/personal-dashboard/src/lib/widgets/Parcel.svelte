@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { page } from "$app/stores";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import {Package, Plus, RefreshCw} from "lucide-svelte";
@@ -65,7 +66,7 @@
   );
 
   $effect(() => {
-    if (isEditing) {
+    if (isEditing || showSettings) {
       hidden = false;
     } else {
       hidden = deliveries.length === 0 && !showAddForm && isConfigured;
@@ -86,12 +87,16 @@
     const saved = localStorage.getItem(`parcel-settings-${id}`);
     const cachedData = localStorage.getItem(`parcel-cache-${id}`);
 
+    const serverApiKey = $page.data.secrets?.[id];
+
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        apiKey = parsed.apiKey || "";
+        apiKey = serverApiKey || parsed.apiKey || "";
         filterMode = parsed.filterMode || "recent";
       } catch (e) { console.error(e); }
+    } else {
+        apiKey = serverApiKey || "";
     }
 
     if (cachedData) {
@@ -171,8 +176,19 @@
     }
   }
 
-  function saveSettings() {
-    localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ apiKey, filterMode }));
+  async function saveSettings() {
+    if ($page.data.session && apiKey) {
+        try {
+            await fetch('/api/secrets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service: id, key: apiKey })
+            });
+            localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ filterMode }));
+        } catch (e) { console.error("Failed to save secret", e); }
+    } else {
+        localStorage.setItem(`parcel-settings-${id}`, JSON.stringify({ apiKey, filterMode }));
+    }
     showSettings = false;
     fetchDeliveries(true);
   }
@@ -293,7 +309,7 @@
 </WidgetCard>
 
 <SettingsDialog
-	title="17TRACK Settings"
+	title="Parcel Track Settings"
 	bind:show={showSettings}
 	data={[apiKey]}
 	onRevert={(r: any) => { apiKey = r[0]; }}

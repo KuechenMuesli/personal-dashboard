@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { slide } from "svelte/transition";
+  import { page } from "$app/stores";
   import { RefreshCw, ListTodo, AlertCircle, Clock, CheckCircle2, Circle } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
@@ -36,8 +37,12 @@
   const isCompact = $derived(height <= 2);
 
   onMount(() => {
+    const serverSecrets = $page.data.secrets?.[id];
     const savedSettings = localStorage.getItem(`reminders-settings-${id}`);
-    if (savedSettings) {
+    
+    if (serverSecrets && serverSecrets.webhookUrl !== undefined) {
+        webhookUrl = serverSecrets.webhookUrl || "";
+    } else if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
         webhookUrl = parsed.webhookUrl || "";
@@ -92,8 +97,19 @@
     }
   }
 
-  function saveSettings() {
-    localStorage.setItem(`reminders-settings-${id}`, JSON.stringify({ webhookUrl }));
+  async function saveSettings() {
+    if ($page.data.session) {
+        try {
+            await fetch('/api/secrets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service: id, key: { webhookUrl } })
+            });
+            localStorage.removeItem(`reminders-settings-${id}`);
+        } catch (e) { console.error("Failed to save TRMNL Reminders secrets", e); }
+    } else {
+        localStorage.setItem(`reminders-settings-${id}`, JSON.stringify({ webhookUrl }));
+    }
     showSettings = false;
     fetchReminders(true);
   }

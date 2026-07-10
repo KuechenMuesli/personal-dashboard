@@ -2,10 +2,11 @@
   import { onMount } from "svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import type { StoredWidget } from '../types/stored-widget';
-  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, Cloud, CloudOff} from "lucide-svelte";
+  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut} from "lucide-svelte";
 
   let { data } = $props();
   let session = $derived(data.session);
+  let supabase = $derived(data.supabase);
 
   export const widgets = {
     searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
@@ -45,13 +46,129 @@
   ];
   let globalTheme = $state('theme-default');
 
-  onMount(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) dashboardLayout = JSON.parse(saved);
+  onMount(async () => {
+    // 1. Load local state into memory immediately (Optimistic UI)
+    const hasLocal = !!localStorage.getItem(STORAGE_KEY);
+    const isDefault = localStorage.getItem('dashboard-is-default') === 'true';
+
+    if (hasLocal) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+        dashboardLayout = parsed.map((w: any) => ({ ...w, showSettings: false }));
+      } catch (e) { console.error(e); }
+    }
 
     const savedTheme = localStorage.getItem('dashboard-theme');
     if (savedTheme) globalTheme = savedTheme;
+
+    // 2. Background Sync
+    if (session && supabase) {
+      const { data: dbData } = await supabase
+        .from('dashboard_state')
+        .select('config')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (dbData && dbData.config) {
+        const remoteConfig = dbData.config;
+        const localTimestamp = Number(localStorage.getItem('dashboard-timestamp')) || 0;
+        const remoteTimestamp = remoteConfig.timestamp || 0;
+
+        // If cloud is newer, OR local is missing, OR local is just the untouched default
+        if (remoteTimestamp > localTimestamp || !hasLocal || isDefault) {
+          if (remoteConfig.dump) {
+            Object.entries(remoteConfig.dump).forEach(([key, value]) => {
+               localStorage.setItem(key, value as string);
+            });
+          }
+          if (remoteConfig.layout) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteConfig.layout));
+          }
+          if (remoteConfig.theme) {
+            localStorage.setItem('dashboard-theme', remoteConfig.theme);
+          }
+          localStorage.setItem('dashboard-timestamp', remoteTimestamp.toString());
+          localStorage.removeItem('dashboard-is-default');
+          
+          window.location.reload();
+          return;
+        } else if (localTimestamp > remoteTimestamp) {
+          // Local is newer (e.g. after import or offline edits), push to cloud
+          syncUp();
+        }
+      } else {
+        // No cloud data exists for this user.
+        if (!hasLocal) {
+          generateWelcomeLayout();
+        } else {
+          syncUp();
+        }
+      }
+    } else {
+      // Offline mode / Not logged in
+      if (!hasLocal) {
+        generateWelcomeLayout();
+      }
+    }
   });
+
+  function generateWelcomeLayout() {
+      const welcomeId = crypto.randomUUID();
+      const hintId = crypto.randomUUID();
+
+      localStorage.setItem(`note-settings-${welcomeId}`,
+        "# Welcome to your Dashboard! \n\n" +
+        "You can customize this space exactly how *you* like it. \n\n" +
+        "- **Add Widgets**: Use the '+' button.\n" +
+        "- **Rearrange**: Click the 'Edit' (✎) button to drag and resize.\n" +
+        "- **Markdown**: This note supports **bold**, *italics*, lists and more! \n\n" +
+				"Connect with me on [LinkedIn](https://www.linkedin.com/in/paul-simon-470477272) or [GitHub](https://github.com/KuechenMuesli) " +
+				"or [contribute to this project yourself!](https://github.com/KuechenMuesli/personal-dashboard)"
+      );
+      localStorage.setItem(`note-mode-${welcomeId}`, "true");
+
+      localStorage.setItem(`note-settings-${hintId}`,
+        "## Start Here! \n\n" +
+        "Click the **pencil icon** in the bottom right corner to enter **edit** mode and **add** widgets."
+      );
+      localStorage.setItem(`note-mode-${hintId}`, "true");
+
+      dashboardLayout = [
+        { id: welcomeId, type: 'note', x: 0, y: 0, width: 3, height: 6, showSettings: false },
+        { id: hintId, type: 'note', x: columns - 2, y: Math.floor(window.innerHeight / ROW_HEIGHT) - 5, width: 2, height: 4, showSettings: false }
+      ];
+
+      save();
+      // Mark as default layout so it gets overwritten when the user logs in and pulls from the cloud
+      localStorage.setItem('dashboard-is-default', 'true');
+  }
+
+  async function syncUp() {
+    if (!session || !supabase) return;
+    const timestamp = Date.now();
+    localStorage.setItem('dashboard-timestamp', timestamp.toString());
+
+    const dump: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      // Skip Supabase auth tokens so we don't accidentally sync credentials
+      if (key && !key.startsWith('sb-') && !key.includes('auth-token')) {
+        dump[key] = localStorage.getItem(key) || "";
+      }
+    }
+
+    const configToSave = {
+      layout: dashboardLayout.map(({ showSettings, ...rest }) => rest),
+      theme: globalTheme,
+      dump,
+      timestamp
+    };
+
+    await supabase.from('dashboard_state').upsert({
+      user_id: session.user.id,
+      config: configToSave
+    });
+  }
 
   $effect(() => {
     if (typeof document !== 'undefined') {
@@ -134,62 +251,18 @@
     }
   });
 
-  onMount(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        dashboardLayout = parsed.map((w: any) => ({ ...w, showSettings: false }));
-      } catch (e) { console.error(e); }
-    } else {
-      const welcomeId = crypto.randomUUID();
-      const hintId = crypto.randomUUID();
-
-      localStorage.setItem(`note-settings-${welcomeId}`,
-        "# Welcome to your Dashboard! \n\n" +
-        "You can customize this space exactly how *you* like it. \n\n" +
-        "- **Add Widgets**: Use the '+' button.\n" +
-        "- **Rearrange**: Click the 'Edit' (✎) button to drag and resize.\n" +
-        "- **Markdown**: This note supports **bold**, *italics*, lists and more! \n\n" +
-				"Connect with me on [LinkedIn](https://www.linkedin.com/in/paul-simon-470477272) or [GitHub](https://github.com/KuechenMuesli) " +
-				"or [contribute to this project yourself!](https://github.com/KuechenMuesli/personal-dashboard)"
-      );
-      localStorage.setItem(`note-mode-${welcomeId}`, "true");
-
-      localStorage.setItem(`note-settings-${hintId}`,
-        "## Start Here! \n\n" +
-        "Click the **pencil icon** in the bottom right corner to enter **edit** mode and **add** widgets."
-      );
-      localStorage.setItem(`note-mode-${hintId}`, "true");
-
-      dashboardLayout = [
-        {
-          id: welcomeId,
-          type: 'note',
-          x: 0,
-          y: 0,
-          width: 3,
-          height: 6,
-          showSettings: false
-        },
-        {
-          id: hintId,
-          type: 'note',
-          x: columns - 2,
-          y: Math.floor(window.innerHeight / ROW_HEIGHT) - 5,
-          width: 2,
-          height: 4,
-          showSettings: false
-        }
-      ];
-
-      save();
-    }
-  });
+  async function handleLogout() {
+    localStorage.clear();
+    if (supabase) await supabase.auth.signOut();
+    window.location.reload();
+  }
 
   function save() {
     const toSave = dashboardLayout.map(({ showSettings, ...rest }) => rest);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    localStorage.setItem('dashboard-timestamp', Date.now().toString());
+    localStorage.removeItem('dashboard-is-default');
+    if (session) syncUp();
   }
 
   function isOverlapping(w1: any, w2: any) {
@@ -362,7 +435,8 @@
     const config: Record<string, string> = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key) {
+      // Skip Supabase auth tokens so we don't accidentally export credentials
+      if (key && !key.startsWith('sb-') && !key.includes('auth-token')) {
         config[key] = localStorage.getItem(key) || "";
       }
     }
@@ -391,10 +465,29 @@
         }
 
         if (confirm("This will overwrite your current layout and settings. Continue?")) {
+          // Backup auth tokens to avoid logging out the user
+          const authTokens: Record<string, string> = {};
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('sb-') || key.includes('auth-token'))) {
+              authTokens[key] = localStorage.getItem(key)!;
+            }
+          }
+
           localStorage.clear();
+          
+          // Restore auth tokens
+          Object.entries(authTokens).forEach(([k, v]) => localStorage.setItem(k, v));
+          
+          // Import config
           Object.entries(config).forEach(([key, value]) => {
-            localStorage.setItem(key, value as string);
+            if (key !== 'dashboard-timestamp') {
+              localStorage.setItem(key, value as string);
+            }
           });
+          
+          // Force a new timestamp so the imported config is newer than the cloud config
+          localStorage.setItem('dashboard-timestamp', Date.now().toString());
           window.location.reload();
         }
       } catch (err) {
@@ -506,6 +599,24 @@
 {#if columns >= 9}
 	<div class="fixed bottom-8 right-8 z-[1000] flex flex-col gap-4">
 		{#if isEditing}
+			{#if session}
+			<button
+					onclick={handleLogout}
+					class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 shadow-2xl transition-all hover:scale-105 hover:text-white hover:border-neutral-500"
+					title="Logout"
+			>
+				<LogOut size={20} />
+			</button>
+			{:else}
+				<a
+						href="/login"
+						class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-neutral-400 border border-neutral-700 shadow-2xl transition-all hover:scale-105 hover:text-white hover:border-neutral-500"
+						title="Login to Sync"
+				>
+					<LogIn size={20} />
+				</a>
+			{/if}
+
 			<label class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105">
 				<Download size={20} />
 				<input type="file" accept=".json" class="hidden" onchange={importConfig} />
@@ -527,23 +638,11 @@
 				<Palette size={20} />
 			</button>
 
-			<button
-					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
-					onclick={() => debounceAction(() => showPickerDialog = true)}
-			><Plus size={20} /></button>
-		{/if}
-
-		<a
-				href="/login"
-				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105 {session ? 'bg-blue-600' : 'bg-neutral-800 border border-neutral-600'}"
-				title={session ? "Cloud Sync Active" : "Login to Sync"}
-		>
-			{#if session}
-				<Cloud size={20} />
-			{:else}
-				<CloudOff size={20} class="text-neutral-400" />
-			{/if}
-		</a>
+		<button
+				class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
+				onclick={() => debounceAction(() => showPickerDialog = true)}
+		><Plus size={20} /></button>
+	{/if}
 
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
@@ -591,7 +690,7 @@
 			{#each THEMES as theme}
 				<button
 					class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between h-[80px] {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
-					onclick={() => globalTheme = theme.id}
+					onclick={() => { globalTheme = theme.id; if (session) syncUp(); }}
 				>
 					<div class="font-bold text-sm text-slate-200">{theme.name}</div>
 					<div class="flex gap-1.5 mt-2 bg-black/20 p-1.5 rounded-lg w-fit border border-black/20">

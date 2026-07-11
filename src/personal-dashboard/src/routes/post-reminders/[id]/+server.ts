@@ -65,8 +65,7 @@ export const POST: RequestHandler = async ({ params, request, locals: { supabase
 
         payload = JSON.parse(rawText);
     } catch (e) {
-        console.error("JSON Parse Error. Raw Text:", rawText);
-        throw error(400, 'Invalid JSON');
+        throw error(400, `Invalid JSON. Raw Text: ${rawText}`);
     }
 
     // Assuming the payload contains the reminders we want to store.

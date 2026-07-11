@@ -1,5 +1,6 @@
 <script lang="ts">
   import { i18n } from '$lib/i18n/i18n.svelte';
+  import LegalFooter from '$lib/components/LegalFooter.svelte';
 
   function goBack() {
     if (window.history.length > 1) {
@@ -32,6 +33,10 @@
       <p>
         contact@paul-simon.dev
       </p>
+    </div>
+
+    <div class="mt-12 pt-8 border-t border-white/10">
+      <LegalFooter />
     </div>
   </div>
 </div>

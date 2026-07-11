@@ -4,6 +4,7 @@
   import { ArrowLeft, Download, Upload, AlertTriangle, Palette, Database, User, LogOut } from 'lucide-svelte';
   import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount } from 'svelte';
+  import LegalFooter from "$lib/components/LegalFooter.svelte";
 
   let { data, form } = $props();
   let emailLoading = $state(false);
@@ -96,7 +97,7 @@
   <div class="absolute inset-0 z-0 pointer-events-none opacity-40" style="background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0); background-size: 32px 32px;"></div>
 
   <div class="w-full max-w-[1000px] h-[90vh] flex flex-col bg-neutral-800/80 backdrop-blur-xl border border-black/40 rounded-[24px] shadow-2xl p-6 md:p-8 relative z-10">
-    
+
     <div class="mb-8 shrink-0 flex flex-col md:flex-row md:items-start justify-between gap-6">
       <div>
         <a href="/" class="inline-flex items-center text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mb-6">
@@ -108,23 +109,23 @@
     </div>
 
     <div class="flex flex-col md:flex-row gap-8 flex-1 min-h-0">
-      
+
       <!-- Sidebar / Vertical Tabs -->
       <div class="w-full md:w-1/4 flex flex-col gap-2 shrink-0 overflow-y-auto pr-2 custom-scrollbar">
-        <button 
-          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'account' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}" 
+        <button
+          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'account' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}"
           onclick={() => activeTab = 'account'}
         >
           <User size={18} /> {i18n.t.accountSettings.tabAccount}
         </button>
-        <button 
-          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'appearance' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}" 
+        <button
+          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'appearance' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}"
           onclick={() => activeTab = 'appearance'}
         >
           <Palette size={18} /> {i18n.t.accountSettings.tabAppearance}
         </button>
-        <button 
-          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'data' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}" 
+        <button
+          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'data' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}"
           onclick={() => activeTab = 'data'}
         >
           <Database size={18} /> {i18n.t.accountSettings.tabData}
@@ -143,7 +144,7 @@
 
       <!-- Content Area -->
       <div class="w-full md:w-3/4 space-y-8 overflow-y-auto pr-4 pb-8 custom-scrollbar">
-        
+
         {#if activeTab === 'appearance'}
           <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner">
             <h2 class="text-lg font-bold mb-4">{i18n.t.accountSettings.language}</h2>
@@ -263,7 +264,7 @@
                   <input type="password" id="newPassword" name="newPassword" required placeholder="••••••••" class="w-full bg-black/40 border border-black/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-neutral-600" />
                 </div>
               </div>
-              
+
               <button type="submit" disabled={passwordLoading} class="bg-neutral-800 hover:bg-neutral-700 border border-black/40 text-white font-bold text-sm py-2 px-6 rounded-xl transition-all disabled:opacity-50 active:scale-[0.98]">
                 {passwordLoading ? '...' : i18n.t.accountSettings.updatePasswordBtn}
               </button>
@@ -288,7 +289,7 @@
                 <label for="delete_password" class="block text-[10px] font-black text-red-500/70 uppercase tracking-widest mb-1.5 ml-1">{i18n.t.accountSettings.passwordToConfirm}</label>
                 <input type="password" id="delete_password" name="password" required placeholder="••••••••" class="w-full bg-black/40 border border-red-900/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all placeholder:text-red-900/50 text-red-100" />
               </div>
-              
+
               <button type="submit" disabled={deleteLoading} onclick={(e) => { if(!confirm(i18n.t.accountSettings.deleteAccountConfirm)) e.preventDefault(); }} class="bg-red-900/40 hover:bg-red-600/50 border border-red-900/50 text-red-200 font-bold text-sm py-2 px-6 rounded-xl transition-all disabled:opacity-50 active:scale-[0.98]">
                 {deleteLoading ? '...' : i18n.t.accountSettings.deleteAccountBtn}
               </button>
@@ -300,7 +301,7 @@
             <User size={48} class="mx-auto mb-4 text-neutral-500" />
             <h2 class="text-2xl font-bold mb-2 text-white">{i18n.t.dashboardSettings.localMode}</h2>
             <p class="text-sm text-neutral-400 mb-8 max-w-md mx-auto">{i18n.t.dashboardSettings.signInToSync}</p>
-            
+
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a href="/login" class="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(37,99,235,0.2)]">
                 {i18n.t.login.signInBtn}
@@ -315,12 +316,10 @@
 
       </div>
     </div>
-    
+
     <!-- Legal Links -->
     <div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-center gap-4 text-xs text-neutral-500 shrink-0">
-        <a href="/impressum" class="hover:text-white transition-colors">{i18n.t.login.impressum}</a>
-        <span>&bull;</span>
-        <a href="/privacy" class="hover:text-white transition-colors">{i18n.t.login.datenschutz}</a>
+        <LegalFooter />
     </div>
 
   </div>

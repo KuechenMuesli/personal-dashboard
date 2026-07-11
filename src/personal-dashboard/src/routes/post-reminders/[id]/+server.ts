@@ -45,6 +45,12 @@ export const POST: RequestHandler = async ({ params, request, locals: { supabase
     let rawText = '';
     try {
         rawText = await request.text();
+
+        // Handle URL-encoded form data sent by Apple Shortcuts (if Request Body is set to Form)
+        if (rawText.startsWith('merge_variables=')) {
+            const params = new URLSearchParams(rawText);
+            rawText = params.get('merge_variables') || rawText;
+        }
         
         // Apple Shortcuts bug: it sometimes prepends the raw text of the reminders 
         // to the JSON array of dictionaries, resulting in malformed JSON like:

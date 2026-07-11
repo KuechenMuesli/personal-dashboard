@@ -70,6 +70,7 @@
 
     isLoading = true;
     error = false;
+    lastFetched = Date.now();
 
     try {
       const url = `/post-reminders/${userId}`;

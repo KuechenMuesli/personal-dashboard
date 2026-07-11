@@ -43,7 +43,7 @@
   let showPickerDialog = $state(false);
   let widgetSearchQuery = $state('');
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
-  
+
   let showOnboarding = $state(false);
 
   let THEMES = $derived([
@@ -66,7 +66,7 @@
       try {
         const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
         dashboardLayout = parsed.map((w: any) => ({ ...w, showSettings: false }));
-        
+
         // Auto-remove login prompt if user is logged in
         if (session) {
            dashboardLayout = dashboardLayout.filter((w: any) => w.type !== 'loginPrompt');
@@ -200,7 +200,7 @@
         theme: themeObj,
         updated_at: new Date().toISOString()
       }).select('id').single();
-      
+
       if (data) {
         currentLayoutId = data.id;
         localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
@@ -216,40 +216,40 @@
     if (currentLayoutId) {
       const widgetsToUpsert = dashboardLayout.map(w => {
         const custom_data: any = {};
-        
+
         const calendarViewmode = localStorage.getItem(`calendar-viewmode-${w.id}`);
         if (calendarViewmode) custom_data.calendarViewmode = calendarViewmode;
-        
+
         const generalSettings = localStorage.getItem(`general-settings-${w.id}`);
         if (generalSettings) custom_data.generalSettings = generalSettings;
-        
+
         const colorpicker = localStorage.getItem(`colorpicker-${w.id}`);
         if (colorpicker) custom_data.colorpicker = colorpicker;
-        
+
         const webviewSettings = localStorage.getItem(`webview-settings-${w.id}`);
         if (webviewSettings) custom_data.webviewSettings = webviewSettings;
-        
+
         const favoritesSettings = localStorage.getItem(`favorites-settings-${w.id}`);
         if (favoritesSettings) custom_data.favoritesSettings = favoritesSettings;
-        
+
         const noteSettings = localStorage.getItem(`note-settings-${w.id}`);
         if (noteSettings) custom_data.noteSettings = noteSettings;
-        
+
         const noteMode = localStorage.getItem(`note-mode-${w.id}`);
         if (noteMode) custom_data.noteMode = noteMode;
-        
+
         const parcelSettings = localStorage.getItem(`parcel-settings-${w.id}`);
         if (parcelSettings) custom_data.parcelSettings = parcelSettings;
-        
+
         const searchHistory = localStorage.getItem(`search-history-${w.id}`);
         if (searchHistory) custom_data.searchHistory = searchHistory;
-        
+
         const searchSettings = localStorage.getItem(`search-settings-${w.id}`);
         if (searchSettings) custom_data.searchSettings = searchSettings;
-        
+
         const stockSettings = localStorage.getItem(`stock-settings-${w.id}`);
         if (stockSettings) custom_data.stockSettings = stockSettings;
-        
+
         const timerSettings = localStorage.getItem(`timer-settings-${w.id}`);
         if (timerSettings) custom_data.timerSettings = timerSettings;
 
@@ -264,7 +264,7 @@
           custom_data
         };
       });
-      
+
       // Upsert widgets
       if (widgetsToUpsert.length > 0) {
         await supabase.from('widgets').upsert(widgetsToUpsert);
@@ -584,17 +584,17 @@
           }
 
           localStorage.clear();
-          
+
           // Restore auth tokens
           Object.entries(authTokens).forEach(([k, v]) => localStorage.setItem(k, v));
-          
+
           // Import config
           Object.entries(config).forEach(([key, value]) => {
             if (key !== 'dashboard-timestamp') {
               localStorage.setItem(key, value as string);
             }
           });
-          
+
           // Force a new timestamp so the imported config is newer than the cloud config
           localStorage.setItem('dashboard-timestamp', Date.now().toString());
           window.location.reload();
@@ -720,15 +720,14 @@
 			<button
           id="add-widget-btn"
 					transition:scale={{ duration: 200, start: 0.5 }}
-					class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-2xl transition-transform hover:scale-105"
+					class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
 					onclick={() => debounceAction(() => showPickerDialog = true)}
 			><Plus class="w-5 h-5 md:w-6 md:h-6" /></button>
 		{/if}
 
 		<button
         id="edit-mode-btn"
-				class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full text-white shadow-2xl transition-all hover:scale-105
-             {isEditing ? 'bg-emerald-600' : 'bg-neutral-700'}"
+				class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full text-white shadow-2xl transition-all hover:scale-105 bg-neutral-800"
 				onclick={() => debounceAction(() => isEditing = !isEditing)}
 		>
 			{#if isEditing}

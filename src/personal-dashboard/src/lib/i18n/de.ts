@@ -271,7 +271,7 @@ network: {
       noIcons: 'Keine Icons gefunden.'
     },
     sketch: {
-      openSketch: 'Zeichnung öffnen',
+      openSketch: 'Zeichnen',
       eraser: 'Radiergummi',
       pencil: 'Stift',
       text: 'Text',
@@ -345,7 +345,7 @@ network: {
       }
     },
     sketch: {
-      openSketch: 'Zeichnung öffnen'
+      openSketch: 'Zeichnen'
     },
     reminders: {
       title: 'Erinnerungen',

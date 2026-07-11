@@ -269,7 +269,7 @@ network: {
       noIcons: 'No icons found.'
     },
     sketch: {
-      openSketch: 'Open Sketch',
+      openSketch: 'Draw',
       eraser: 'Eraser',
       pencil: 'Pencil',
       text: 'Text',
@@ -343,7 +343,7 @@ network: {
       }
     },
     sketch: {
-      openSketch: 'Open Sketch'
+      openSketch: 'Draw'
     },
     reminders: {
       title: 'Reminders',

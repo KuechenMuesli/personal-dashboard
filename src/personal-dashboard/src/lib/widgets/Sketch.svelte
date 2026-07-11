@@ -486,9 +486,9 @@
 	>
 		{#if isCompact}
 			<div class="flex h-full w-full items-center justify-center p-4">
-				<button class="flex items-center justify-center rounded-lg bg-black/20 border border-black/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-400 hover:bg-black/40 hover:text-white transition-all" onclick={openExpanded}>
-					<Pencil size={15} strokeWidth={2.5} />
-					{i18n.t.w.sketch.openSketch}
+				<button class="flex items-center justify-center gap-1.5 rounded-lg bg-black/20 border border-black/20 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400 hover:bg-black/40 hover:text-white transition-all w-full max-w-[120px]" onclick={openExpanded}>
+					<Pencil size={14} strokeWidth={2.5} class="shrink-0" />
+					<span class="truncate">{i18n.t.w.sketch.openSketch}</span>
 				</button>
 			</div>
 		{:else}
@@ -563,7 +563,7 @@
 
 <dialog
 		bind:this={sketchDialog}
-		class="m-0 h-[85vh] w-[90vw] max-w-5xl rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 outline-none select-none"
+		class="m-0 h-[95vh] w-[95vw] max-w-[1400px] rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 outline-none select-none"
 		onclose={closeExpanded}
 >
 	<div class="flex h-full flex-col bg-neutral-800" onpaste={handlePaste} oncopy={handleCopy} onkeydown={handleKeyDown} tabindex="-1">

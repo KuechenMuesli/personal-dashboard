@@ -51,6 +51,20 @@
           {i18n.t.legal.datenschutz.sec3Desc}
         </p>
       </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-white mb-3 tracking-tight">{i18n.t.legal.datenschutz.sec4Title}</h2>
+        <p>
+          {i18n.t.legal.datenschutz.sec4Desc}
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-white mb-3 tracking-tight">{i18n.t.legal.datenschutz.sec5Title}</h2>
+        <p>
+          {i18n.t.legal.datenschutz.sec5Desc}
+        </p>
+      </section>
     </div>
   </div>
 </div>

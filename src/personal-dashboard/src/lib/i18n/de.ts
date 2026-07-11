@@ -4,7 +4,7 @@ export const de: typeof en = {
 legal: {
     impressum: {
       title: 'Impressum',
-      info: 'Angaben gemäß § 5 TMG:',
+      info: 'Angaben gemäß § 5 DDG:',
       contact: 'Kontakt:',
     },
     datenschutz: {
@@ -14,12 +14,16 @@ legal: {
       sec2Title: '2. Datenerfassung auf dieser Website',
       sec2q1: 'Wer ist verantwortlich für die Datenerfassung?',
       sec2a1: 'Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber (siehe Impressum).',
-      sec2q2: 'Wie erfassen wir Ihre Daten?',
-      sec2a2: 'Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich z. B. um Daten handeln, die Sie bei der Registrierung (E-Mail-Adresse) eingeben oder als Konfiguration (z. B. Dashboard-Einstellungen) in der App speichern.',
-      sec2q3: 'Wofür nutzen wir Ihre Daten?',
-      sec2a3: 'Ein Teil der Daten wird erhoben, um eine fehlerfreie Bereitstellung der Website und Funktionalität des Dashboards (z. B. Speichern Ihrer Einstellungen und API Keys) zu gewährleisten. Die Anwendung nutzt Dienste wie Supabase zur Datenbank-Speicherung und Authentifizierung.',
-      sec3Title: '3. Cookies',
-      sec3Desc: 'Unsere Internetseiten verwenden so genannte „Cookies“. Cookies richten auf Ihrem Rechner keinen Schaden an und enthalten keine Viren. Wir verwenden ausschließlich sogenannte „technisch notwendige Cookies“ (Session-Cookies der Authentifizierung via Supabase), die zwingend erforderlich sind, um die Kernfunktionen der Website bereitzustellen (Login & Session Management). Gemäß § 25 Abs. 2 TTDSG bzw. der ePrivacy-Richtlinie ist für diese Cookies keine explizite Einwilligung (Cookie-Banner) erforderlich.',
+      sec2q2: 'Wie erfassen wir Ihre Daten und auf welcher Rechtsgrundlage?',
+      sec2a2: 'Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen (z. B. E-Mail-Adresse bei Registrierung, Dashboard-Einstellungen, API-Keys). Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung). Zudem erheben wir technische Daten (z.B. IP-Adressen) zur fehlerfreien Bereitstellung und Sicherheit der Website (Art. 6 Abs. 1 lit. f DSGVO).',
+      sec2q3: 'Speicherdauer und API-Keys',
+      sec2a3: 'Ihre Daten bleiben gespeichert, bis Sie Ihren Account löschen oder der Zweck der Datenverarbeitung entfällt. Hinterlegte API-Keys werden sicher in unserer Datenbank gespeichert und niemals für eigene Zwecke ausgelesen oder an Dritte weitergegeben.',
+      sec3Title: '3. Betroffenenrechte (Ihre Rechte)',
+      sec3Desc: 'Sie haben das Recht auf unentgeltliche Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten. Sie haben außerdem ein Recht auf Berichtigung, Sperrung oder Löschung dieser Daten sowie auf Datenübertragbarkeit. Des Weiteren steht Ihnen ein Beschwerderecht bei der zuständigen Aufsichtsbehörde zu.',
+      sec4Title: '4. Infrastruktur, Hosting & Drittanbieter',
+      sec4Desc: 'Diese Website wird über Dienste wie Cloudflare (Hosting, Caching, Routing) ausgeliefert. Zur Datenbank-Speicherung und Authentifizierung nutzen wir Supabase. Bei jedem Aufruf der Website werden IP-Adressen durch diese Infrastruktur-Anbieter verarbeitet. Die Server von Supabase befinden sich i.d.R. in der EU (z.B. Frankfurt). Sollte es zu einem Datentransfer in Drittländer (z.B. USA) kommen, stützen sich diese Anbieter auf das EU-US Data Privacy Framework oder anerkannte Standardvertragsklauseln.',
+      sec5Title: '5. Cookies',
+      sec5Desc: 'Wir verwenden ausschließlich „technisch notwendige Cookies“ (Session-Cookies für den Login via Supabase), die zwingend erforderlich sind, um die Kernfunktionen bereitzustellen. Gemäß § 25 Abs. 2 TDDDG bzw. der ePrivacy-Richtlinie ist hierfür keine explizite Einwilligung (Cookie-Banner) erforderlich.'
     }
   },
   // Common

@@ -2,7 +2,7 @@ export const en = {
 legal: {
     impressum: {
       title: 'Impressum',
-      info: 'Information in accordance with § 5 TMG:',
+      info: 'Information in accordance with § 5 DDG:',
       contact: 'Contact:',
     },
     datenschutz: {
@@ -12,12 +12,16 @@ legal: {
       sec2Title: '2. Data collection on this website',
       sec2q1: 'Who is responsible for data collection?',
       sec2a1: 'Data processing on this website is carried out by the website operator (see Impressum).',
-      sec2q2: 'How do we collect your data?',
-      sec2a2: 'Your data is collected when you provide it to us. This could be data you enter during registration (email address) or save as configuration in the app.',
-      sec2q3: 'What do we use your data for?',
-      sec2a3: 'Part of the data is collected to ensure the error-free provision of the website and functionality of the dashboard (e.g. saving your settings and API Keys). The application uses services like Supabase for database storage and authentication.',
-      sec3Title: '3. Cookies',
-      sec3Desc: 'Our web pages use "cookies". Cookies do not damage your computer and do not contain viruses. We exclusively use "technically necessary cookies" (session cookies for authentication via Supabase) that are strictly necessary to provide the core functions of the website (Login & Session Management). In accordance with § 25 Para. 2 TTDSG and the ePrivacy Directive, no explicit consent (Cookie Banner) is required for these cookies.',
+      sec2q2: 'How do we collect your data and on what legal basis?',
+      sec2a2: 'Your data is collected when you provide it to us (e.g. email address during registration, dashboard settings, API keys). The processing is based on Art. 6 (1) (b) GDPR (fulfillment of contract). We also collect technical data (e.g. IP addresses) to ensure error-free provision and security of the website (Art. 6 (1) (f) GDPR).',
+      sec2q3: 'Storage duration and API Keys',
+      sec2a3: 'Your data remains stored until you delete your account or the purpose of the data processing ceases to apply. Provided API Keys are securely stored in our database and are never read for our own purposes or shared with third parties.',
+      sec3Title: '3. Data subject rights (Your rights)',
+      sec3Desc: 'You have the right to receive information about the origin, recipient, and purpose of your stored personal data free of charge. You also have the right to request the correction, blocking, or deletion of this data, as well as the right to data portability. Furthermore, you have the right to lodge a complaint with the competent supervisory authority.',
+      sec4Title: '4. Infrastructure, Hosting & Third Parties',
+      sec4Desc: 'This website is delivered via services like Cloudflare (hosting, caching, routing). We use Supabase for database storage and authentication. Whenever you visit the website, IP addresses are processed by these infrastructure providers. Supabase servers are generally located in the EU (e.g. Frankfurt). Should a data transfer to third countries (e.g. USA) occur, these providers rely on the EU-US Data Privacy Framework or recognized Standard Contractual Clauses.',
+      sec5Title: '5. Cookies',
+      sec5Desc: 'We exclusively use "technically necessary cookies" (session cookies for authentication via Supabase) that are strictly necessary to provide the core functions. In accordance with § 25 Para. 2 TDDDG and the ePrivacy Directive, no explicit consent (Cookie Banner) is required for these cookies.'
     }
   },
   // Common

@@ -23,9 +23,9 @@
   let weather = $state<{ temp: number; code: number } | null>(null);
   let dialogEl = $state<HTMLDialogElement | null>(null);
 
-  let city = $state("");
-  let lat = $state<number | null>(null);
-  let lon = $state<number | null>(null);
+  let city = $state("Berlin");
+  let lat = $state<number | null>(52.5200);
+  let lon = $state<number | null>(13.4050);
   let showClock = $state(true);
   let showDate = $state(true);
   let showWeather = $state(true);
@@ -40,9 +40,9 @@
       let loadedSomething = false;
       if (secrets[id]) {
         const parsed = secrets[id];
-        city = parsed.city || "";
-        lat = parsed.lat !== undefined ? parsed.lat : null;
-        lon = parsed.lon !== undefined ? parsed.lon : null;
+        city = parsed.city !== undefined ? parsed.city : "Berlin";
+        lat = parsed.lat !== undefined ? parsed.lat : 52.5200;
+        lon = parsed.lon !== undefined ? parsed.lon : 13.4050;
         showClock = parsed.showClock ?? true;
         showDate = parsed.showDate ?? true;
         showWeather = parsed.showWeather ?? true;
@@ -54,9 +54,9 @@
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
-            city = parsed.city || "";
-            lat = parsed.lat !== undefined ? parsed.lat : null;
-            lon = parsed.lon !== undefined ? parsed.lon : null;
+            city = parsed.city !== undefined ? parsed.city : "Berlin";
+            lat = parsed.lat !== undefined ? parsed.lat : 52.5200;
+            lon = parsed.lon !== undefined ? parsed.lon : 13.4050;
             showClock = parsed.showClock ?? true;
             showDate = parsed.showDate ?? true;
             showWeather = parsed.showWeather ?? true;

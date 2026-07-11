@@ -1,7 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { fade } from 'svelte/transition';
-  import { ArrowLeft, Download, Upload, AlertTriangle, Palette, Database, User, LogOut } from 'lucide-svelte';
+  import { ArrowLeft, Download, Upload, AlertTriangle, Palette, Database, User, LogOut, LogIn, UserPlus } from 'lucide-svelte';
   import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount } from 'svelte';
   import LegalFooter from "$lib/components/LegalFooter.svelte";
@@ -303,11 +303,11 @@
             <p class="text-sm text-neutral-400 mb-8 max-w-md mx-auto">{i18n.t.dashboardSettings.signInToSync}</p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href="/login" class="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(37,99,235,0.2)]">
-                {i18n.t.login.signInBtn}
+              <a href="/login" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(37,99,235,0.2)]">
+                <LogIn size={18} /> {i18n.t.login.signInBtn}
               </a>
-              <a href="/login?signup=true" class="w-full sm:w-auto px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all active:scale-[0.98]">
-                {i18n.t.login.signUpBtn}
+              <a href="/login?signup=true" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all active:scale-[0.98]">
+                <UserPlus size={18} /> {i18n.t.login.signUpBtn}
               </a>
             </div>
           </div>

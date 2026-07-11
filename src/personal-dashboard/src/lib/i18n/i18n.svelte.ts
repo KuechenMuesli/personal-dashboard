@@ -30,12 +30,7 @@ class I18nState {
       if (saved && dictionaries[saved]) {
         this.currentLang = saved;
       } else {
-        const browserLang = navigator.language;
-        if (browserLang.startsWith('de')) {
-          this.currentLang = 'de';
-        } else {
-          this.currentLang = 'en';
-        }
+        this.currentLang = 'en';
       }
     }
   }

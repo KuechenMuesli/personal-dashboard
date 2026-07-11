@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, setContext } from "svelte";
+  import { scale } from 'svelte/transition';
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import OnboardingTour from "$lib/components/OnboardingTour.svelte";
   import type { StoredWidget } from '../types/stored-widget';
   import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut, Search} from "lucide-svelte";
   import { i18n } from '$lib/i18n/i18n.svelte';
@@ -41,6 +43,8 @@
   let showPickerDialog = $state(false);
   let widgetSearchQuery = $state('');
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
+  
+  let showOnboarding = $state(false);
 
   let THEMES = $derived([
     { id: 'theme-default', name: i18n.t.themes.default, colors: ['#121212', '#262626', '#3b82f6'] },
@@ -155,36 +159,21 @@
       }
       if (!hasLocal) {
         generateWelcomeLayout();
+        showOnboarding = true;
       }
     }
   });
 
   function generateWelcomeLayout() {
-      const welcomeId = crypto.randomUUID();
-      const hintId = crypto.randomUUID();
       const loginId = crypto.randomUUID();
+      const searchId = crypto.randomUUID();
+      const clockId = crypto.randomUUID();
 
-      localStorage.setItem(`note-settings-${welcomeId}`,
-        "# Welcome to your Dashboard! \n\n" +
-        "You can customize this space exactly how *you* like it. \n\n" +
-        "- **Add Widgets**: Use the '+' button.\n" +
-        "- **Rearrange**: Click the 'Edit' (✎) button to drag and resize.\n" +
-        "- **Markdown**: This note supports **bold**, *italics*, lists and more! \n\n" +
-				"Connect with me on [LinkedIn](https://www.linkedin.com/in/paul-simon-470477272) or [GitHub](https://github.com/KuechenMuesli) " +
-				"or [contribute to this project yourself!](https://github.com/KuechenMuesli/personal-dashboard)"
-      );
-      localStorage.setItem(`note-mode-${welcomeId}`, "true");
-
-      localStorage.setItem(`note-settings-${hintId}`,
-        "## Start Here! \n\n" +
-        "Click the **pencil icon** in the bottom right corner to enter **edit** mode and **add** widgets."
-      );
-      localStorage.setItem(`note-mode-${hintId}`, "true");
-
+      const COLUMNS = 9;
       dashboardLayout = [
-        { id: loginId, type: 'loginPrompt', x: columns - 1, y: 0, width: 1, height: 3, showSettings: false },
-        { id: welcomeId, type: 'note', x: 0, y: 0, width: 3, height: 6, showSettings: false },
-        { id: hintId, type: 'note', x: columns - 2, y: Math.floor(window.innerHeight / ROW_HEIGHT) - 5, width: 2, height: 4, showSettings: false }
+        { id: loginId, type: 'loginPrompt', x: COLUMNS - 1, y: 0, width: 1, height: 3, showSettings: false },
+        { id: searchId, type: 'searchbar', x: Math.floor((COLUMNS - 3) / 2), y: 1, width: 3, height: 2, showSettings: false },
+        { id: clockId, type: 'clockWeatherDate', x: Math.floor((COLUMNS - 3) / 2), y: 0, width: 3, height: 1, showSettings: false }
       ];
 
       save();
@@ -369,12 +358,7 @@
     return packedLayout;
   });
 
-  $effect(() => {
-    if (columns < 9 && isEditing) {
-      isEditing = false;
-      showPickerDialog = false;
-    }
-  });
+  // Remove the effect that forces isEditing = false on mobile
 
   async function handleLogout() {
     localStorage.clear();
@@ -648,6 +632,7 @@
 				class="widget-wrapper absolute p-2 box-border will-change-[transform,width,height]
              {draggingId === sw.id || resizingId === sw.id ? 'z-[100] transition-none' : 'z-10 transition-[transform,width,height] duration-200'}
              {isHidden ? 'pointer-events-none' : ''}"
+        data-widget-type={sw.type}
 				style="
         width: {(sw.width / columns) * 100}%;
         height: {sw.height * ROW_HEIGHT}px;
@@ -661,7 +646,7 @@
 					<div class="absolute top-0 left-0 right-0 z-50 flex items-center gap-1 border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
 						{#if widgetDef.hasSettings}
 						<button
-								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
+								class="widget-settings-btn pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
 								onclick={() => debounceAction(() => toggleSettings(sw.id))}
 						>
 							<Settings size={16} strokeWidth={1} />
@@ -721,36 +706,38 @@
 	{/each}
 </div>
 
-{#if columns >= 9}
-	<div class="fixed bottom-8 right-8 z-[1000] flex flex-col gap-4">
-		{#if isEditing}
-			<button
-					class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-2xl text-white shadow-2xl transition-transform hover:scale-105"
-					onclick={() => debounceAction(() => showPickerDialog = true)}
-			><Plus size={20} /></button>
-		{/if}
-
+	<div class="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-[1000] flex flex-row md:flex-col gap-3 md:gap-4 items-center">
 		<a
 				href="/settings"
-				class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
+        id="settings-btn"
+				class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
 				title="Settings"
 		>
-			<Settings size={20} />
+			<Settings class="w-5 h-5 md:w-6 md:h-6" />
 		</a>
 
+		{#if isEditing}
+			<button
+          id="add-widget-btn"
+					transition:scale={{ duration: 200, start: 0.5 }}
+					class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-2xl transition-transform hover:scale-105"
+					onclick={() => debounceAction(() => showPickerDialog = true)}
+			><Plus class="w-5 h-5 md:w-6 md:h-6" /></button>
+		{/if}
+
 		<button
-				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
+        id="edit-mode-btn"
+				class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full text-white shadow-2xl transition-all hover:scale-105
              {isEditing ? 'bg-emerald-600' : 'bg-neutral-700'}"
 				onclick={() => debounceAction(() => isEditing = !isEditing)}
 		>
 			{#if isEditing}
-				<Check size={20} />
+				<Check class="w-5 h-5 md:w-6 md:h-6" />
 			{:else}
-				<Pencil size={20} />
+				<Pencil class="w-5 h-5 md:w-6 md:h-6" />
 			{/if}
 		</button>
 	</div>
-{/if}
 
 <SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog} maxWidth="max-w-[900px]" fixedHeight={true}>
 	<div class="mb-6 relative shrink-0">
@@ -775,5 +762,9 @@
 		{/each}
 	</div>
 </SettingsDialog>
+
+{#if showOnboarding}
+  <OnboardingTour {isEditing} onComplete={() => { showOnboarding = false; localStorage.setItem('dashboard-onboarding-complete', 'true'); }} />
+{/if}
 
 

@@ -3,6 +3,7 @@
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import type { StoredWidget } from '../types/stored-widget';
   import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut} from "lucide-svelte";
+  import { i18n } from '$lib/i18n/i18n.svelte';
 
   let { data } = $props();
   let session = $derived(data.session);
@@ -743,7 +744,7 @@
 	</div>
 {/if}
 
-<SettingsDialog title="Add Widget" bind:show={showPickerDialog}>
+<SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog}>
 	<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
 		{#each Object.entries(widgets) as [type, config]}
 			<button
@@ -763,7 +764,7 @@
 </SettingsDialog>
 
 <SettingsDialog
-	title="Dashboard Settings"
+	title={i18n.t.dashboardSettings.title}
 	bind:show={showGlobalSettings}
 	data={[globalTheme]}
 	onRevert={(r) => globalTheme = r[0]}
@@ -772,32 +773,58 @@
 	<div class="space-y-8">
 		<!-- ACCOUNT SECTION -->
         <div class="space-y-3">
-		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Account & Cloud</h4>
+		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">{i18n.t.dashboardSettings.accountCloud}</h4>
             <div class="bg-black/20 border border-neutral-800 rounded-xl p-4 flex items-center justify-between">
                 <div>
                     {#if session}
-                        <div class="font-bold text-sm text-white">Logged in</div>
+                        <div class="font-bold text-sm text-white">{i18n.t.dashboardSettings.loggedIn}</div>
                         <div class="text-xs text-neutral-400 mt-0.5">{session.user.email}</div>
                     {:else}
-                        <div class="font-bold text-sm text-white">Local Mode</div>
-                        <div class="text-xs text-neutral-400 mt-0.5">Sign in to sync your dashboard.</div>
+                        <div class="font-bold text-sm text-white">{i18n.t.dashboardSettings.localMode}</div>
+                        <div class="text-xs text-neutral-400 mt-0.5">{i18n.t.dashboardSettings.signInToSync}</div>
                     {/if}
                 </div>
                 {#if session}
-                    <button onclick={handleLogout} class="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold rounded-lg transition-colors">
-                        Logout
-                    </button>
+                    <div class="flex gap-2">
+                        <a href="/settings" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
+                            {i18n.t.dashboardSettings.settingsBtn}
+                        </a>
+                        <button onclick={handleLogout} class="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold rounded-lg transition-colors">
+                            {i18n.t.dashboardSettings.logoutBtn}
+                        </button>
+                    </div>
                 {:else}
                     <a href="/login" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
-                        Login
+                        {i18n.t.dashboardSettings.loginBtn}
                     </a>
                 {/if}
             </div>
         </div>
 
+        <!-- LANGUAGE SECTION -->
+        <div class="space-y-3">
+            <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Language / Sprache</h4>
+            <div class="grid grid-cols-2 gap-3">
+                <button
+                    class="p-3 rounded-xl border text-left transition-all flex items-center gap-3 {i18n.currentLang === 'en' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                    onclick={() => i18n.setLang('en')}
+                >
+                    <span class="text-xl">🇬🇧</span>
+                    <span class="font-bold text-sm text-slate-200">English</span>
+                </button>
+                <button
+                    class="p-3 rounded-xl border text-left transition-all flex items-center gap-3 {i18n.currentLang === 'de' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                    onclick={() => i18n.setLang('de')}
+                >
+                    <span class="text-xl">🇩🇪</span>
+                    <span class="font-bold text-sm text-slate-200">Deutsch</span>
+                </button>
+            </div>
+        </div>
+
         <!-- THEME SECTION -->
 		<div class="space-y-3">
-            <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Theme</h4>
+            <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">{i18n.t.dashboardSettings.theme}</h4>
             <div class="grid grid-cols-2 gap-3">
                 {#each THEMES as theme}
                     <button
@@ -817,20 +844,27 @@
 
         <!-- DATA SECTION -->
         <div class="space-y-3">
-		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Data & Backup</h4>
+		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">{i18n.t.dashboardSettings.dataBackup}</h4>
             <div class="grid grid-cols-2 gap-3">
                 <label class="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-700 bg-black/20 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center">
                     <Download size={24} class="mb-2 text-neutral-400" />
-                    <span class="text-sm font-bold text-slate-200">Import</span>
-                    <span class="text-xs text-neutral-500 mt-1">Load from file</span>
+                    <span class="text-sm font-bold text-slate-200">{i18n.t.dashboardSettings.import}</span>
+                    <span class="text-xs text-neutral-500 mt-1">{i18n.t.dashboardSettings.importDesc}</span>
                     <input type="file" accept=".json" class="hidden" onchange={importConfig} />
                 </label>
                 <button onclick={exportConfig} class="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-700 bg-black/20 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center">
                     <Upload size={24} class="mb-2 text-neutral-400" />
-                    <span class="text-sm font-bold text-slate-200">Export</span>
-                    <span class="text-xs text-neutral-500 mt-1">Save to file</span>
+                    <span class="text-sm font-bold text-slate-200">{i18n.t.dashboardSettings.export}</span>
+                    <span class="text-xs text-neutral-500 mt-1">{i18n.t.dashboardSettings.exportDesc}</span>
                 </button>
             </div>
+        </div>
+
+        <!-- LEGAL SECTION -->
+        <div class="pt-4 flex items-center justify-center gap-4 text-[10px] text-neutral-600">
+            <a href="/impressum" class="hover:text-white transition-colors">{i18n.t.login.impressum}</a>
+            <span>&bull;</span>
+            <a href="/datenschutz" class="hover:text-white transition-colors">{i18n.t.login.datenschutz}</a>
         </div>
 
 	</div>

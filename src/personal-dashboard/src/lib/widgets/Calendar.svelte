@@ -128,7 +128,7 @@
   function saveSettingsLocally() {
     localStorage.setItem(`calendar-viewmode-${id}`, viewMode);
   }
-  
+
   async function saveConfigsToCloud() {
     if ($page.data.session) {
         try {
@@ -229,12 +229,12 @@
       const jcalData = ICAL.parse(icsData);
       const comp = new ICAL.Component(jcalData);
       const vevents = comp.getAllSubcomponents('vevent');
-      
+
       const now = new Date();
       // Expand events up to 1 year into the future and 1 month in the past
       const maxDate = new Date();
       maxDate.setFullYear(now.getFullYear() + 1);
-      
+
       for (const vevent of vevents) {
         const event = new ICAL.Event(vevent);
         if (!event.startDate) continue;
@@ -453,8 +453,8 @@
 			{#if storedConfigs.length === 0}
 				<div class="text-sm text-neutral-600 italic rounded-lg border border-black/40 border-dashed p-4 text-center">{i18n.t.w.calendar.noAdded}</div>
 			{:else}
-				<DraggableList 
-					bind:items={storedConfigs} 
+				<DraggableList
+					bind:items={storedConfigs}
 					handleClass="drag-handle"
 					listClass="flex flex-col gap-2"
 					itemClass="flex items-center justify-between gap-3 rounded-lg bg-neutral-900 p-2.5 border border-black/40"
@@ -491,7 +491,7 @@
 		<div class="space-y-3 border-t border-black/40 pt-5">
 			<div class="flex justify-between items-center">
 				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">
-					{editingCalId ? '{i18n.t.w.calendar.edit}' : '{i18n.t.w.calendar.add}'}
+					{editingCalId ? i18n.t.w.calendar.edit : i18n.t.w.calendar.add}
 				</label>
 				{#if editingCalId}
 					<button onclick={resetForm} class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase tracking-wider">{i18n.t.w.common.cancel}</button>
@@ -510,7 +510,7 @@
 					disabled={!newCalUrl || !newCalName}
 					class="w-full rounded-lg bg-black/40 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-black/40"
 			>
-				{editingCalId ? '{i18n.t.w.common.save}' : '{i18n.t.w.calendar.add}'}
+				{editingCalId ? i18n.t.w.common.save : i18n.t.w.calendar.add}
 			</button>
 		</div>
 

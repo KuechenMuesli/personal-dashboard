@@ -25,9 +25,7 @@
       <p class="font-bold text-white">{i18n.t.legal.impressum.info}</p>
 
       <p>
-        Paul Simon<br>
-<!--        Hallandstr. 52<br>-->
-<!--        13189 Berlin-->
+        Paul Simon
       </p>
 
       <p class="font-bold text-white mt-6">{i18n.t.legal.impressum.contact}</p>

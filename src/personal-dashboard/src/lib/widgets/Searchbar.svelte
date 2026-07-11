@@ -643,14 +643,33 @@
 
   function loadFavorites() {
     const loadedFavs: Favorite[] = [];
+    const secrets = getSecrets();
+    
+    // 1. Load from global secrets (Cloud)
+    for (const [key, value] of Object.entries(secrets)) {
+      if (value && value.favorites && Array.isArray(value.favorites)) {
+        loadedFavs.push(...value.favorites);
+      }
+    }
+
+    // 2. Load from localStorage (Local)
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key?.startsWith('favorites-settings-')) {
         try {
           const parsed = JSON.parse(localStorage.getItem(key) || '{}');
-          if (parsed.favorites) loadedFavs.push(...parsed.favorites);
+          if (parsed.favorites && Array.isArray(parsed.favorites)) {
+            loadedFavs.push(...parsed.favorites);
+          }
         } catch (e) {}
       }
+    }
+    if (loadedFavs.length === 0) {
+      loadedFavs.push(
+        { name: "Reddit", url: "https://reddit.com" },
+        { name: "GitHub", url: "https://github.com" },
+        { name: "YouTube", url: "https://youtube.com" }
+      );
     }
     const unique = new Map<string, Favorite>();
     for (const fav of loadedFavs) { if (fav.url) unique.set(fav.url, fav); }
@@ -662,6 +681,8 @@
 
   $effect(() => {
     const secrets = getSecrets();
+    loadFavorites(); // Re-run when secrets update
+
     if (!isLoaded) {
       if (secrets[id]) {
         const parsed = secrets[id];

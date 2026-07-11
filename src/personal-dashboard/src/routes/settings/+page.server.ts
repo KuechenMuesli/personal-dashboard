@@ -105,6 +105,11 @@ export const actions: Actions = {
     // Call rpc to delete user if it exists on the backend
     const { error: rpcError } = await supabase.rpc('delete_user');
 
+    if (rpcError) {
+      console.error('Failed to delete user account via RPC:', rpcError);
+      return { deleteError: 'Der Account konnte nicht gelöscht werden. Bitte stelle sicher, dass die delete_user RPC Funktion in Supabase existiert.' };
+    }
+
     await supabase.auth.signOut();
     throw redirect(303, '/');
   }

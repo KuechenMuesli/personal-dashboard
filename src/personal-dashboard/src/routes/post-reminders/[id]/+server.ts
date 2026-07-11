@@ -42,9 +42,25 @@ export const POST: RequestHandler = async ({ params, request, locals: { supabase
     }
 
     let payload;
+    let rawText = '';
     try {
-        payload = await request.json();
+        rawText = await request.text();
+        
+        // Apple Shortcuts bug: it sometimes prepends the raw text of the reminders 
+        // to the JSON array of dictionaries, resulting in malformed JSON like:
+        // "today": [Task 1, Task 2, {"t":"Task 1", ...}, {"t":"Task 2", ...}]
+        // We fix this by removing anything between '[' and the first '{', 
+        // and clearing arrays that contain only unquoted strings.
+        
+        // 1. Fix arrays that have dictionaries (removes unquoted strings before the first '{')
+        rawText = rawText.replace(/\[\s*[^\]{]*?(?=\{)/g, '[');
+        
+        // 2. Fix arrays that only have unquoted strings and no dictionaries
+        rawText = rawText.replace(/\[\s*[^\]{"\[\]]*?\]/g, '[]');
+
+        payload = JSON.parse(rawText);
     } catch (e) {
+        console.error("JSON Parse Error. Raw Text:", rawText);
         throw error(400, 'Invalid JSON');
     }
 

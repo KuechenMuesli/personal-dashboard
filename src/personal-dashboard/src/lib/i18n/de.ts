@@ -148,6 +148,7 @@ common: {
       clickToReadMore: 'Klicken für mehr Details',
       copied: 'Kopiert!',
       configure: 'Konfigurieren',
+      configureWidget: '{widget} konfigurieren',
       discardChanges: 'Änderungen verwerfen?',
       discardMsg: 'Sie haben ungespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?',
       discard: 'Verwerfen',
@@ -333,7 +334,15 @@ network: {
     },
     weather: {
       city: 'Stadt',
-      cityPlaceholder: 'z.B. Berlin'
+      cityPlaceholder: 'z.B. Berlin',
+      conditions: {
+        clear: 'Klarer Himmel',
+        mainlyClear: 'Weitgehend klar',
+        foggy: 'Neblig',
+        rainy: 'Regnerisch',
+        snowy: 'Schneefall',
+        thunderstorm: 'Gewitter'
+      }
     },
     sketch: {
       openSketch: 'Zeichnung öffnen'

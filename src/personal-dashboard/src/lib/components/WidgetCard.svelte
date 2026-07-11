@@ -32,7 +32,7 @@
 				class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors"
 		>
 			<Settings size={14} />
-			{i18n.t.w.common.configure} {title || 'Widget'}
+			{i18n.t.w.common.configureWidget.replace('{widget}', title || 'Widget')}
 		</button>
 	{:else}
 

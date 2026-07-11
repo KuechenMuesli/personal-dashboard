@@ -37,34 +37,41 @@
   $effect(() => {
     const secrets = getSecrets();
     if (!isLoaded) {
+      let loadedSomething = false;
       if (secrets[id]) {
         const parsed = secrets[id];
         city = parsed.city || "";
-        lat = parsed.lat || null;
-        lon = parsed.lon || null;
+        lat = parsed.lat !== undefined ? parsed.lat : null;
+        lon = parsed.lon !== undefined ? parsed.lon : null;
         showClock = parsed.showClock ?? true;
         showDate = parsed.showDate ?? true;
         showWeather = parsed.showWeather ?? true;
         unit = parsed.unit || "celsius";
         hour12 = parsed.hour12 ?? false;
+        loadedSomething = true;
       } else {
         const saved = localStorage.getItem(`general-settings-${id}`);
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
             city = parsed.city || "";
-            lat = parsed.lat || null;
-            lon = parsed.lon || null;
+            lat = parsed.lat !== undefined ? parsed.lat : null;
+            lon = parsed.lon !== undefined ? parsed.lon : null;
             showClock = parsed.showClock ?? true;
             showDate = parsed.showDate ?? true;
             showWeather = parsed.showWeather ?? true;
             unit = parsed.unit || "celsius";
             hour12 = parsed.hour12 ?? false;
+            loadedSomething = true;
           } catch (e) { console.error(e); }
         }
       }
-      isLoaded = true;
-      if (lat && lon) fetchWeather();
+      
+      // If we found data, or if we know for sure the widget is brand new and has no secrets
+      if (loadedSomething || Object.keys(secrets).length > 0) {
+        isLoaded = true;
+        if (lat !== null && lon !== null) fetchWeather();
+      }
     }
   });
 
@@ -147,12 +154,12 @@
   }
 
   function getWeatherLabel(code: number) {
-    if (code === 0) return "Clear sky";
-    if (code <= 3) return "Mainly clear";
-    if (code <= 48) return "Foggy";
-    if (code <= 67) return "Rainy";
-    if (code <= 77) return "Snowy";
-    return "Thunderstorm";
+    if (code === 0) return i18n.t.w.weather.conditions.clear;
+    if (code <= 3) return i18n.t.w.weather.conditions.mainlyClear;
+    if (code <= 48) return i18n.t.w.weather.conditions.foggy;
+    if (code <= 67) return i18n.t.w.weather.conditions.rainy;
+    if (code <= 77) return i18n.t.w.weather.conditions.snowy;
+    return i18n.t.w.weather.conditions.thunderstorm;
   }
 
   const iconSize = $derived(isLarge ? 32 : isHeight3 ? 24 : 20);

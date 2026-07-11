@@ -146,6 +146,7 @@ common: {
       clickToReadMore: 'Click to read more',
       copied: 'Copied!',
       configure: 'Configure',
+      configureWidget: 'Configure {widget}',
       discardChanges: 'Discard Changes?',
       discardMsg: 'You have unsaved changes. Are you sure you want to discard them?',
       discard: 'Discard',
@@ -331,7 +332,15 @@ network: {
     },
     weather: {
       city: 'City',
-      cityPlaceholder: 'e.g. London'
+      cityPlaceholder: 'e.g. London',
+      conditions: {
+        clear: 'Clear sky',
+        mainlyClear: 'Mainly clear',
+        foggy: 'Foggy',
+        rainy: 'Rainy',
+        snowy: 'Snowy',
+        thunderstorm: 'Thunderstorm'
+      }
     },
     sketch: {
       openSketch: 'Open Sketch'

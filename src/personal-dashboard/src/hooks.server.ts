@@ -10,9 +10,15 @@ export const handle: Handle = async ({ event, resolve }) => {
       cookies: {
         getAll: () => event.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            event.cookies.set(name, value, { ...options, path: '/' })
-          })
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              event.cookies.set(name, value, { ...options, path: '/' })
+            })
+          } catch (error) {
+            // Supabase occasionally refreshes tokens asynchronously. SvelteKit throws if we try 
+            // to set cookies after the response headers have already been sent. This is harmless 
+            // and Supabase will just handle the session refresh on the client-side instead.
+          }
         },
       },
     }

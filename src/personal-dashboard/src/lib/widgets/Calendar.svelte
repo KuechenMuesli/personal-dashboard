@@ -5,6 +5,7 @@
   import { Clock, MapPin, FileText, Pencil, X, GripVertical } from "lucide-svelte";
   // @ts-ignore
   import ICAL from 'ical.js';
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import WidgetTabs from "$lib/components/WidgetTabs.svelte";
@@ -300,9 +301,9 @@
 {#snippet calendarHeader()}
 	<WidgetTabs
 		options={[
-			{ value: 'today', label: 'Today' },
-			{ value: 'upcoming', label: 'Upcoming' },
-			{ value: 'grouped', label: 'Grouped' }
+			{ value: 'today', label: i18n.t.w.calendar.today },
+			{ value: 'upcoming', label: i18n.t.w.calendar.week },
+			{ value: 'grouped', label: i18n.t.w.calendar.month }
 		]}
 		bind:selected={viewMode as any}
 		onChange={() => { saveSettingsLocally(); expandedEventId = null; }}
@@ -385,7 +386,7 @@
 {/snippet}
 
 <WidgetCard
-		title={isLoading ? 'Syncing...' : 'Calendar'}
+		title={isLoading ? '...' : i18n.t.w.calendar.title}
 		bind:showSettings={showSettings}
 		isConfigured={isConfigured}
 		padding={!isHeight1}
@@ -394,7 +395,7 @@
 	<div class="h-full w-full {isHeight1 ? 'flex items-center px-4' : 'pr-1'}">
 		{#if viewMode === 'today' && !isHeight1}
 			{#if todayEvents().length === 0}
-				<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">No more events today.</div>
+				<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">{i18n.t.w.calendar.noMoreEvents}</div>
 			{:else}
 				<div class="flex flex-col gap-2 w-full">
 					{#each todayEvents() as event (event.id)}
@@ -405,7 +406,7 @@
 
 		{:else if viewMode === 'upcoming' || isHeight1}
 			{#if upcomingEvents().length === 0}
-				<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">No upcoming events.</div>
+				<div class="flex h-full items-center justify-center text-xs text-neutral-500 italic pb-4">{i18n.t.w.calendar.noEvents}</div>
 			{:else}
 				<div class="flex flex-col gap-2 w-full">
 					{#each upcomingEvents().slice(0, isHeight1 ? 1 : undefined) as event (event.id)}
@@ -423,7 +424,7 @@
 							<span class="truncate">{calendar.name}</span>
 						</h3>
 						{#if calendar.events.filter(e => e.end > new Date()).length === 0}
-							<div class="text-[10px] text-neutral-600 pl-4">No upcoming events.</div>
+							<div class="text-[10px] text-neutral-600 pl-4">{i18n.t.w.calendar.noEvents}</div>
 						{:else}
 							<div class="flex flex-col gap-0.5 pl-4 border-l border-black/40 ml-1">
 								{#each calendar.events.filter(e => e.end > new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 5) as event (event.id)}
@@ -439,7 +440,7 @@
 </WidgetCard>
 
 <SettingsDialog
-		title="Calendar Settings"
+		title="{i18n.t.w.calendar.settings}"
 		bind:show={showSettings}
 		data={[storedConfigs, viewMode] as any}
 		onRevert={(restored) => { storedConfigs = restored[0]; viewMode = restored[1]; }}
@@ -448,9 +449,9 @@
 	<div class="space-y-6">
 
 		<div class="space-y-2">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Active Calendars</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.w.calendar.title}</label>
 			{#if storedConfigs.length === 0}
-				<div class="text-sm text-neutral-600 italic rounded-lg border border-black/40 border-dashed p-4 text-center">No calendars added yet.</div>
+				<div class="text-sm text-neutral-600 italic rounded-lg border border-black/40 border-dashed p-4 text-center">{i18n.t.w.calendar.noAdded}</div>
 			{:else}
 				<DraggableList 
 					bind:items={storedConfigs} 
@@ -470,14 +471,14 @@
 								<button
 										onclick={() => editCalendar(config)}
 										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
-										title="Edit Calendar"
+										title="{i18n.t.w.calendar.edit}"
 								>
 									<Pencil size={12} strokeWidth={2.5} />
 								</button>
 								<button
 										onclick={() => removeCalendar(config.id)}
 										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
-										title="Remove Calendar"
+										title="{i18n.t.w.calendar.remove}"
 								>
 									<X size={12} strokeWidth={2.5} />
 								</button>
@@ -490,26 +491,26 @@
 		<div class="space-y-3 border-t border-black/40 pt-5">
 			<div class="flex justify-between items-center">
 				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">
-					{editingCalId ? 'Edit Calendar' : 'Add New Calendar'}
+					{editingCalId ? '{i18n.t.w.calendar.edit}' : '{i18n.t.w.calendar.add}'}
 				</label>
 				{#if editingCalId}
-					<button onclick={resetForm} class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase tracking-wider">Cancel Edit</button>
+					<button onclick={resetForm} class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase tracking-wider">{i18n.t.w.common.cancel}</button>
 				{/if}
 			</div>
 
 			<div class="grid grid-cols-[1fr_auto] gap-3">
-				<input bind:value={newCalName} placeholder="Calendar Name (e.g. Work)" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" onkeydown={(e) => e.stopPropagation()} />
+				<input bind:value={newCalName} placeholder="{i18n.t.w.calendar.namePlaceholder}" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" onkeydown={(e) => e.stopPropagation()} />
 				<input type="color" bind:value={newCalColor} class="h-[42px] w-[42px] rounded-lg cursor-pointer border border-black/40 bg-neutral-900" title="Pick a color" />
 			</div>
 
-			<input bind:value={newCalUrl} placeholder="ICS URL (https://...)" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 font-mono text-[11px]" onkeydown={(e) => e.stopPropagation()} />
+			<input bind:value={newCalUrl} placeholder="{i18n.t.w.calendar.urlPlaceholder}" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 font-mono text-[11px]" onkeydown={(e) => e.stopPropagation()} />
 
 			<button
 					onclick={saveCalendar}
 					disabled={!newCalUrl || !newCalName}
 					class="w-full rounded-lg bg-black/40 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-black/40"
 			>
-				{editingCalId ? 'Save Changes' : '+ Add to List'}
+				{editingCalId ? '{i18n.t.w.common.save}' : '{i18n.t.w.calendar.add}'}
 			</button>
 		</div>
 

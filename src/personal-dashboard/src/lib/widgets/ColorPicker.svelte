@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount } from "svelte";
   import { Pipette, Copy, Check } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
@@ -113,7 +114,7 @@
 		<div class="flex flex-col gap-2 flex-grow min-w-0 justify-center">
 
 			<div class="relative min-w-0">
-				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none {isSmallWidth ? 'left-2' : 'left-2.5'}">HEX</span>
+				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none {isSmallWidth ? 'left-2' : 'left-2.5'}">{i18n.t.w.colorPicker.hex}</span>
 				<div class="relative flex items-center">
 					<input
 							type="text"
@@ -133,7 +134,7 @@
 			</div>
 
 			<div class="relative min-w-0">
-				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none {isSmallWidth ? 'left-2' : 'left-2.5'}">RGB</span>
+				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none {isSmallWidth ? 'left-2' : 'left-2.5'}">{i18n.t.w.colorPicker.rgb}</span>
 				<div class="relative flex items-center">
 					<input
 							type="text"

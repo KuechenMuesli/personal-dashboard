@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount, onDestroy, getContext } from "svelte";
   import { Plus, X, Search, ChevronUp, ChevronDown, GripVertical } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
@@ -368,11 +369,11 @@
 	</div>
 </WidgetCard>
 
-<SettingsDialog title="Stock Ticker Settings" bind:show={showSettings} onSave={saveSettings}>
+<SettingsDialog title="{i18n.t.w.stock.settings}" bind:show={showSettings} onSave={saveSettings}>
 	<div class="flex flex-col gap-4">
 
 		<div class="space-y-1.5">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="currency">Target Currency</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="currency">{i18n.t.w.stock.targetCurrency}</label>
 			<select
 					id="currency"
 					bind:value={targetCurrency}
@@ -396,7 +397,7 @@
 							type="text"
 							bind:value={searchQuery}
 							oninput={handleSearchInput}
-							placeholder="Search AAPL, BTC-USD..."
+							placeholder="{i18n.t.w.stock.searchPlaceholder}"
 							class="w-full bg-transparent text-sm text-white outline-none placeholder:text-neutral-600 border-none focus:ring-0 p-0"
 					/>
 					{#if isSearching}
@@ -424,7 +425,7 @@
 		</div>
 
 		<div class="space-y-2">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Active Tickers</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.w.stock.activeTickers}</label>
 			<DraggableList 
 				bind:items={stocks} 
 				handleClass="drag-handle"
@@ -447,7 +448,7 @@
 				{/snippet}
 			</DraggableList>
 				{#if stocks.length === 0}
-					<div class="text-[10px] text-neutral-500 italic text-center py-4">No tickers configured. Search above to add some.</div>
+					<div class="text-[10px] text-neutral-500 italic text-center py-4">{i18n.t.w.stock.noTickers}</div>
 				{/if}
 		</div>
 

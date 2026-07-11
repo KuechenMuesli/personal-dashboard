@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getContext } from 'svelte';
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import { marked } from 'marked';
   import { Plus, X, GripHorizontal, PenLine, Eye } from 'lucide-svelte';
   import WidgetCard from '$lib/components/WidgetCard.svelte';
@@ -158,14 +159,14 @@
 					{@html renderedMarkdown}
 				</div>
 			{:else}
-       <textarea
-					 value={content}
-					 oninput={handleInput}
-					 placeholder="Write something..."
-					 spellcheck="false"
-					 class="h-full w-full resize-none border-none bg-transparent p-3.5 font-mono text-[13px] leading-relaxed tracking-tight text-slate-200 outline-none placeholder:text-neutral-600
+        <textarea
+          value={content}
+          oninput={handleInput}
+          placeholder={i18n.t.w.note.placeholder}
+          spellcheck="false"
+          class="h-full w-full resize-none border-none bg-transparent p-3.5 font-mono text-[13px] leading-relaxed tracking-tight text-slate-200 outline-none placeholder:text-neutral-600
                 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent"
-			 ></textarea>
+        ></textarea>
 			{/if}
 
 			<div

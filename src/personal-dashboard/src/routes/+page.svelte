@@ -13,22 +13,22 @@
   let globalSecrets = $state<Record<string, any>>({});
   setContext('secrets', () => globalSecrets);
 
-  export const widgets = {
-    searchbar:        { name: "Searchbar", load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
-    favorites:        { name: "Favorites", load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
-    note:             { name: "Sticky Note", load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false },
-    parcel:           { name: "Parcel Tracker", load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true },
-    trmnl:            { name: "TRMNL Current Screen", load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true },
-    trmnlReminders:   { name: "TRMNL Reminders", load: () => import("$lib/widgets/TrmnlReminders.svelte"), defaultSize: { width: 1, height: 4 }, hasSettings: true },
-    clockWeatherDate: { name: "Clock & Weather", load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true },
-    embed:            { name: "Web Embed", load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true },
-    TimerStopwatch:   { name: "Timer / Stopwatch", load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    sketch:           { name: "Whiteboard", load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false },
-    colorPicker:      { name: "Color Picker", load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    newtorkMetrics:   { name: "Network Metrics", load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    calendar:         { name: "Calendar", load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    stockTicker:      { name: "Stocks", load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
-  }
+  let widgets = $derived({
+    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
+    favorites:        { name: i18n.t.widgets.favorites, load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
+    note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false },
+    parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true },
+    trmnl:            { name: i18n.t.widgets.trmnl, load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true },
+    trmnlReminders:   { name: i18n.t.widgets.trmnlReminders, load: () => import("$lib/widgets/TrmnlReminders.svelte"), defaultSize: { width: 1, height: 4 }, hasSettings: true },
+    clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true },
+    embed:            { name: i18n.t.widgets.embed, load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true },
+    TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    sketch:           { name: i18n.t.widgets.sketch, load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false },
+    colorPicker:      { name: i18n.t.widgets.colorPicker, load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+  });
 
   const STORAGE_KEY = "dashboard-layout";
 
@@ -41,15 +41,15 @@
   let showGlobalSettings = $state(false);
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
 
-  const THEMES = [
-    { id: 'theme-default', name: 'Default Dark', colors: ['#121212', '#262626', '#3b82f6'] },
-    { id: 'theme-oled', name: 'OLED Black', colors: ['#000000', '#0a0a0a', '#38bdf8'] },
-    { id: 'theme-midnight', name: 'Midnight Blue', colors: ['#020617', '#0f172a', '#818cf8'] },
-    { id: 'theme-hacker', name: 'Hacker Green', colors: ['#050505', '#022c22', '#10b981'] },
-    { id: 'theme-sunset', name: 'Crimson Sunset', colors: ['#2a111a', '#3a1623', '#f43f5e'] },
-    { id: 'theme-light', name: 'Modern Light', colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
-    { id: 'theme-paper', name: 'Solarized Paper', colors: ['#fdf6e3', '#eee8d5', '#268bd2'] }
-  ];
+  let THEMES = $derived([
+    { id: 'theme-default', name: i18n.t.themes.default, colors: ['#121212', '#262626', '#3b82f6'] },
+    { id: 'theme-oled', name: i18n.t.themes.oled, colors: ['#000000', '#0a0a0a', '#38bdf8'] },
+    { id: 'theme-midnight', name: i18n.t.themes.midnight, colors: ['#020617', '#0f172a', '#818cf8'] },
+    { id: 'theme-hacker', name: i18n.t.themes.hacker, colors: ['#050505', '#022c22', '#10b981'] },
+    { id: 'theme-sunset', name: i18n.t.themes.sunset, colors: ['#2a111a', '#3a1623', '#f43f5e'] },
+    { id: 'theme-light', name: i18n.t.themes.light, colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
+    { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] }
+  ]);
   let globalTheme = $state('theme-default');
 
   onMount(async () => {
@@ -828,10 +828,10 @@
             <div class="grid grid-cols-2 gap-3">
                 {#each THEMES as theme}
                     <button
-                        class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between h-[80px] {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                        class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[80px] gap-2 {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
                         onclick={() => { globalTheme = theme.id; if (session) syncUp(); }}
                     >
-                        <div class="font-bold text-sm text-slate-200">{theme.name}</div>
+                        <div class="font-bold text-sm text-slate-200 break-words leading-tight">{theme.name}</div>
                         <div class="flex gap-1.5 mt-2 bg-black/20 p-1.5 rounded-lg w-fit border border-black/20">
                             {#each theme.colors as c}
                                 <div class="w-4 h-4 rounded-full border border-black/40 shadow-sm" style="background-color: {c}"></div>
@@ -861,10 +861,10 @@
         </div>
 
         <!-- LEGAL SECTION -->
-        <div class="pt-4 flex items-center justify-center gap-4 text-[10px] text-neutral-600">
+        <div class="mt-8 flex items-center justify-center gap-4 text-[10px] text-neutral-600">
             <a href="/impressum" class="hover:text-white transition-colors">{i18n.t.login.impressum}</a>
             <span>&bull;</span>
-            <a href="/datenschutz" class="hover:text-white transition-colors">{i18n.t.login.datenschutz}</a>
+            <a href="/privacy" class="hover:text-white transition-colors">{i18n.t.login.datenschutz}</a>
         </div>
 
 	</div>

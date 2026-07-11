@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount, getContext } from "svelte";
   import { page } from "$app/stores";
   import { RefreshCw, BatteryWarning } from "lucide-svelte";
@@ -175,7 +176,7 @@
 			</div>
 		{:else if error && !screenshotUrl}
 			<div class="flex h-full items-center justify-center p-4 text-center text-[10px] text-red-500 uppercase font-bold">
-				Sync Error
+				{i18n.t.w.trmnl.syncError}
 			</div>
 		{:else}
 			{#if screenshotUrl}
@@ -222,7 +223,7 @@
 </WidgetCard>
 
 <SettingsDialog 
-	title="TRMNL Sync" 
+	title="{i18n.t.w.trmnl.settings}" 
 	bind:show={showSettings} 
 	data={[accessToken, userApiKey, deviceId]} 
 	onRevert={(r: any) => { accessToken = r[0]; userApiKey = r[1]; deviceId = r[2]; }} 
@@ -230,7 +231,7 @@
 >
 	<div class="space-y-4">
 		<div class="space-y-1.5">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="trmnl-token">Device Access Token</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="trmnl-token">{i18n.t.w.trmnl.deviceToken}</label>
 			<input
 					id="trmnl-token"
 					type="password"
@@ -242,7 +243,7 @@
 		</div>
 
 		<div class="space-y-1.5">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="trmnl-user-api">User API Key</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="trmnl-user-api">{i18n.t.w.trmnl.apiKey}</label>
 			<input
 					id="trmnl-user-api"
 					type="password"
@@ -254,7 +255,7 @@
 		</div>
 
 		<div class="space-y-1.5">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="trmnl-device-id">Device ID</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="trmnl-device-id">{i18n.t.w.trmnl.deviceId}</label>
 			<input
 					id="trmnl-device-id"
 					type="text"

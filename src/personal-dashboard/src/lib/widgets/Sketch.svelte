@@ -2,6 +2,7 @@
   import { onMount, tick } from "svelte";
   import {Copy, Eraser, Maximize2, MousePointer2, Pencil, Plus, Redo, Type, Undo, X} from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import { i18n } from '$lib/i18n/i18n.svelte';
 
   let { id, width, height, isEditing } = $props();
 
@@ -487,23 +488,23 @@
 			<div class="flex h-full w-full items-center justify-center p-4">
 				<button class="flex items-center justify-center rounded-lg bg-black/20 border border-black/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-400 hover:bg-black/40 hover:text-white transition-all" onclick={openExpanded}>
 					<Pencil size={15} strokeWidth={2.5} />
-					Open Sketch
+					{i18n.t.w.sketch.openSketch}
 				</button>
 			</div>
 		{:else}
 			<div class="flex items-center justify-between border-b border-black/20 bg-black/10 p-2">
 				<div class="flex items-center gap-2">
 					<div class="flex bg-black/20 rounded p-0.5 border border-black/20">
-						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'draw' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => { if(canvas && selection?.buffer) finalizeMove(canvas); mode = 'draw'; selection = null}} title="Draw (1)">
+						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'draw' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => { if(canvas && selection?.buffer) finalizeMove(canvas); mode = 'draw'; selection = null}} title={i18n.t.w.sketch.pencil}>
 							<Pencil size={12} strokeWidth={2.5} />
 						</button>
-						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'text' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => { if(canvas && selection?.buffer) finalizeMove(canvas); mode = 'text'; selection = null}} title="Text (2)">
+						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'text' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => { if(canvas && selection?.buffer) finalizeMove(canvas); mode = 'text'; selection = null}} title={i18n.t.w.sketch.text}>
 							<Type size={12} strokeWidth={2.5} />
 						</button>
-						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'erase' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => { if(canvas && selection?.buffer) finalizeMove(canvas); mode = 'erase'; selection = null}} title="Erase (3)">
+						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'erase' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => { if(canvas && selection?.buffer) finalizeMove(canvas); mode = 'erase'; selection = null}} title={i18n.t.w.sketch.eraser}>
 							<Eraser size={12} strokeWidth={2.5} />
 						</button>
-						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'select' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => mode = 'select'} title="Select (4)">
+						<button class="px-2 py-1 rounded text-neutral-500 transition-colors {mode === 'select' ? 'bg-black/40 text-white shadow-sm' : 'hover:text-white'}" onclick={() => mode = 'select'} title={i18n.t.w.sketch.select}>
 							<MousePointer2 size={12} strokeWidth={2.5} />
 						</button>
 					</div>
@@ -574,10 +575,10 @@
 					<button class="p-1.5 rounded-md hover:bg-black/40 text-neutral-400 hover:text-white disabled:opacity-20 transition-colors" onclick={redo} disabled={historyIndex >= history.length - 1}><Redo size={16} strokeWidth={2.5}/></button>
 				</div>
 				<div class="flex bg-black/30 rounded-lg p-1 border border-black/20">
-					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'draw' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => { if(dialogCanvas && selection?.buffer) finalizeMove(dialogCanvas); mode = 'draw'; selection = null}}><Pencil size={12} strokeWidth={2.5}/> Pencil</button>
-					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'text' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => { if(dialogCanvas && selection?.buffer) finalizeMove(dialogCanvas); mode = 'text'; selection = null}}><Type size={12} strokeWidth={2.5}/> Text</button>
-					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'erase' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => { if(dialogCanvas && selection?.buffer) finalizeMove(dialogCanvas); mode = 'erase'; selection = null}}><Eraser size={12} strokeWidth={2.5}/> Eraser</button>
-					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'select' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => mode = 'select'}><MousePointer2 size={12} strokeWidth={2.5}/> Select</button>
+					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'draw' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => { if(dialogCanvas && selection?.buffer) finalizeMove(dialogCanvas); mode = 'draw'; selection = null}}><Pencil size={12} strokeWidth={2.5}/> {i18n.t.w.sketch.pencil}</button>
+					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'text' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => { if(dialogCanvas && selection?.buffer) finalizeMove(dialogCanvas); mode = 'text'; selection = null}}><Type size={12} strokeWidth={2.5}/> {i18n.t.w.sketch.text}</button>
+					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'erase' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => { if(dialogCanvas && selection?.buffer) finalizeMove(dialogCanvas); mode = 'erase'; selection = null}}><Eraser size={12} strokeWidth={2.5}/> {i18n.t.w.sketch.eraser}</button>
+					<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-colors {mode === 'select' ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}" onclick={() => mode = 'select'}><MousePointer2 size={12} strokeWidth={2.5}/> {i18n.t.w.sketch.select}</button>
 				</div>
 				<div class="flex items-center gap-3 bg-black/30 px-3 py-2 rounded-lg border border-black/20">
 					<input type="range" min="1" max="50" bind:value={toolSize} class="w-24 h-1.5 accent-blue-500 bg-black/40 border border-black/20 rounded-lg appearance-none cursor-pointer" />

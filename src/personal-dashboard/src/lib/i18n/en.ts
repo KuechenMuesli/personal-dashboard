@@ -1,4 +1,29 @@
 export const en = {
+legal: {
+    impressum: {
+      title: 'Impressum',
+      info: 'Information in accordance with § 5 TMG:',
+      contact: 'Contact:',
+      phone: 'Phone:',
+      email: 'Email:',
+      disclaimer: 'Note: This is a placeholder impressum. Please add your real data to comply with legal requirements.'
+    },
+    datenschutz: {
+      title: 'Privacy Policy',
+      sec1Title: '1. Data protection at a glance',
+      sec1Desc: 'We take the protection of your personal data very seriously. We treat your personal data confidentially and in accordance with the statutory data protection regulations and this privacy policy.',
+      sec2Title: '2. Data collection on this website',
+      sec2q1: 'Who is responsible for data collection?',
+      sec2a1: 'Data processing on this website is carried out by the website operator (see Impressum).',
+      sec2q2: 'How do we collect your data?',
+      sec2a2: 'Your data is collected when you provide it to us. This could be data you enter during registration (email address) or save as configuration in the app.',
+      sec2q3: 'What do we use your data for?',
+      sec2a3: 'Part of the data is collected to ensure the error-free provision of the website and functionality of the dashboard (e.g. saving your settings and API Keys). The application uses services like Supabase for database storage and authentication.',
+      sec3Title: '3. Cookies',
+      sec3Desc: 'Our web pages use "cookies". Cookies do not damage your computer and do not contain viruses. We exclusively use "technically necessary cookies" (session cookies for authentication via Supabase) that are strictly necessary to provide the core functions of the website (Login & Session Management). In accordance with § 25 Para. 2 TTDSG and the ePrivacy Directive, no explicit consent (Cookie Banner) is required for these cookies.',
+      disclaimer: 'Note: This is a basic template. Please adjust it according to your exact conditions and server locations (Cloudflare, Supabase).'
+    }
+  },
   // Common
   save: 'Save',
   cancel: 'Cancel',
@@ -69,5 +94,241 @@ export const en = {
     export: 'Export',
     exportDesc: 'Save to file',
     addWidget: 'Add Widget'
+  },
+
+  // Widgets
+  widgets: {
+    searchbar: 'Searchbar',
+    favorites: 'Favorites',
+    note: 'Sticky Note',
+    parcel: 'Parcel Tracker',
+    trmnl: 'TRMNL Current Screen',
+    trmnlReminders: 'TRMNL Reminders',
+    clockWeatherDate: 'Clock & Weather',
+    embed: 'Web Embed',
+    timerStopwatch: 'Timer / Stopwatch',
+    sketch: 'Whiteboard',
+    colorPicker: 'Color Picker',
+    networkMetrics: 'Network Metrics',
+    calendar: 'Calendar',
+    stockTicker: 'Stocks'
+  },
+
+  // Theme names
+  themes: {
+    default: 'Default Dark',
+    oled: 'OLED Black',
+    midnight: 'Midnight Blue',
+    hacker: 'Hacker Green',
+    sunset: 'Crimson Sunset',
+    light: 'Modern Light',
+    paper: 'Solarized Paper'
+  },
+
+  // Widget specific strings
+  w: {
+common: {
+      cancel: 'Cancel',
+      save: 'Save',
+      close: 'Close',
+      clickToCollapse: 'Click to collapse',
+      clickToReadMore: 'Click to read more',
+      copied: 'Copied!',
+      configure: 'Configure',
+      discardChanges: 'Discard Changes?',
+      discardMsg: 'You have unsaved changes. Are you sure you want to discard them?',
+      discard: 'Discard',
+      keepEditing: 'Keep Editing',
+      loading: 'Loading...',
+      syncing: 'Syncing...',
+      error: 'Error',
+      refresh: 'Refresh',
+      copy: 'Copy',
+      copyDetails: 'Copy details',
+      back: 'Back'
+    },
+    calendar: {
+      title: 'Calendar',
+      today: 'Today',
+      week: 'Week',
+      month: 'Month',
+      noEvents: 'No upcoming events.',
+      noMoreEvents: 'No more events today.',
+      noAdded: 'No calendars added yet.',
+      settings: 'Calendar Settings',
+      edit: 'Edit Calendar',
+      add: 'Add Calendar',
+      remove: 'Remove Calendar',
+      namePlaceholder: 'Calendar Name (e.g. Work)',
+      urlPlaceholder: 'ICS URL (https://...)'
+    },
+    clock: {
+      clock: 'Clock',
+      weather: 'Weather',
+      date: 'Date',
+      timeFormat: 'Time Format',
+      temperature: 'Temperature',
+      generalInfo: 'General Info Settings'
+    },
+    embed: {
+      webView: 'Web View',
+      noUrl: 'No URL Configured',
+      setUrl: 'Set Source URL',
+      settings: 'Webview Settings',
+      label: 'Widget Label',
+      labelPlaceholder: 'e.g. My Calendar',
+      sourceUrl: 'Source URL',
+      urlPlaceholder: 'https://...',
+      note: 'Note: Some sites block being embedded (X-Frame-Options). Use "Embed" links where available.'
+    },
+    favorites: {
+      addBtn: 'Add',
+      urlPlaceholder: 'https://...',
+      namePlaceholder: 'Name',
+      edit: 'Edit Favorites'
+    },
+    parcel: {
+      deliveries: 'Deliveries',
+      syncing: 'Syncing...',
+      addPackage: 'Add Package',
+      trackPackage: 'Track Package',
+      noPackages: 'No {filterMode} packages.',
+      active: 'Active',
+      recent: 'Recent',
+      status: {
+        delivered: 'Delivered',
+        frozen: 'Frozen',
+        inTransit: 'In Transit',
+        ready: 'Ready for Pickup',
+        outForDelivery: 'Out for Delivery',
+        notFound: 'Not Found',
+        failed: 'Failed Attempt',
+        exception: 'Exception',
+        infoReceived: 'Info Received',
+        unknown: 'Unknown'
+      },
+      settings: 'Parcel Track Settings',
+      apiKey: 'API Key',
+      displayFilter: 'Display Filter',
+      activePackages: 'Active Packages',
+      recentPackages: 'Recent Packages (All)'
+    },
+    stock: {
+      stocks: 'Stocks',
+      noTickers: 'No tickers configured. Search above to add some.',
+      settings: 'Stock Ticker Settings',
+      targetCurrency: 'Target Currency',
+      activeTickers: 'Active Tickers',
+      searchPlaceholder: 'Search AAPL, BTC-USD...'
+    },
+    trmnl: {
+      currentScreen: 'TRMNL Screen',
+      syncError: 'Sync Error',
+      settings: 'TRMNL Sync',
+      webhookUrl: 'Webhook URL',
+      apiKey: 'User API Key',
+      deviceToken: 'Device Access Token',
+      deviceId: 'Device ID',
+      urlPlaceholder: 'https://trmnl.com/api/...',
+      apiKeyPlaceholder: 'sk_...',
+      tokenPlaceholder: '...',
+      idPlaceholder: '...',
+      instructions: 'You can find these in your TRMNL dashboard under developers. For Webhook URL use your cloudflare domain if you have deployed this.'
+    },
+network: {
+      metrics: 'Network Metrics',
+      domReady: 'DOM Ready',
+      dom: 'DOM',
+      ttfb: 'TTFB',
+      load: 'Load',
+      totalLoad: 'Total Load'
+    },
+    colorPicker: {
+      title: 'Color Picker',
+      rgb: 'RGB',
+      hex: 'HEX',
+      visibility: 'Visibility'
+    },
+    favorites: {
+      addBtn: 'Add',
+      urlPlaceholder: 'https://...',
+      namePlaceholder: 'Name',
+      edit: 'Edit Favorites',
+      noIcons: 'No icons found.'
+    },
+    sketch: {
+      openSketch: 'Open Sketch',
+      eraser: 'Eraser',
+      pencil: 'Pencil',
+      text: 'Text',
+      select: 'Select',
+      record: 'Record'
+    },
+    trmnlReminders: {
+      syncError: 'Sync Error',
+      webhookUrl: 'Webhook URL',
+      urlPlaceholder: 'https://trmnl.com/api/...',
+      apiKey: 'User API Key',
+      apiKeyPlaceholder: 'sk_...',
+      deviceToken: 'Device Access Token',
+      tokenPlaceholder: '...',
+      deviceId: 'Device ID',
+      idPlaceholder: '...',
+      instructions: 'You can find these in your TRMNL dashboard under developers.'
+    },
+    note: {
+      placeholder: 'Write something...'
+    },
+    search: {
+      placeholder: 'Search, Calculate, Convert...',
+      provider: 'Search Provider',
+      webSearch: 'Web Search',
+      calculate: 'Calculate',
+      convert: 'Convert',
+      calendar: 'Calendar',
+      reminders: 'Reminders',
+      clearHistory: 'Clear History',
+      badges: {
+        CALC: 'CALC',
+        CONV: 'CONV',
+        HISTORY: 'HISTORY',
+        FAV: 'FAV',
+        WEB: 'WEB',
+        WEATHER: 'WEATHER',
+        TIME: 'TIME',
+        TRANSLATE: 'TRANSLATE',
+        FACT: 'FACT',
+        CALENDAR: 'CALENDAR',
+        REMINDER: 'REMINDER'
+      },
+      subtitles: {
+        recentSearch: 'Recent Search',
+        searchHistory: 'Search History',
+        copyToClipboard: 'Copy to clipboard',
+        suggestion: 'Suggestion',
+        readMore: 'Read more on'
+      }
+    },
+    timer: {
+      timer: 'Timer',
+      stopwatch: 'Stopwatch',
+      start: 'Start',
+      pause: 'Pause',
+      reset: 'Reset'
+    },
+    weather: {
+      city: 'City',
+      cityPlaceholder: 'e.g. London'
+    },
+    sketch: {
+      openSketch: 'Open Sketch'
+    },
+    reminders: {
+      title: 'Reminders',
+      overdue: 'Overdue',
+      today: 'Today',
+      planned: 'Planned',
+      noEvents: 'No Reminders'
+    }
   }
 };

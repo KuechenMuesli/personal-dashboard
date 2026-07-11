@@ -5,6 +5,7 @@
   import { RefreshCw, ListTodo, AlertCircle, Clock, CheckCircle2, Circle } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
+  import { i18n } from '$lib/i18n/i18n.svelte';
 
   let { id, isEditing, height, width, showSettings = $bindable(false) } = $props<{
     id: string; isEditing: boolean; height: number; width: number; showSettings: boolean;
@@ -192,26 +193,26 @@
 {/snippet}
 
 <WidgetCard
-		title={isLoading && !reminders ? 'Syncing...' : 'Reminders'}
+		title={isLoading && !reminders ? '...' : i18n.t.w.reminders.title}
 		bind:showSettings={showSettings}
 		isConfigured={isConfigured}
 		padding={true} headerActions={headerButtons}
 >
 	<div class="h-full w-full {isCompact ? 'flex items-center' : 'pt-2'}">
 		{#if error && !reminders}
-			<div class="flex h-full w-full items-center justify-center text-xs text-red-500 font-medium">Sync Error</div>
+			<div class="flex h-full w-full items-center justify-center text-xs text-red-500 font-medium">{i18n.t.w.trmnlReminders.syncError}</div>
 		{:else if !reminders}
-			<div class="flex h-full w-full items-center justify-center text-xs text-neutral-500 font-medium text-center">Lade...</div>
+			<div class="flex h-full w-full items-center justify-center text-xs text-neutral-500 font-medium text-center">...</div>
 		{:else}
 			<div class="w-full flex {isWide ? 'flex-row gap-6 items-start' : 'flex-col gap-5'} pb-2">
-				{@render section('Überfällig', reminders.overdue, 'text-red-500/80', AlertCircle, 'overdue')}
-				{@render section('Heute', reminders.today, 'text-blue-400/80', ListTodo, 'today')}
-				{@render section('Geplant', reminders.future, 'text-neutral-500', Clock, 'future')}
+				{@render section(i18n.t.w.reminders.overdue, reminders.overdue, 'text-red-500/80', AlertCircle, 'overdue')}
+				{@render section(i18n.t.w.reminders.today, reminders.today, 'text-blue-400/80', ListTodo, 'today')}
+				{@render section(i18n.t.w.reminders.planned, reminders.future, 'text-neutral-500', Clock, 'future')}
 
 				{#if !reminders.today?.length && !reminders.overdue?.length && !reminders.future?.length}
 					<div class="flex-1 flex flex-col items-center justify-center text-center py-6 opacity-40">
 						<CheckCircle2 size={24} strokeWidth={1.5} class="text-neutral-500 mb-2" />
-						<span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Alles erledigt</span>
+						<span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">{i18n.t.w.reminders.noEvents}</span>
 					</div>
 				{/if}
 			</div>
@@ -227,7 +228,7 @@
 	onSave={saveSettings}
 >
 	<div class="space-y-4">
-		<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="webhook-url">Webhook URL</label>
-		<input id="webhook-url" type="url" bind:value={webhookUrl} placeholder="https://trmnl.com/api/..." class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-xs font-mono text-white outline-none focus:border-blue-500" />
+		<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="webhook-url">{i18n.t.w.trmnlReminders.webhookUrl}</label>
+		<input id="webhook-url" type="url" bind:value={webhookUrl} placeholder={i18n.t.w.trmnlReminders.urlPlaceholder} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-xs font-mono text-white outline-none focus:border-blue-500" />
 	</div>
 </SettingsDialog>

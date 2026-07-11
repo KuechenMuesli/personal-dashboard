@@ -5,6 +5,7 @@
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SuggestionList from "$lib/components/SuggestionList.svelte";
   import { evaluateMath, evaluateConversion, getStoredEventsAndReminders, parseNaturalDateRange } from "$lib/utils/searchUtils";
+  import { i18n } from '$lib/i18n/i18n.svelte';
 
   let { id, isEditing, showSettings = $bindable(false) } = $props<{
     id: string; isEditing: boolean; showSettings: boolean;
@@ -87,15 +88,12 @@
 
 
 
-
-
-
   const suggestions = $derived.by<SuggestionItem[]>(() => {
     const trimmed = query.trim();
 
     if (!trimmed) {
       return searchHistory.slice(0, 6).map((h, i) => ({
-        id: `hist-recent-${i}`, title: h, subtitle: 'Recent Search', badge: 'HISTORY',
+        id: `hist-recent-${i}`, title: h, subtitle: i18n.t.w.search.subtitles.recentSearch, badge: 'HISTORY',
         action: () => { handleSearch(h); },
         onDelete: () => {
           searchHistory = searchHistory.filter(item => item !== h);
@@ -277,7 +275,7 @@
     const mathRes = evaluateMath(trimmed);
     if (mathRes !== null) {
       results.push({
-        id: 'math', title: `= ${mathRes}`, subtitle: 'Copy to clipboard', badge: 'CALC',
+        id: 'math', title: `= ${mathRes}`, subtitle: i18n.t.w.search.subtitles.copyToClipboard, badge: 'CALC',
         action: async () => {
           await navigator.clipboard.writeText(mathRes);
           copiedId = 'math';
@@ -290,7 +288,7 @@
     for (const conv of convResults) {
       const uniqueId = `conv-${conv.unit}`;
       results.push({
-        id: uniqueId, title: `= ${conv.val} ${conv.unit}`, subtitle: 'Copy to clipboard', badge: 'CONV',
+        id: uniqueId, title: `= ${conv.val} ${conv.unit}`, subtitle: i18n.t.w.search.subtitles.copyToClipboard, badge: 'CONV',
         action: async () => {
           await navigator.clipboard.writeText(conv.val);
           copiedId = uniqueId;
@@ -303,7 +301,7 @@
       .filter(h => h.toLowerCase().includes(lower) && h !== trimmed)
       .slice(0, 3)
       .map((h, i) => ({
-        id: `hist-match-${i}`, title: h, subtitle: 'Search History', badge: 'HISTORY',
+        id: `hist-match-${i}`, title: h, subtitle: i18n.t.w.search.subtitles.searchHistory, badge: 'HISTORY',
         action: () => { handleSearch(h); },
         onDelete: () => {
           searchHistory = searchHistory.filter(item => item !== h);
@@ -324,7 +322,7 @@
       .filter(w => w.toLowerCase() !== lower && !searchHistory.some(h => h.toLowerCase() === w.toLowerCase()))
       .slice(0, 4)
       .map((w, i) => ({
-        id: `web-${i}`, title: w, subtitle: 'Suggestion', badge: 'WEB',
+        id: `web-${i}`, title: w, subtitle: i18n.t.w.search.subtitles.suggestion, badge: 'WEB',
         action: () => { handleSearch(w); }
       }));
 
@@ -447,7 +445,7 @@
                       const sign = temp > 0 ? '+' : '';
                       const answer = `${geo.name}: ${sign}${temp}°C`;
                       smartAnswer = {
-                        id: 'smart-weather', title: answer, subtitle: 'Copy to clipboard', badge: 'WEATHER', icon: icon,
+                        id: 'smart-weather', title: answer, subtitle: i18n.t.w.search.subtitles.copyToClipboard, badge: 'WEATHER', icon: icon,
                         action: async () => {
                           await navigator.clipboard.writeText(answer);
                           copiedId = 'smart-weather';
@@ -469,7 +467,7 @@
                  const timeStr = new Date().toLocaleTimeString("de-DE", { timeZone: geo.timezone, timeStyle: "short" });
                  const answer = `${geo.name}: ${timeStr} Uhr`;
                  smartAnswer = {
-                   id: 'smart-time', title: answer, subtitle: 'Copy to clipboard', badge: 'TIME',
+                   id: 'smart-time', title: answer, subtitle: i18n.t.w.search.subtitles.copyToClipboard, badge: 'TIME',
                    action: async () => {
                      await navigator.clipboard.writeText(answer);
                      copiedId = 'smart-time';
@@ -575,7 +573,7 @@
             if (answerText) {
               // DuckDuckGo facts can be slightly long; we make them expandable
               smartAnswer = {
-                 id: 'smart-fact', title: answerText, subtitle: `Mehr auf ${sourceName} lesen`, badge: 'FACT',
+                 id: 'smart-fact', title: answerText, subtitle: `${i18n.t.w.search.subtitles.readMore} ${sourceName}`, badge: 'FACT',
                  expandable: true,
                  url: sourceUrl,
                  sourceName: sourceName,

@@ -2,6 +2,7 @@
   import { onMount, onDestroy, getContext } from "svelte";
   import { Play, Pause, Timer, Clock } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
+  import { i18n } from "$lib/i18n/i18n.svelte";
 
   let { id, height, width } = $props<{ id: string; height: number; width: number }>();
 

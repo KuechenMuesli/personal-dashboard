@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount, getContext } from "svelte";
   import { Settings } from "lucide-svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
@@ -15,14 +16,14 @@
   const getSecrets = getContext<() => Record<string, any>>('secrets');
 
   let url = $state("");
-  let title = $state("Web View");
+  let title = $state(i18n.t.w.embed.webView);
 
   $effect(() => {
     const secrets = getSecrets();
     if (secrets[id]) {
       const parsed = secrets[id];
       url = parsed.url || "";
-      title = parsed.title || "Web View";
+      title = parsed.title || i18n.t.w.embed.webView;
     }
   });
 
@@ -32,7 +33,7 @@
       try {
         const parsed = JSON.parse(saved);
         url = parsed.url || "";
-        title = parsed.title || "Web View";
+        title = parsed.title || i18n.t.w.embed.webView;
       } catch (e) { console.error(e); }
     }
   });
@@ -71,12 +72,12 @@
 	<div class="flex h-full w-full flex-col bg-white">
 		{#if !url}
 			<div class="flex h-full flex-col items-center justify-center p-4 text-center bg-neutral-900">
-				<p class="mb-2 text-xs text-neutral-500">No URL Configured</p>
+				<p class="mb-2 text-xs text-neutral-500">{i18n.t.w.embed.noUrl}</p>
 				<button
 						onclick={() => showSettings = true}
 						class="text-[10px] font-bold uppercase tracking-widest text-blue-500 hover:text-blue-400"
 				>
-					Set Source URL
+					{i18n.t.w.embed.setUrl}
 				</button>
 			</div>
 		{:else}
@@ -92,7 +93,7 @@
 </WidgetCard>
 
 <SettingsDialog 
-	title="Webview Settings" 
+	title="{i18n.t.w.embed.settings}" 
 	bind:show={showSettings} 
 	data={[url, title]} 
 	onRevert={(r: any) => { url = r[0]; title = r[1]; }} 
@@ -100,26 +101,26 @@
 >
 	<div class="space-y-4">
 		<div class="space-y-1.5">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="wv-title">Widget Label</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="wv-title">{i18n.t.w.embed.label}</label>
 			<input
 					id="wv-title"
 					bind:value={title}
-					placeholder="e.g. My Calendar"
+					placeholder="{i18n.t.w.embed.labelPlaceholder}"
 					class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
 					onkeydown={(e) => e.stopPropagation()}
 			/>
 		</div>
 
 		<div class="space-y-1.5">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="wv-url">Source URL</label>
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="wv-url">{i18n.t.w.embed.sourceUrl}</label>
 			<input
 					id="wv-url"
 					bind:value={url}
-					placeholder="https://..."
+					placeholder={i18n.t.w.embed.urlPlaceholder}
 					class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
 					onkeydown={(e) => e.stopPropagation()}
 			/>
-			<p class="text-[10px] text-neutral-500">Note: Some sites block being embedded (X-Frame-Options). Use "Embed" links where available.</p>
+			<p class="text-[10px] text-neutral-500">{i18n.t.w.embed.note}</p>
 		</div>
 	</div>
 </SettingsDialog>

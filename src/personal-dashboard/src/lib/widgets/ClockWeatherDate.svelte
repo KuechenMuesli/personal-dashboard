@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, getContext } from "svelte";
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import { Sun, Cloud, CloudRain, Snowflake, CloudLightning, Settings } from "lucide-svelte";
@@ -214,7 +215,7 @@
 </WidgetCard>
 
 <SettingsDialog 
-	title="General Info Settings" 
+	title="{i18n.t.w.clock.generalInfo}" 
 	bind:show={showSettings} 
 	data={[city, showClock, showDate, showWeather, hour12]} 
 	onRevert={(r: any) => { city = r[0]; showClock = r[1]; showDate = r[2]; showWeather = r[3]; hour12 = r[4]; }} 
@@ -222,20 +223,26 @@
 >
 	<div class="space-y-4">
 		<div class="space-y-1.5">
-			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="city">City</label>
-			<input id="city" bind:value={city} placeholder="e.g. London" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" onkeydown={(e) => e.stopPropagation()} />
+			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="city">{i18n.t.w.weather.city}</label>
+      <input
+        type="text"
+        bind:value={city}
+        placeholder={i18n.t.w.weather.cityPlaceholder}
+        class="w-full bg-black/20 border-none rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-neutral-500 focus:ring-1 focus:ring-blue-500/50"
+        onkeydown={(e) => e.stopPropagation()} 
+      />
 		</div>
 
 		<div class="grid grid-cols-2 gap-4">
 			<div class="space-y-1.5">
-				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Temperature</label>
+				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.w.clock.temperature}</label>
 				<select bind:value={unit} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer">
 					<option value="celsius">Celsius (°C)</option>
 					<option value="fahrenheit">Fahrenheit (°F)</option>
 				</select>
 			</div>
 			<div class="space-y-1.5">
-				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Time Format</label>
+				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.w.clock.timeFormat}</label>
 				<select bind:value={hour12} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer">
 					<option value={false}>24h (13:00)</option>
 					<option value={true}>12h (1:00 PM)</option>
@@ -246,9 +253,9 @@
 		<div class="flex flex-col gap-3 pt-2">
 			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Visibility</label>
 			<div class="grid grid-cols-3 gap-2">
-				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showClock ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showClock = !showClock}>Clock</button>
-				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showDate ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showDate = !showDate}>Date</button>
-				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showWeather ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showWeather = !showWeather}>Weather</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showClock ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showClock = !showClock}>{i18n.t.w.clock.clock}</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showDate ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showDate = !showDate}>{i18n.t.w.clock.date}</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showWeather ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showWeather = !showWeather}>{i18n.t.w.clock.weather}</button>
 			</div>
 		</div>
 	</div>

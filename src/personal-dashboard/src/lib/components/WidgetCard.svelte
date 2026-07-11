@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import {Settings} from "lucide-svelte";
+  import { i18n } from '$lib/i18n/i18n.svelte';
 
   let {
     title,
@@ -31,7 +32,7 @@
 				class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors"
 		>
 			<Settings size={14} />
-			Configure {title || 'Widget'}
+			{i18n.t.w.common.configure} {title || 'Widget'}
 		</button>
 	{:else}
 

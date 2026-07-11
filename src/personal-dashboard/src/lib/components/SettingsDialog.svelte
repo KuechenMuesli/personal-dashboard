@@ -1,5 +1,6 @@
 <script lang="ts" generics="T">
   import type { Snippet } from 'svelte';
+  import { i18n } from '$lib/i18n/i18n.svelte';
 
   let {
     title,
@@ -71,10 +72,10 @@
 
     <footer class="flex justify-end gap-2 shrink-0 border-t border-black/20 pt-4 mt-2">
       {#if onSave}
-        <button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={handleCancel}>Cancel</button>
-        <button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={handleSave}>Save</button>
+        <button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={handleCancel}>{i18n.t.w.common.cancel}</button>
+        <button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={handleSave}>{i18n.t.w.common.save}</button>
       {:else}
-        <button class="rounded-lg bg-neutral-700 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-600 transition-colors shadow-lg shadow-black/20" onclick={handleCancel}>Close</button>
+        <button class="rounded-lg bg-neutral-700 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-600 transition-colors shadow-lg shadow-black/20" onclick={handleCancel}>{i18n.t.w.common.close}</button>
       {/if}
     </footer>
   </div>
@@ -82,11 +83,11 @@
   {#if showConfirm}
     <div class="absolute inset-0 z-50 flex items-center justify-center bg-neutral-900/80 backdrop-blur-sm rounded-2xl">
       <div class="bg-neutral-800 border border-black/40 rounded-xl p-6 shadow-2xl max-w-sm w-[90%]">
-        <h4 class="text-lg font-bold text-white mb-2">Discard Changes?</h4>
-        <p class="text-sm text-neutral-400 mb-6">You have unsaved changes. Are you sure you want to discard them?</p>
+        <h4 class="text-lg font-bold text-white mb-2">{i18n.t.w.common.discardChanges}</h4>
+        <p class="text-sm text-neutral-400 mb-6">{i18n.t.w.common.discardMsg}</p>
         <div class="flex justify-end gap-2">
-          <button class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={() => showConfirm = false}>Keep Editing</button>
-          <button class="px-4 py-2 rounded-lg bg-red-600 text-sm font-bold text-white hover:bg-red-500 shadow-lg shadow-red-900/20 transition-colors" onclick={confirmCancel}>Discard</button>
+          <button class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={() => showConfirm = false}>{i18n.t.w.common.keepEditing}</button>
+          <button class="px-4 py-2 rounded-lg bg-red-600 text-sm font-bold text-white hover:bg-red-500 shadow-lg shadow-red-900/20 transition-colors" onclick={confirmCancel}>{i18n.t.w.common.discard}</button>
         </div>
       </div>
     </div>

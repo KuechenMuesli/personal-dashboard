@@ -94,7 +94,7 @@
   <div class="mt-8 flex items-center justify-center gap-4 text-[10px] text-neutral-600">
     <a href="/impressum" class="hover:text-white transition-colors">{i18n.t.login.impressum}</a>
     <span>&bull;</span>
-    <a href="/datenschutz" class="hover:text-white transition-colors">{i18n.t.login.datenschutz}</a>
+    <a href="/privacy" class="hover:text-white transition-colors">{i18n.t.login.datenschutz}</a>
   </div>
 
   </div>

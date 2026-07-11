@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Check, Search, Sun, Copy } from "lucide-svelte";
+  import { Check, Search, Trash2, Copy, Sun } from "lucide-svelte";
+  import { i18n } from '$lib/i18n/i18n.svelte';
 
   let {
     suggestions,
@@ -61,7 +62,7 @@
         {/if}
         <span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : getBadgeColor(item.badge)}">
           {#if copiedId === item.id}
-            <Check size={10} strokeWidth={3} /> Copied!
+            <Check size={10} strokeWidth={3} /> {i18n.t.w.common.copied}
           {:else}
             {#if item.badge === 'FACT'}
               <Search size={10} strokeWidth={3} />
@@ -84,14 +85,14 @@
             {/if}
             {#if item.expandable}
               <span class="opacity-50 mx-1">•</span>
-              {expandedItemId === item.id ? 'Click to collapse' : 'Click to read more'}
+              {expandedItemId === item.id ? i18n.t.w.common.clickToCollapse : i18n.t.w.common.clickToReadMore}
             {/if}
           {/if}
         </span>
       </div>
       <div class="flex items-center shrink-0 relative justify-end">
         <div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {getBadgeColor(item.badge)} transition-opacity duration-200 {item.onCopy || item.onDelete ? 'group-hover:opacity-0' : ''}">
-          {item.badge}
+          {(i18n.t.w.search.badges as Record<string, string>)[item.badge] || item.badge}
         </div>
         {#if item.onCopy || item.onDelete}
           <div class="absolute right-0 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">

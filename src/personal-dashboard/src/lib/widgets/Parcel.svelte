@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount, getContext } from "svelte";
   import { page } from "$app/stores";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
@@ -26,15 +27,15 @@
   const COOLDOWN_MS = 5 * 60 * 1000;
 
   const STATUS_MAP: Record<number, { label: string, color: string }> = {
-    0: { label: "Delivered", color: "#10b981" },
-    1: { label: "Frozen", color: "#64748b" },
-    2: { label: "In Transit", color: "#3b82f6" },
-    3: { label: "Ready for Pickup", color: "#f59e0b" },
-    4: { label: "Out for Delivery", color: "#8b5cf6" },
-    5: { label: "Not Found", color: "#ef4444" },
-    6: { label: "Failed Attempt", color: "#f43f5e" },
-    7: { label: "Exception", color: "#dc2626" },
-    8: { label: "Info Received", color: "#06b6d4" }
+    0: { label: i18n.t.w.parcel.status.delivered, color: "#10b981" },
+    1: { label: i18n.t.w.parcel.status.frozen, color: "#64748b" },
+    2: { label: i18n.t.w.parcel.status.inTransit, color: "#3b82f6" },
+    3: { label: i18n.t.w.parcel.status.ready, color: "#f59e0b" },
+    4: { label: i18n.t.w.parcel.status.outForDelivery, color: "#8b5cf6" },
+    5: { label: i18n.t.w.parcel.status.notFound, color: "#ef4444" },
+    6: { label: i18n.t.w.parcel.status.failed, color: "#f43f5e" },
+    7: { label: i18n.t.w.parcel.status.exception, color: "#dc2626" },
+    8: { label: i18n.t.w.parcel.status.infoReceived, color: "#06b6d4" }
   };
 
   interface Delivery {
@@ -145,7 +146,7 @@
             uuid: item.tracking_number + item.carrier_code,
             tracking_number: item.tracking_number,
             description: item.description || item.tracking_number,
-            status: STATUS_MAP[item.status_code] || { label: "Unknown", color: "#525252" },
+            status: STATUS_MAP[item.status_code] || { label: i18n.t.w.parcel.status.unknown, color: "#525252" },
             last_event: latestEvent ? {
               description: latestEvent.event,
               location: latestEvent.location || "",
@@ -233,7 +234,7 @@
 {/snippet}
 
 <WidgetCard
-		title={isLoading ? 'Syncing...' : 'Deliveries'}
+		title={isLoading ? i18n.t.w.common.syncing : i18n.t.w.parcel.deliveries}
 		bind:showSettings={showSettings}
 		isConfigured={isConfigured}
 		headerActions={headerButtons}
@@ -262,18 +263,18 @@
 
 	<div class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent pr-1">
 		{#if isLoading && !deliveries.length}
-			<div class="flex h-full items-center justify-center text-[10px] uppercase font-bold tracking-widest text-widget-text-muted">Loading...</div>
+			<div class="flex h-full items-center justify-center text-[10px] uppercase font-bold tracking-widest text-widget-text-muted">{i18n.t.w.common.loading}</div>
 
 		{:else if deliveries.length === 0}
 			<div class="flex h-full flex-col items-center justify-center text-center pb-2">
 				<Package size={24} />
-				<p class="text-[9px] text-widget-text-muted font-medium mb-2">No {filterMode} packages.</p>
+				<p class="text-[9px] text-widget-text-muted font-medium mb-2">{i18n.t.w.parcel.noPackages.replace('{filterMode}', filterMode === 'active' ? i18n.t.w.parcel.active : i18n.t.w.parcel.recent)}</p>
 				{#if !showAddForm}
 					<button
 							onclick={() => showAddForm = true}
 							class="rounded px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider bg-black/20 text-widget-text-muted hover:text-white border border-widget-border transition-colors"
 					>
-						Track Package
+						{i18n.t.w.parcel.trackPackage}
 					</button>
 				{/if}
 			</div>
@@ -318,7 +319,7 @@
 </WidgetCard>
 
 <SettingsDialog
-	title="Parcel Track Settings"
+	title="{i18n.t.w.parcel.settings}"
 	bind:show={showSettings}
 	data={[apiKey]}
 	onRevert={(r: any) => { apiKey = r[0]; }}
@@ -326,7 +327,7 @@
 >
 	<div class="space-y-4">
 		<div class="space-y-2">
-			<label for="api-key-input" class="block text-[10px] uppercase font-black text-widget-text-muted tracking-widest">API Key</label>
+			<label for="api-key-input" class="block text-[10px] uppercase font-black text-widget-text-muted tracking-widest">{i18n.t.w.parcel.apiKey}</label>
 			<input
 					id="api-key-input"
 					type="password"
@@ -338,13 +339,13 @@
 		</div>
 
 		<div class="space-y-2">
-			<label for="filter-mode-select" class="block text-[10px] uppercase font-black text-widget-text-muted tracking-widest">Display Filter</label>
+			<label for="filter-mode-select" class="block text-[10px] uppercase font-black text-widget-text-muted tracking-widest">{i18n.t.w.parcel.displayFilter}</label>
 			<select
 					id="filter-mode-select"
 					bind:value={filterMode}
 					class="w-full rounded-lg bg-black/30 p-2.5 text-sm text-white outline-none focus:ring-1 focus:ring-widget-accent/50 appearance-none cursor-pointer"
 			>
-				<option value="active" class="bg-widget-bg text-white">Active Packages</option>
+				<option value="active" class="bg-widget-bg text-white">{i18n.t.w.parcel.activePackages}</option>
 				<option value="recent" class="bg-widget-bg text-white">Recent History (30 Days)</option>
 			</select>
 		</div>

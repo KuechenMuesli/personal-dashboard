@@ -2,6 +2,7 @@
   import { getContext } from "svelte";
   import { ChevronUp, ChevronDown, Plus, X, GripVertical, Search, Pencil } from "lucide-svelte";
   import * as icons from "lucide-svelte";
+  import { i18n } from "$lib/i18n/i18n.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import WidgetTabs from "$lib/components/WidgetTabs.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
@@ -158,7 +159,7 @@
 </WidgetCard>
 
 <SettingsDialog 
-	title="Edit Favorites" 
+	title="{i18n.t.w.favorites.edit}" 
 	bind:show={showSettings} 
 	data={[favorites, displayMode]} 
 	onRevert={(r: any) => { favorites = r[0]; displayMode = r[1]; }} 
@@ -182,7 +183,7 @@
 					class="flex items-center gap-1.5 rounded-lg bg-black/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-black/60 transition-colors border border-black/20"
 					onclick={() => favorites.push({name: '', url: '', color: '#232323'})}
 			>
-				<Plus size={12} strokeWidth={2.5} /> ADD
+				<Plus size={12} strokeWidth={2.5} /> {i18n.t.w.favorites.addBtn}
 			</button>
 		</div>
 
@@ -237,8 +238,8 @@
 						</div>
 					</button>
 
-					<input type="text" bind:value={fav.name} placeholder="Name" class="w-20 shrink-0 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
-					<input type="text" bind:value={fav.url} placeholder="https://..." class="flex-1 min-w-0 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
+					<input type="text" bind:value={fav.name} placeholder={i18n.t.w.favorites.namePlaceholder} class="w-20 shrink-0 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
+					<input type="text" bind:value={fav.url} placeholder={i18n.t.w.favorites.urlPlaceholder} class="flex-1 min-w-0 rounded-lg border border-black/40 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
 
 					<button class="p-1 shrink-0 text-neutral-600 hover:text-red-500 transition-colors z-10" onclick={() => favorites = favorites.filter((_, idx) => idx !== i)}>
 						<X size={16} strokeWidth={2.5} />
@@ -289,7 +290,7 @@
 		   {/each}
 	   </div>
 	   {#if filteredIcons.length === 0}
-		 <div class="w-full py-10 text-center text-sm font-medium text-neutral-500">No icons found.</div>
+		 <div class="w-full py-10 text-center text-sm font-medium text-neutral-500">{i18n.t.w.favorites.noIcons}</div>
 	   {/if}
 	</div>
   </div>

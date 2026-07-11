@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount } from 'svelte';
   import { Activity, AppWindow, Server } from 'lucide-svelte';
   import WidgetCard from '$lib/components/WidgetCard.svelte';
@@ -44,7 +45,7 @@
 				<div class="flex flex-col items-center gap-1">
 					<div class="flex items-center gap-1 text-neutral-500">
 						<Activity size={10} strokeWidth={2.5} />
-						<span class="text-[9px] font-black uppercase tracking-widest">Load</span>
+						<span class="text-[9px] font-black uppercase tracking-widest">{i18n.t.w.network.load}</span>
 					</div>
 					<span class="font-mono text-xs sm:text-sm font-semibold {loadTime && loadTime < 500 ? 'text-emerald-400' : 'text-yellow-400'}">
         {loadTime !== null ? `${loadTime}ms` : '...'}
@@ -54,7 +55,7 @@
 				<div class="flex flex-col items-center gap-1">
 					<div class="flex items-center gap-1 text-neutral-500">
 						<AppWindow size={10} strokeWidth={2.5} />
-						<span class="text-[9px] font-black uppercase tracking-widest">DOM</span>
+						<span class="text-[9px] font-black uppercase tracking-widest">{i18n.t.w.network.dom}</span>
 					</div>
 					<span class="font-mono text-xs text-blue-400 sm:text-sm font-semibold">
         {domReadyTime !== null ? `${domReadyTime}ms` : '...'}
@@ -64,7 +65,7 @@
 				<div class="flex flex-col items-center gap-1">
 					<div class="flex items-center gap-1 text-neutral-500">
 						<Server size={10} strokeWidth={2.5} />
-						<span class="text-[9px] font-black uppercase tracking-widest">TTFB</span>
+						<span class="text-[9px] font-black uppercase tracking-widest">{i18n.t.w.network.ttfb}</span>
 					</div>
 					<span class="font-mono text-xs text-purple-400 sm:text-sm font-semibold">
         {ttfb !== null ? `${ttfb}ms` : '...'}
@@ -78,7 +79,7 @@
 				<div class="flex items-center justify-between px-3 py-2 sm:py-2.5">
 					<div class="flex items-center gap-1.5 text-neutral-500">
 						<Activity size={12} strokeWidth={2.5} />
-						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">Total Load</span>
+						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">{i18n.t.w.network.totalLoad}</span>
 					</div>
 					<span class="font-mono text-xs sm:text-sm font-semibold {loadTime && loadTime < 500 ? 'text-emerald-400' : 'text-yellow-400'}">
         {loadTime !== null ? `${loadTime}ms` : '...'}
@@ -88,7 +89,7 @@
 				<div class="flex items-center justify-between px-3 py-2 sm:py-2.5">
 					<div class="flex items-center gap-1.5 text-neutral-500">
 						<AppWindow size={12} strokeWidth={2.5} />
-						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">DOM Ready</span>
+						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">{i18n.t.w.network.domReady}</span>
 					</div>
 					<span class="font-mono text-xs text-blue-400 sm:text-sm font-semibold">
         {domReadyTime !== null ? `${domReadyTime}ms` : '...'}
@@ -98,7 +99,7 @@
 				<div class="flex items-center justify-between px-3 py-2 sm:py-2.5">
 					<div class="flex items-center gap-1.5 text-neutral-500">
 						<Server size={12} strokeWidth={2.5} />
-						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">TTFB</span>
+						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">{i18n.t.w.network.ttfb}</span>
 					</div>
 					<span class="font-mono text-xs text-purple-400 sm:text-sm font-semibold">
         {ttfb !== null ? `${ttfb}ms` : '...'}

@@ -35,11 +35,12 @@
 
   const isWide = $derived(width >= 3);
   const isCompact = $derived(height <= 2);
-  const endpointUrl = $derived(`https://dashboard.paul-simon.dev/post-reminders/${id}`);
+  const userId = $derived($page.data.session?.user?.id || id);
+  const endpointUrl = $derived(`https://dashboard.paul-simon.dev/post-reminders/${userId}`);
   const iCloudShortcutUrl = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
 
   onMount(() => {
-    const cache = localStorage.getItem(`reminders-cache-${id}`);
+    const cache = localStorage.getItem(`reminders-cache-${userId}`);
     if (cache) {
       try {
         const parsed = JSON.parse(cache);
@@ -71,17 +72,17 @@
     error = false;
 
     try {
-      const url = `/post-reminders/${id}`;
+      const url = `/post-reminders/${userId}`;
       const res = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const json = await res.json();
       if (json && json.merge_variables) {
         reminders = json.merge_variables;
         lastFetched = Date.now();
-        localStorage.setItem(`reminders-cache-${id}`, JSON.stringify({
-          data: reminders, timestamp: lastFetched
+        localStorage.setItem(`reminders-cache-${userId}`, JSON.stringify({
+          timestamp: lastFetched,
+          data: reminders
         }));
-        localStorage.setItem('global-reminders', JSON.stringify(reminders));
       }
     } catch (e) {
       console.error("Reminders sync failed", e);

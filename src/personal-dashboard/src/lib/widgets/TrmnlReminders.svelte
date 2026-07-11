@@ -11,9 +11,6 @@
     id: string; isEditing: boolean; height: number; width: number; showSettings: boolean;
   }>();
 
-  const getSecrets = getContext<() => Record<string, any>>('secrets');
-
-  const PROXY_URL = "/api/proxy";
   const COOLDOWN_MS = 10 * 60 * 1000;
 
   interface ReminderData {
@@ -26,7 +23,6 @@
     overdue: ReminderData[];
   }
 
-  let webhookUrl = $state("");
   let reminders = $state<MergedVariables | null>(null);
   let isLoading = $state(false);
   let lastFetched = $state<number>(0);
@@ -34,17 +30,13 @@
   let dialogEl = $state<HTMLDialogElement | null>(null);
   let expandedId = $state<string | null>(null);
   let refreshTimer: ReturnType<typeof setInterval>;
+  let copied = $state(false);
+  let showTutorial = $state(false);
 
-  const isConfigured = $derived(webhookUrl.trim() !== "");
   const isWide = $derived(width >= 3);
   const isCompact = $derived(height <= 2);
-
-  $effect(() => {
-    const secrets = getSecrets();
-    if (secrets[id] && secrets[id].webhookUrl !== undefined) {
-        webhookUrl = secrets[id].webhookUrl || "";
-    }
-  });
+  const endpointUrl = $derived(`https://dashboard.paul-simon.dev/post-reminders/${id}`);
+  const iCloudShortcutUrl = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
 
   onMount(() => {
     const cache = localStorage.getItem(`reminders-cache-${id}`);
@@ -56,15 +48,14 @@
       } catch (e) { console.error(e); }
     }
 
-    if (isConfigured) {
-      const isStale = Date.now() - lastFetched > COOLDOWN_MS;
-      if (!reminders || isStale) fetchReminders();
-    }
+    const isStale = Date.now() - lastFetched > COOLDOWN_MS;
+    if (!reminders || isStale) fetchReminders();
+
     refreshTimer = setInterval(() => fetchReminders(), COOLDOWN_MS);
   });
 
   $effect(() => {
-    if (isConfigured && !reminders && !isLoading) {
+    if (!reminders && !isLoading) {
        const timeSinceLastFetch = Date.now() - lastFetched;
        if (timeSinceLastFetch > COOLDOWN_MS) fetchReminders();
     }
@@ -73,7 +64,6 @@
   onDestroy(() => clearInterval(refreshTimer));
 
   async function fetchReminders(force = false) {
-    if (!webhookUrl) return;
     const timeSinceLast = Date.now() - lastFetched;
     if (!force && timeSinceLast < COOLDOWN_MS && reminders && !error) return;
 
@@ -81,8 +71,7 @@
     error = false;
 
     try {
-      const targetUrl = encodeURIComponent(webhookUrl);
-      const url = `${PROXY_URL}?target=${targetUrl}${force ? '&force=true' : ''}`;
+      const url = `/post-reminders/${id}`;
       const res = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const json = await res.json();
@@ -103,18 +92,13 @@
   }
 
   async function saveSettings() {
-    if ($page.data.session) {
-        try {
-            await fetch('/api/secrets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ service: id, key: { webhookUrl } })
-            });
-            localStorage.removeItem(`reminders-settings-${id}`);
-        } catch (e) { console.error("Failed to save TRMNL Reminders secrets", e); }
-    }
     showSettings = false;
-    fetchReminders(true);
+  }
+
+  function copyUrl() {
+    navigator.clipboard.writeText(endpointUrl);
+    copied = true;
+    setTimeout(() => copied = false, 2000);
   }
 
   function getPriorityColor(p: string) {
@@ -195,7 +179,7 @@
 <WidgetCard
 		title={isLoading && !reminders ? '...' : i18n.t.w.reminders.title}
 		bind:showSettings={showSettings}
-		isConfigured={isConfigured}
+		isConfigured={true}
 		padding={true} headerActions={headerButtons}
 >
 	<div class="h-full w-full {isCompact ? 'flex items-center' : 'pt-2'}">
@@ -220,15 +204,35 @@
 	</div>
 </WidgetCard>
 
-<SettingsDialog 
-	title="Reminders Settings" 
-	bind:show={showSettings} 
-	data={[webhookUrl]} 
-	onRevert={(r: any) => { webhookUrl = r[0]; }} 
+<SettingsDialog
+	title="Apple Reminders Setup"
+	bind:show={showSettings}
+	data={[]}
+	onRevert={() => {}}
 	onSave={saveSettings}
 >
 	<div class="space-y-4">
-		<label class="block text-[10px] uppercase font-black text-neutral-500 tracking-widest" for="webhook-url">{i18n.t.w.trmnlReminders.webhookUrl}</label>
-		<input id="webhook-url" type="url" bind:value={webhookUrl} placeholder={i18n.t.w.trmnlReminders.urlPlaceholder} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-xs font-mono text-white outline-none focus:border-blue-500" />
+		<div class="flex items-center justify-between">
+			<span class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Deine Widget-URL:</span>
+			<button onclick={() => showTutorial = !showTutorial} class="text-[10px] uppercase tracking-widest font-bold text-blue-500 hover:text-blue-600 transition-colors">
+				{showTutorial ? 'Tutorial ausblenden' : 'Wie richte ich das ein?'}
+			</button>
+		</div>
+
+		<div class="flex items-center gap-2">
+			<input type="text" readonly value={endpointUrl} class="flex-1 rounded-lg border border-black/20 dark:border-white/10 bg-black/5 dark:bg-black/20 p-3 text-xs font-mono text-neutral-800 dark:text-neutral-300 outline-none select-all" />
+			<button onclick={copyUrl} class="h-[42px] px-4 rounded-lg bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 border border-black/20 dark:border-white/10 text-neutral-800 dark:text-white text-xs font-bold transition-colors">
+				{copied ? 'Kopiert!' : 'Kopieren'}
+			</button>
+		</div>
+
+		{#if showTutorial}
+			<div transition:slide={{ duration: 200 }} class="bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-white/10 rounded-xl p-4 text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed mt-4">
+				<p class="mb-3 font-semibold text-neutral-900 dark:text-white">Um deine Erinnerungen hier anzuzeigen, nutze unseren vorgefertigten iOS/macOS Kurzbefehl:</p>
+				<p class="mb-2"><strong class="text-black dark:text-white">1.</strong> Lade den Kurzbefehl herunter: <a href={iCloudShortcutUrl} target="_blank" class="underline hover:text-black dark:hover:text-white transition-colors">Shortcut installieren</a></p>
+				<p class="mb-2"><strong class="text-black dark:text-white">2.</strong> Öffne ihn in der Kurzbefehle-App und füge oben in das URL-Feld deine kopierte <strong>Widget-URL</strong> ein.</p>
+				<p><strong class="text-black dark:text-white">3.</strong> Führe den Kurzbefehl aus (oder erstelle eine Automation, die ihn regelmäßig ausführt).</p>
+			</div>
+		{/if}
 	</div>
 </SettingsDialog>

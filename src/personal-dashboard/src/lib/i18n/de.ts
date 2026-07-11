@@ -116,7 +116,7 @@ legal: {
     note: 'Notizzettel',
     parcel: 'Paketverfolgung',
     trmnl: 'TRMNL Display',
-    trmnlReminders: 'TRMNL Erinnerungen',
+    trmnlReminders: 'Apple Erinnerungen',
     clockWeatherDate: 'Uhr & Wetter',
     embed: 'Web-Embed',
     timerStopwatch: 'Timer / Stoppuhr',

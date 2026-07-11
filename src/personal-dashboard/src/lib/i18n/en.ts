@@ -114,7 +114,7 @@ legal: {
     note: 'Sticky Note',
     parcel: 'Parcel Tracker',
     trmnl: 'TRMNL Current Screen',
-    trmnlReminders: 'TRMNL Reminders',
+    trmnlReminders: 'Apple Reminders',
     clockWeatherDate: 'Clock & Weather',
     embed: 'Web Embed',
     timerStopwatch: 'Timer / Stopwatch',

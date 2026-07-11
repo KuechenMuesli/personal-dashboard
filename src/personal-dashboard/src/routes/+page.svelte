@@ -28,6 +28,7 @@
     newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
     calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
     stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, systemOnly: true },
   });
 
   const STORAGE_KEY = "dashboard-layout";
@@ -38,7 +39,6 @@
   let resizingId = $state<string | null>(null);
   let isEditing = $state(false);
   let showPickerDialog = $state(false);
-  let showGlobalSettings = $state(false);
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
 
   let THEMES = $derived([
@@ -61,6 +61,11 @@
       try {
         const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
         dashboardLayout = parsed.map((w: any) => ({ ...w, showSettings: false }));
+        
+        // Auto-remove login prompt if user is logged in
+        if (session) {
+           dashboardLayout = dashboardLayout.filter((w: any) => w.type !== 'loginPrompt');
+        }
       } catch (e) { console.error(e); }
     }
 
@@ -156,6 +161,7 @@
   function generateWelcomeLayout() {
       const welcomeId = crypto.randomUUID();
       const hintId = crypto.randomUUID();
+      const loginId = crypto.randomUUID();
 
       localStorage.setItem(`note-settings-${welcomeId}`,
         "# Welcome to your Dashboard! \n\n" +
@@ -175,6 +181,7 @@
       localStorage.setItem(`note-mode-${hintId}`, "true");
 
       dashboardLayout = [
+        { id: loginId, type: 'loginPrompt', x: columns - 1, y: 0, width: 1, height: 3, showSettings: false },
         { id: welcomeId, type: 'note', x: 0, y: 0, width: 3, height: 6, showSettings: false },
         { id: hintId, type: 'note', x: columns - 2, y: Math.floor(window.innerHeight / ROW_HEIGHT) - 5, width: 2, height: 4, showSettings: false }
       ];
@@ -722,13 +729,13 @@
 			><Plus size={20} /></button>
 		{/if}
 
-		<button
+		<a
+				href="/settings"
 				class="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
-				onclick={() => debounceAction(() => showGlobalSettings = true)}
 				title="Settings"
 		>
 			<Settings size={20} />
-		</button>
+		</a>
 
 		<button
 				class="flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-2xl transition-all hover:scale-105
@@ -746,7 +753,7 @@
 
 <SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog}>
 	<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
-		{#each Object.entries(widgets) as [type, config]}
+		{#each Object.entries(widgets).filter(([_, config]) => !(config as any).systemOnly) as [type, config]}
 			<button
 					class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all active:border-blue-500 active:bg-neutral-800 hover:border-blue-500"
 					onclick={() => debounceAction(() => addWidget(type))}
@@ -763,109 +770,4 @@
 	</div>
 </SettingsDialog>
 
-<SettingsDialog
-	title={i18n.t.dashboardSettings.title}
-	bind:show={showGlobalSettings}
-	data={[globalTheme]}
-	onRevert={(r) => globalTheme = r[0]}
-	onSave={() => showGlobalSettings = false}
->
-	<div class="space-y-8">
-		<!-- ACCOUNT SECTION -->
-        <div class="space-y-3">
-		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">{i18n.t.dashboardSettings.accountCloud}</h4>
-            <div class="bg-black/20 border border-neutral-800 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                    {#if session}
-                        <div class="font-bold text-sm text-white">{i18n.t.dashboardSettings.loggedIn}</div>
-                        <div class="text-xs text-neutral-400 mt-0.5">{session.user.email}</div>
-                    {:else}
-                        <div class="font-bold text-sm text-white">{i18n.t.dashboardSettings.localMode}</div>
-                        <div class="text-xs text-neutral-400 mt-0.5">{i18n.t.dashboardSettings.signInToSync}</div>
-                    {/if}
-                </div>
-                {#if session}
-                    <div class="flex gap-2">
-                        <a href="/settings" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
-                            {i18n.t.dashboardSettings.settingsBtn}
-                        </a>
-                        <button onclick={handleLogout} class="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold rounded-lg transition-colors">
-                            {i18n.t.dashboardSettings.logoutBtn}
-                        </button>
-                    </div>
-                {:else}
-                    <a href="/login" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
-                        {i18n.t.dashboardSettings.loginBtn}
-                    </a>
-                {/if}
-            </div>
-        </div>
 
-        <!-- LANGUAGE SECTION -->
-        <div class="space-y-3">
-            <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">Language / Sprache</h4>
-            <div class="grid grid-cols-2 gap-3">
-                <button
-                    class="p-3 rounded-xl border text-left transition-all flex items-center gap-3 {i18n.currentLang === 'en' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
-                    onclick={() => i18n.setLang('en')}
-                >
-                    <span class="text-xl">🇬🇧</span>
-                    <span class="font-bold text-sm text-slate-200">English</span>
-                </button>
-                <button
-                    class="p-3 rounded-xl border text-left transition-all flex items-center gap-3 {i18n.currentLang === 'de' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
-                    onclick={() => i18n.setLang('de')}
-                >
-                    <span class="text-xl">🇩🇪</span>
-                    <span class="font-bold text-sm text-slate-200">Deutsch</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- THEME SECTION -->
-		<div class="space-y-3">
-            <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">{i18n.t.dashboardSettings.theme}</h4>
-            <div class="grid grid-cols-2 gap-3">
-                {#each THEMES as theme}
-                    <button
-                        class="p-3 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[80px] gap-2 {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
-                        onclick={() => { globalTheme = theme.id; if (session) syncUp(); }}
-                    >
-                        <div class="font-bold text-sm text-slate-200 break-words leading-tight">{theme.name}</div>
-                        <div class="flex gap-1.5 mt-2 bg-black/20 p-1.5 rounded-lg w-fit border border-black/20">
-                            {#each theme.colors as c}
-                                <div class="w-4 h-4 rounded-full border border-black/40 shadow-sm" style="background-color: {c}"></div>
-                            {/each}
-                        </div>
-                    </button>
-                {/each}
-            </div>
-        </div>
-
-        <!-- DATA SECTION -->
-        <div class="space-y-3">
-		    <h4 class="text-[10px] font-black uppercase tracking-widest text-neutral-500">{i18n.t.dashboardSettings.dataBackup}</h4>
-            <div class="grid grid-cols-2 gap-3">
-                <label class="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-700 bg-black/20 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center">
-                    <Download size={24} class="mb-2 text-neutral-400" />
-                    <span class="text-sm font-bold text-slate-200">{i18n.t.dashboardSettings.import}</span>
-                    <span class="text-xs text-neutral-500 mt-1">{i18n.t.dashboardSettings.importDesc}</span>
-                    <input type="file" accept=".json" class="hidden" onchange={importConfig} />
-                </label>
-                <button onclick={exportConfig} class="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-700 bg-black/20 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center">
-                    <Upload size={24} class="mb-2 text-neutral-400" />
-                    <span class="text-sm font-bold text-slate-200">{i18n.t.dashboardSettings.export}</span>
-                    <span class="text-xs text-neutral-500 mt-1">{i18n.t.dashboardSettings.exportDesc}</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- LEGAL SECTION -->
-        <div class="mt-8 flex items-center justify-center gap-4 text-[10px] text-neutral-600">
-            <a href="/impressum" class="hover:text-white transition-colors">{i18n.t.login.impressum}</a>
-            <span>&bull;</span>
-            <a href="/privacy" class="hover:text-white transition-colors">{i18n.t.login.datenschutz}</a>
-        </div>
-
-	</div>
-</SettingsDialog>

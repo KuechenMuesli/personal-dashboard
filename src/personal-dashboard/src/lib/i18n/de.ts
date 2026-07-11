@@ -76,7 +76,17 @@ legal: {
     passwordDesc: 'Stelle sicher, dass dein Konto ein langes, zufälliges Passwort verwendet.',
     newPassword: 'Neues Passwort',
     updatePasswordBtn: 'Passwort aktualisieren',
-    signOut: 'Abmelden'
+    signOut: 'Abmelden',
+    currentPassword: 'Aktuelles Passwort',
+    deleteAccount: 'Account löschen',
+    deleteAccountDesc: 'Diese Aktion ist unwiderruflich. Alle deine Dashboards, Einstellungen und zugehörigen Daten werden endgültig gelöscht.',
+    passwordToConfirm: 'Passwort zur Bestätigung',
+    deleteAccountBtn: 'Account dauerhaft löschen',
+    deleteAccountConfirm: 'Bist du sicher, dass du deinen Account und alle Daten unwiderruflich löschen möchtest?',
+    language: 'Language / Sprache',
+    tabAccount: 'Konto',
+    tabAppearance: 'Darstellung',
+    tabData: 'Daten'
   },
 
   // Dashboard Settings
@@ -332,5 +342,12 @@ network: {
       planned: 'Geplant',
       noEvents: 'Keine Erinnerungen'
     }
+  },
+
+  // Error Page
+  errorPage: {
+    notFound: 'Huch! Da bist du wohl falsch abgebogen. Diese Seite ist wie ein unsichtbares Widget – sie existiert nicht.',
+    generic: 'Ein unerwarteter Fehler ist aufgetreten.',
+    backToDashboard: 'Zurück zum Dashboard'
   }
 };

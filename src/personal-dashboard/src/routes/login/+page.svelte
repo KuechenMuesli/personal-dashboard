@@ -4,8 +4,9 @@
   import { i18n } from '$lib/i18n/i18n.svelte';
   
   let { form, data } = $props();
+  import { page } from '$app/stores';
   let loading = $state(false);
-  let isSignUp = $state(false);
+  let isSignUp = $state($page.url.searchParams.has('signup'));
   
   async function signInWithOAuth(provider: 'google' | 'github') {
     loading = true;

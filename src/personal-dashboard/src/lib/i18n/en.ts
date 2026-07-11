@@ -74,7 +74,17 @@ legal: {
     passwordDesc: 'Ensure your account is using a long, random password.',
     newPassword: 'New Password',
     updatePasswordBtn: 'Update Password',
-    signOut: 'Sign Out'
+    signOut: 'Sign Out',
+    currentPassword: 'Current Password',
+    deleteAccount: 'Delete Account',
+    deleteAccountDesc: 'This action is irreversible. All your dashboards, settings, and associated data will be permanently deleted.',
+    passwordToConfirm: 'Password to confirm',
+    deleteAccountBtn: 'Delete Account Permanently',
+    deleteAccountConfirm: 'Are you sure you want to permanently delete your account and all data?',
+    language: 'Language / Sprache',
+    tabAccount: 'Account',
+    tabAppearance: 'Appearance',
+    tabData: 'Data'
   },
 
   // Dashboard Settings
@@ -330,5 +340,12 @@ network: {
       planned: 'Planned',
       noEvents: 'No Reminders'
     }
+  },
+
+  // Error Page
+  errorPage: {
+    notFound: "Oops! Looks like you took a wrong turn. This page is like an invisible widget – it doesn't exist.",
+    generic: 'An unexpected error has occurred.',
+    backToDashboard: 'Back to Dashboard'
   }
 };

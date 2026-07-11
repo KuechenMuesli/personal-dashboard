@@ -4,9 +4,6 @@ legal: {
       title: 'Impressum',
       info: 'Information in accordance with § 5 TMG:',
       contact: 'Contact:',
-      phone: 'Phone:',
-      email: 'Email:',
-      disclaimer: 'Note: This is a placeholder impressum. Please add your real data to comply with legal requirements.'
     },
     datenschutz: {
       title: 'Privacy Policy',
@@ -21,7 +18,6 @@ legal: {
       sec2a3: 'Part of the data is collected to ensure the error-free provision of the website and functionality of the dashboard (e.g. saving your settings and API Keys). The application uses services like Supabase for database storage and authentication.',
       sec3Title: '3. Cookies',
       sec3Desc: 'Our web pages use "cookies". Cookies do not damage your computer and do not contain viruses. We exclusively use "technically necessary cookies" (session cookies for authentication via Supabase) that are strictly necessary to provide the core functions of the website (Login & Session Management). In accordance with § 25 Para. 2 TTDSG and the ePrivacy Directive, no explicit consent (Cookie Banner) is required for these cookies.',
-      disclaimer: 'Note: This is a basic template. Please adjust it according to your exact conditions and server locations (Cloudflare, Supabase).'
     }
   },
   // Common

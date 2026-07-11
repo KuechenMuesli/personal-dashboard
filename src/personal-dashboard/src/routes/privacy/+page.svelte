@@ -18,9 +18,9 @@
     <button onclick={goBack} class="inline-block text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mb-6">
       &larr; {i18n.t.back || 'Back'}
     </button>
-    
+
     <h1 class="text-3xl font-bold tracking-tight mb-8">{i18n.t.legal.datenschutz.title}</h1>
-    
+
     <div class="space-y-8 text-sm text-neutral-300 leading-relaxed">
       <section>
         <h2 class="text-xl font-bold text-white mb-3 tracking-tight">{i18n.t.legal.datenschutz.sec1Title}</h2>
@@ -33,7 +33,7 @@
         <h2 class="text-xl font-bold text-white mb-3 tracking-tight">{i18n.t.legal.datenschutz.sec2Title}</h2>
         <p class="font-bold text-white mb-1">{i18n.t.legal.datenschutz.sec2q1}</p>
         <p class="mb-4">{i18n.t.legal.datenschutz.sec2a1}</p>
-        
+
         <p class="font-bold text-white mb-1">{i18n.t.legal.datenschutz.sec2q2}</p>
         <p class="mb-4">
           {i18n.t.legal.datenschutz.sec2a2}
@@ -51,10 +51,6 @@
           {i18n.t.legal.datenschutz.sec3Desc}
         </p>
       </section>
-
-      <div class="mt-12 pt-6 border-t border-white/10 text-xs text-neutral-500 italic">
-        {i18n.t.legal.datenschutz.disclaimer}
-      </div>
     </div>
   </div>
 </div>

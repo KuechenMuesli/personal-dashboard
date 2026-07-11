@@ -6,9 +6,6 @@ legal: {
       title: 'Impressum',
       info: 'Angaben gemäß § 5 TMG:',
       contact: 'Kontakt:',
-      phone: 'Telefon:',
-      email: 'E-Mail:',
-      disclaimer: 'Hinweis: Dies ist ein Platzhalter-Impressum. Bitte ergänze deine echten Daten, um den rechtlichen Vorgaben zu entsprechen.'
     },
     datenschutz: {
       title: 'Datenschutzerklärung',
@@ -23,7 +20,6 @@ legal: {
       sec2a3: 'Ein Teil der Daten wird erhoben, um eine fehlerfreie Bereitstellung der Website und Funktionalität des Dashboards (z. B. Speichern Ihrer Einstellungen und API Keys) zu gewährleisten. Die Anwendung nutzt Dienste wie Supabase zur Datenbank-Speicherung und Authentifizierung.',
       sec3Title: '3. Cookies',
       sec3Desc: 'Unsere Internetseiten verwenden so genannte „Cookies“. Cookies richten auf Ihrem Rechner keinen Schaden an und enthalten keine Viren. Wir verwenden ausschließlich sogenannte „technisch notwendige Cookies“ (Session-Cookies der Authentifizierung via Supabase), die zwingend erforderlich sind, um die Kernfunktionen der Website bereitzustellen (Login & Session Management). Gemäß § 25 Abs. 2 TTDSG bzw. der ePrivacy-Richtlinie ist für diese Cookies keine explizite Einwilligung (Cookie-Banner) erforderlich.',
-      disclaimer: 'Hinweis: Dies ist ein Basis-Muster. Bitte passe es ggf. an deine genauen Bedingungen und Server-Standorte (Cloudflare, Supabase) an.'
     }
   },
   // Common

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { i18n } from '$lib/i18n/i18n.svelte';
-  
+
   function goBack() {
     if (window.history.length > 1) {
       window.history.back();
@@ -18,27 +18,22 @@
     <button onclick={goBack} class="inline-block text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mb-6">
       &larr; {i18n.t.back || 'Back'}
     </button>
-    
+
     <h1 class="text-3xl font-bold tracking-tight mb-8">{i18n.t.legal.impressum.title}</h1>
-    
+
     <div class="space-y-4 text-sm text-neutral-300 leading-relaxed">
       <p class="font-bold text-white">{i18n.t.legal.impressum.info}</p>
-      
+
       <p>
-        [Dein Vorname] [Dein Nachname]<br>
-        [Deine Straße und Hausnummer]<br>
-        [Deine PLZ und Ort]
+        Paul Simon<br>
+        Hallandstr. 52<br>
+        13189 Berlin
       </p>
-      
+
       <p class="font-bold text-white mt-6">{i18n.t.legal.impressum.contact}</p>
       <p>
-        {i18n.t.legal.impressum.phone} [Deine Telefonnummer, falls gewünscht]<br>
-        {i18n.t.legal.impressum.email} [Deine E-Mail Adresse]
+        contact@paul-simon.dev
       </p>
-      
-      <div class="mt-8 pt-4 border-t border-white/10 text-xs text-neutral-500 italic">
-        {i18n.t.legal.impressum.disclaimer}
-      </div>
     </div>
   </div>
 </div>

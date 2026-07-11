@@ -2,7 +2,7 @@
   import { onMount, setContext } from "svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import type { StoredWidget } from '../types/stored-widget';
-  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut} from "lucide-svelte";
+  import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut, Search} from "lucide-svelte";
   import { i18n } from '$lib/i18n/i18n.svelte';
 
   let { data } = $props();
@@ -39,6 +39,7 @@
   let resizingId = $state<string | null>(null);
   let isEditing = $state(false);
   let showPickerDialog = $state(false);
+  let widgetSearchQuery = $state('');
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
 
   let THEMES = $derived([
@@ -751,9 +752,14 @@
 	</div>
 {/if}
 
-<SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog}>
-	<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
-		{#each Object.entries(widgets).filter(([_, config]) => !(config as any).systemOnly) as [type, config]}
+<SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog} maxWidth="max-w-[900px]" fixedHeight={true}>
+	<div class="mb-6 relative shrink-0">
+		<Search class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
+		<input type="text" bind:value={widgetSearchQuery} placeholder={i18n.t.dashboardSettings.searchWidget} class="w-full bg-black/40 border border-neutral-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50" />
+	</div>
+
+	<div class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
+		{#each Object.entries(widgets).filter(([_, config]) => !(config as any).systemOnly && config.name.toLowerCase().includes(widgetSearchQuery.toLowerCase())) as [type, config]}
 			<button
 					class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all active:border-blue-500 active:bg-neutral-800 hover:border-blue-500"
 					onclick={() => debounceAction(() => addWidget(type))}

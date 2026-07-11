@@ -105,7 +105,8 @@ legal: {
     importDesc: 'Aus Datei laden',
     export: 'Exportieren',
     exportDesc: 'In Datei speichern',
-    addWidget: 'Widget hinzufügen'
+    addWidget: 'Widget hinzufügen',
+    searchWidget: 'Widgets durchsuchen...'
   },
 
   // Widgets
@@ -289,7 +290,9 @@ network: {
       instructions: 'Sie finden diese in Ihrem TRMNL-Dashboard unter "Developers".'
     },
     note: {
-      placeholder: 'Schreibe etwas...'
+      placeholder: 'Schreibe etwas...',
+      editMode: 'Bearbeiten',
+      viewMode: 'Lesen'
     },
     search: {
       placeholder: 'Suchen, Rechnen, Konvertieren...',

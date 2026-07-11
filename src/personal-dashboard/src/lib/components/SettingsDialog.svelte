@@ -8,6 +8,8 @@
     onSave,
     data,
     onRevert,
+    maxWidth = 'max-w-[450px]',
+    fixedHeight = false,
     children
   }: {
     title: string;
@@ -15,6 +17,8 @@
     onSave?: () => void;
     data?: T;
     onRevert?: (restored: T) => void;
+    maxWidth?: string;
+    fixedHeight?: boolean;
     children: Snippet;
   } = $props();
 
@@ -58,10 +62,10 @@
 
 <dialog
     bind:this={dialogEl}
-    class="fixed left-1/2 top-1/2 m-0 w-[90vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl outline-none backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm"
+    class="fixed left-1/2 top-1/2 m-0 w-[95vw] {maxWidth} -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl outline-none backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm"
     oncancel={handleCancel}
 >
-  <div class="relative flex flex-col gap-5 p-6 max-h-[85vh] bg-neutral-800 text-slate-200 rounded-2xl">
+  <div class="relative flex flex-col gap-5 p-6 {fixedHeight ? 'h-[85vh]' : 'max-h-[85vh]'} bg-neutral-800 text-slate-200 rounded-2xl">
     <header class="flex items-center justify-between shrink-0 mb-2">
       <h3 class="text-lg font-bold">{title}</h3>
     </header>

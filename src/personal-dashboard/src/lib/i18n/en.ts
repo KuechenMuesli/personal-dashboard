@@ -103,7 +103,8 @@ legal: {
     importDesc: 'Load from file',
     export: 'Export',
     exportDesc: 'Save to file',
-    addWidget: 'Add Widget'
+    addWidget: 'Add Widget',
+    searchWidget: 'Search widgets...'
   },
 
   // Widgets
@@ -287,7 +288,9 @@ network: {
       instructions: 'You can find these in your TRMNL dashboard under developers.'
     },
     note: {
-      placeholder: 'Write something...'
+      placeholder: 'Write something...',
+      editMode: 'Edit',
+      viewMode: 'View'
     },
     search: {
       placeholder: 'Search, Calculate, Convert...',

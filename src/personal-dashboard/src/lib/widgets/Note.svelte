@@ -129,9 +129,9 @@
              {!isMarkdownMode ? 'bg-white/10 text-slate-200 shadow-sm' : 'bg-black/20 text-neutral-500 hover:text-white'}"
 			>
 				{#if isMarkdownMode}
-					<PenLine size={10} strokeWidth={2.5} /> Edit
+					<PenLine size={10} strokeWidth={2.5} /> {i18n.t.w.note.editMode}
 				{:else}
-					<Eye size={10} strokeWidth={2.5} /> View
+					<Eye size={10} strokeWidth={2.5} /> {i18n.t.w.note.viewMode}
 				{/if}
 			</button>
 

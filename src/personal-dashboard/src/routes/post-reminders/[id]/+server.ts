@@ -91,8 +91,7 @@ export const POST: RequestHandler = async ({ params, request, locals: { supabase
         });
 
     if (dbError) {
-        console.error('Error saving reminders:', dbError);
-        throw error(500, 'Failed to save reminders');
+        throw error(500, `Failed to save reminders: ${dbError.message}`);
     }
 
     return json({ success: true });

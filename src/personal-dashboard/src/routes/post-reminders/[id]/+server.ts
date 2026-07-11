@@ -58,6 +58,11 @@ export const POST: RequestHandler = async ({ params, request, locals: { supabase
         // 2. Fix arrays that only have unquoted strings and no dictionaries
         rawText = rawText.replace(/\[\s*[^\]{"\[\]]*?\]/g, '[]');
 
+        // 3. Fix unescaped control characters (like newlines) inside string literals
+        rawText = rawText.replace(/"([^"\\]|\\.)*"/g, match => {
+            return match.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+        });
+
         payload = JSON.parse(rawText);
     } catch (e) {
         console.error("JSON Parse Error. Raw Text:", rawText);

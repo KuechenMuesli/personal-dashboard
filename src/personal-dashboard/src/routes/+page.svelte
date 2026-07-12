@@ -206,11 +206,16 @@
         localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
       }
     } else {
-      await supabase.from('layouts').update({
+      const { error: updateError } = await supabase.from('layouts').update({
         theme: themeObj,
         is_active: true,
         updated_at: new Date().toISOString()
       }).eq('id', currentLayoutId);
+
+      if (updateError) {
+        console.error("Failed to update layout:", updateError);
+        alert("Cloud Sync Fehler (Layout): " + updateError.message);
+      }
     }
 
     if (currentLayoutId) {
@@ -267,7 +272,11 @@
 
       // Upsert widgets
       if (widgetsToUpsert.length > 0) {
-        await supabase.from('widgets').upsert(widgetsToUpsert);
+        const { error: upsertError } = await supabase.from('widgets').upsert(widgetsToUpsert);
+        if (upsertError) {
+          console.error("Failed to upsert widgets:", upsertError);
+          alert("Cloud Sync Fehler (Widgets): " + upsertError.message);
+        }
       }
 
       // Delete widgets that are no longer in the layout

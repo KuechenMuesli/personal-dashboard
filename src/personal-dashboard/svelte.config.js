@@ -7,6 +7,10 @@ const config = {
 	},
 	kit: {
 		adapter: adapter(),
+		prerender: {
+			handleUnseenRoutes: 'ignore',
+			handleHttpError: 'warn'
+		},
 		csrf: {
 			checkOrigin: false
 		}

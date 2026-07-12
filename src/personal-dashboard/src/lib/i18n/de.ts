@@ -124,7 +124,8 @@ legal: {
     colorPicker: 'Pipette / Farben',
     networkMetrics: 'Netzwerk Metriken',
     calendar: 'Kalender',
-    stockTicker: 'Aktien'
+    stockTicker: 'Aktien',
+    todo: 'To-Do Liste'
   },
 
   // Theme names
@@ -176,6 +177,7 @@ common: {
       namePlaceholder: 'Kalender Name (z.B. Arbeit)',
       urlPlaceholder: 'ICS URL (https://...)'
     },
+
     clock: {
       clock: 'Uhr',
       weather: 'Wetter',

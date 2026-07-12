@@ -122,7 +122,8 @@ legal: {
     colorPicker: 'Color Picker',
     networkMetrics: 'Network Metrics',
     calendar: 'Calendar',
-    stockTicker: 'Stocks'
+    stockTicker: 'Stocks',
+    todo: 'To-Do List'
   },
 
   // Theme names

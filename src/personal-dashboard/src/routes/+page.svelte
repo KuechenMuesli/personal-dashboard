@@ -382,6 +382,26 @@
     if (typeof document !== 'undefined') {
       document.body.className = globalTheme;
       localStorage.setItem('dashboard-theme', globalTheme);
+
+      let styleTag = document.getElementById('custom-theme-style');
+      if (globalTheme.startsWith('custom_')) {
+        const localCustomThemes = localStorage.getItem('dashboard-custom-themes');
+        if (localCustomThemes) {
+          const customThemes = JSON.parse(localCustomThemes);
+          const themeId = globalTheme.replace('custom_', '');
+          const theme = customThemes.find((t: any) => t.id === themeId);
+          if (theme) {
+            if (!styleTag) {
+              styleTag = document.createElement('style');
+              styleTag.id = 'custom-theme-style';
+              document.head.appendChild(styleTag);
+            }
+            styleTag.innerHTML = `.${globalTheme} {\n${theme.css_variables.raw}\n}`;
+          }
+        }
+      } else {
+        if (styleTag) styleTag.remove();
+      }
     }
   });
 

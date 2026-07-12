@@ -18,6 +18,7 @@
   import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount } from 'svelte';
   import LegalFooter from "$lib/components/LegalFooter.svelte";
+  import ThemeEditor from "$lib/components/ThemeEditor.svelte";
 
   let { data, form } = $props();
   let emailLoading = $state(false);
@@ -27,27 +28,124 @@
   let activeTab = $state('account'); // 'appearance', 'data', 'account', 'integrations'
   let globalTheme = $state('theme-default');
 
-  let THEMES = $derived([
+  let customThemes = $state<any[]>([]);
+  let showThemeEditor = $state(false);
+  let editingTheme = $state<any>(null);
+
+  let ALL_THEMES = $derived([
     { id: 'theme-default', name: i18n.t.themes.default, colors: ['#121212', '#262626', '#3b82f6'] },
     { id: 'theme-oled', name: i18n.t.themes.oled, colors: ['#000000', '#0a0a0a', '#38bdf8'] },
     { id: 'theme-midnight', name: i18n.t.themes.midnight, colors: ['#020617', '#0f172a', '#818cf8'] },
-    { id: 'theme-hacker', name: i18n.t.themes.hacker, colors: ['#050505', '#022c22', '#10b981'] },
+    { id: 'theme-forest', name: 'Forest Green', colors: ['#041f14', '#022c22', '#10b981'] },
     { id: 'theme-sunset', name: i18n.t.themes.sunset, colors: ['#2a111a', '#3a1623', '#f43f5e'] },
     { id: 'theme-light', name: i18n.t.themes.light, colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
-    { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] }
+    { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] },
+    { id: 'theme-princess', name: 'Princess Pink', colors: ['#fff0f5', '#ffffff', '#ff1493'] },
+    ...customThemes.map(t => ({
+      id: `custom_${t.id}`,
+      name: t.name,
+      colors: extractColorsFromCSS(t.css_variables.raw),
+      isCustom: true,
+      raw: t
+    }))
   ]);
 
-  onMount(() => {
+  function extractColorsFromCSS(css: string) {
+    const bgMatch = css.match(/--theme-body-bg:\s*([^;]+);/);
+    const cardMatch = css.match(/--color-neutral-800:\s*([^;]+);/);
+    const accentMatch = css.match(/--color-blue-500:\s*([^;]+);/);
+    return [
+      bgMatch ? bgMatch[1] : '#000000',
+      cardMatch ? cardMatch[1] : '#111111',
+      accentMatch ? accentMatch[1] : '#555555'
+    ];
+  }
+
+  onMount(async () => {
     const savedTheme = localStorage.getItem('dashboard-theme');
     if (savedTheme) globalTheme = savedTheme;
+
+    const localCustomThemes = localStorage.getItem('dashboard-custom-themes');
+    if (localCustomThemes) customThemes = JSON.parse(localCustomThemes);
+
+    if (data.user) {
+      const { data: themes } = await data.supabase.from('custom_themes').select('*');
+      if (themes) {
+        customThemes = themes;
+        localStorage.setItem('dashboard-custom-themes', JSON.stringify(themes));
+      }
+    }
   });
 
   $effect(() => {
     if (typeof document !== 'undefined') {
       document.body.className = globalTheme;
       localStorage.setItem('dashboard-theme', globalTheme);
+
+      let styleTag = document.getElementById('custom-theme-style');
+      if (globalTheme.startsWith('custom_')) {
+        const themeId = globalTheme.replace('custom_', '');
+        const theme = customThemes.find(t => t.id === themeId);
+        if (theme) {
+          if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = 'custom-theme-style';
+            document.head.appendChild(styleTag);
+          }
+          styleTag.innerHTML = `.${globalTheme} {\n${theme.css_variables.raw}\n}`;
+        }
+      } else {
+        if (styleTag) styleTag.remove();
+      }
     }
   });
+
+  async function handleSaveTheme(themeData: any) {
+    if (!data.user) {
+      alert("You must be logged in to save custom themes.");
+      return;
+    }
+    
+    if (themeData.id) {
+      const { error } = await data.supabase.from('custom_themes').update({
+        name: themeData.name,
+        css_variables: { raw: themeData.css_variables }
+      }).eq('id', themeData.id);
+      if (error) alert(error.message);
+    } else {
+      const { error, data: inserted } = await data.supabase.from('custom_themes').insert({
+        user_id: data.user.id,
+        name: themeData.name,
+        css_variables: { raw: themeData.css_variables }
+      }).select().single();
+      if (error) alert(error.message);
+      if (inserted) {
+        globalTheme = `custom_${inserted.id}`;
+      }
+    }
+    
+    const { data: themes } = await data.supabase.from('custom_themes').select('*');
+    if (themes) {
+      customThemes = themes;
+      localStorage.setItem('dashboard-custom-themes', JSON.stringify(themes));
+    }
+    showThemeEditor = false;
+  }
+
+  async function handleDeleteTheme(id: string) {
+    if (confirm("Are you sure you want to delete this theme?")) {
+      const { error } = await data.supabase.from('custom_themes').delete().eq('id', id);
+      if (error) alert(error.message);
+      
+      const { data: themes } = await data.supabase.from('custom_themes').select('*');
+      if (themes) {
+        customThemes = themes;
+        localStorage.setItem('dashboard-custom-themes', JSON.stringify(themes));
+      }
+      if (globalTheme === `custom_${id}`) globalTheme = 'theme-default';
+      showThemeEditor = false;
+    }
+  }
 
   async function handleLogout() {
     localStorage.clear();
@@ -224,14 +322,34 @@
               </div>
             </div>
 
-            <h2 class="text-lg font-bold mb-4">{i18n.t.dashboardSettings.theme}</h2>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-bold">{i18n.t.dashboardSettings.theme}</h2>
+              {#if data.user}
+                <button 
+                  onclick={() => { editingTheme = null; showThemeEditor = true; }}
+                  class="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/20 transition-colors"
+                >
+                  Create Custom Theme
+                </button>
+              {/if}
+            </div>
+            
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {#each THEMES as theme}
+                {#each ALL_THEMES as theme}
                     <button
-                        class="p-4 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[90px] gap-2 {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                        class="relative p-4 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[90px] gap-2 {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
                         onclick={() => globalTheme = theme.id}
                     >
-                        <div class="font-bold text-sm text-slate-200 break-words leading-tight">{theme.name}</div>
+                        {#if theme.isCustom}
+                          <button 
+                            class="absolute top-3 right-3 p-1.5 rounded-lg bg-black/40 text-neutral-400 hover:text-white hover:bg-blue-500 transition-colors"
+                            onclick={(e) => { e.stopPropagation(); editingTheme = theme.raw; showThemeEditor = true; }}
+                            title="Edit Custom Theme"
+                          >
+                            <Palette size={14} />
+                          </button>
+                        {/if}
+                        <div class="font-bold text-sm text-slate-200 break-words leading-tight pr-6">{theme.name}</div>
                         <div class="flex gap-1.5 mt-2 bg-black/20 p-2 rounded-lg w-fit border border-black/20">
                             {#each theme.colors as c}
                                 <div class="w-4 h-4 rounded-full border border-black/40 shadow-sm" style="background-color: {c}"></div>
@@ -241,6 +359,15 @@
                 {/each}
             </div>
           </div>
+
+          {#if showThemeEditor}
+            <ThemeEditor 
+              theme={editingTheme} 
+              onSave={handleSaveTheme} 
+              onCancel={() => showThemeEditor = false} 
+              onDelete={handleDeleteTheme} 
+            />
+          {/if}
 
         {:else if activeTab === 'integrations'}
           <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner">

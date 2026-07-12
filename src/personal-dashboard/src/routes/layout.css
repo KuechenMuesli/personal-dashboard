@@ -28,8 +28,8 @@
     --color-blue-500: #818cf8; /* Indigo */
   }
 
-  .theme-hacker {
-    --theme-body-bg: #050505;
+  .theme-forest {
+    --theme-body-bg: #041f14; /* Deep forest green instead of pure black */
     --color-neutral-800: #064e3b;
     --color-neutral-900: #022c22;
     --color-neutral-950: #021c17;
@@ -84,28 +84,47 @@
     --color-blue-500: #268bd2; /* Solarized blue */
     --tw-shadow-color: rgba(255, 255, 255, 0.5);
   }
+  .theme-princess {
+    color-scheme: light;
+    --theme-body-bg: #ffe4e8; /* soft background pink */
+    --color-neutral-600: #f4aeb9; 
+    --color-neutral-700: #ffb6c1; 
+    --color-neutral-800: #fff0f5; /* very light pinkish cards instead of pure white */
+    --color-neutral-900: #ffe6eb; /* search bar bg */
+    --color-neutral-950: #ffd1dc; 
+    --color-white: #8b0a50; 
+    --color-slate-200: #8b0a50; 
+    --color-slate-300: #9e1b5f;
+    --color-slate-400: #b03060;
+    --color-neutral-300: #c71585; 
+    --color-neutral-400: #db7093;
+    --color-neutral-500: #ff69b4; 
+    --color-widget-text: #8b0a50; 
+    --color-blue-500: #ff1493; 
+    --tw-shadow-color: rgba(255, 182, 193, 0.4); 
+  }
 }
 
 /* Glass Effect Light Mode Overrides
    These scale down the dark black opacities used for frosted glass panels in dark mode
    so they don't look muddy and dirty in light mode. */
 @layer utilities {
-  :is(.theme-light, .theme-paper) .bg-black\/10 { background-color: rgba(0, 0, 0, 0.03) !important; }
-  :is(.theme-light, .theme-paper) .bg-black\/20 { background-color: rgba(0, 0, 0, 0.05) !important; }
-  :is(.theme-light, .theme-paper) .bg-black\/30 { background-color: rgba(0, 0, 0, 0.07) !important; }
-  :is(.theme-light, .theme-paper) .bg-black\/40 { background-color: rgba(0, 0, 0, 0.1) !important; }
-  :is(.theme-light, .theme-paper) .bg-black\/50 { background-color: rgba(0, 0, 0, 0.12) !important; }
-  :is(.theme-light, .theme-paper) .bg-black\/60 { background-color: rgba(0, 0, 0, 0.15) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .bg-black\/10 { background-color: rgba(0, 0, 0, 0.03) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .bg-black\/20 { background-color: rgba(0, 0, 0, 0.05) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .bg-black\/30 { background-color: rgba(0, 0, 0, 0.07) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .bg-black\/40 { background-color: rgba(0, 0, 0, 0.1) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .bg-black\/50 { background-color: rgba(0, 0, 0, 0.12) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .bg-black\/60 { background-color: rgba(0, 0, 0, 0.15) !important; }
   
-  :is(.theme-light, .theme-paper) .hover\:bg-black\/20:hover { background-color: rgba(0, 0, 0, 0.05) !important; }
-  :is(.theme-light, .theme-paper) .hover\:bg-black\/40:hover { background-color: rgba(0, 0, 0, 0.1) !important; }
-  :is(.theme-light, .theme-paper) .hover\:bg-black\/60:hover { background-color: rgba(0, 0, 0, 0.15) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .hover\:bg-black\/20:hover { background-color: rgba(0, 0, 0, 0.05) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .hover\:bg-black\/40:hover { background-color: rgba(0, 0, 0, 0.1) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .hover\:bg-black\/60:hover { background-color: rgba(0, 0, 0, 0.15) !important; }
 
-  :is(.theme-light, .theme-paper) .border-black\/10 { border-color: rgba(0, 0, 0, 0.05) !important; }
-  :is(.theme-light, .theme-paper) .border-black\/20 { border-color: rgba(0, 0, 0, 0.08) !important; }
-  :is(.theme-light, .theme-paper) .border-black\/30 { border-color: rgba(0, 0, 0, 0.1) !important; }
-  :is(.theme-light, .theme-paper) .border-black\/40 { border-color: rgba(0, 0, 0, 0.12) !important; }
-  :is(.theme-light, .theme-paper) .border-black\/50 { border-color: rgba(0, 0, 0, 0.15) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .border-black\/10 { border-color: rgba(0, 0, 0, 0.05) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .border-black\/20 { border-color: rgba(0, 0, 0, 0.08) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .border-black\/30 { border-color: rgba(0, 0, 0, 0.1) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .border-black\/40 { border-color: rgba(0, 0, 0, 0.12) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .border-black\/50 { border-color: rgba(0, 0, 0, 0.15) !important; }
   
-  :is(.theme-light, .theme-paper) .hover\:border-black\/40:hover { border-color: rgba(0, 0, 0, 0.12) !important; }
+  :is(.theme-light, .theme-paper, .theme-princess) .hover\:border-black\/40:hover { border-color: rgba(0, 0, 0, 0.12) !important; }
 }

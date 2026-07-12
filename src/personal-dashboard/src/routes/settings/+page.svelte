@@ -108,38 +108,28 @@
       </div>
     </div>
 
-    <div class="flex flex-col md:flex-row gap-8 flex-1 min-h-0">
+    <div class="flex flex-col md:flex-row gap-4 md:gap-8 flex-1 min-h-0">
 
-      <!-- Sidebar / Vertical Tabs -->
-      <div class="w-full md:w-1/4 flex flex-col gap-2 shrink-0 overflow-y-auto pr-2 custom-scrollbar">
+      <!-- Sidebar / Vertical Tabs (Desktop) & Segmented Control (Mobile) -->
+      <div class="w-full md:w-1/4 flex flex-row md:flex-col gap-1 md:gap-2 shrink-0 bg-black/40 md:bg-transparent p-1 md:p-0 rounded-xl md:rounded-none overflow-visible">
         <button
-          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'account' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}"
+          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'account' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
           onclick={() => activeTab = 'account'}
         >
-          <User size={18} /> {i18n.t.accountSettings.tabAccount}
+          <User size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabAccount}
         </button>
         <button
-          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'appearance' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}"
+          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'appearance' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
           onclick={() => activeTab = 'appearance'}
         >
-          <Palette size={18} /> {i18n.t.accountSettings.tabAppearance}
+          <Palette size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabAppearance}
         </button>
         <button
-          class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left {activeTab === 'data' ? 'bg-blue-500/10 text-white border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent'}"
+          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'data' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
           onclick={() => activeTab = 'data'}
         >
-          <Database size={18} /> {i18n.t.accountSettings.tabData}
+          <Database size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabData}
         </button>
-
-        {#if data.user}
-          <div class="mt-4 pt-4 border-t border-white/5">
-            <form method="POST" action="/?/logout" class="w-full">
-              <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-left text-neutral-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent">
-                <LogOut size={18} /> {i18n.t.accountSettings.signOut}
-              </button>
-            </form>
-          </div>
-        {/if}
       </div>
 
       <!-- Content Area -->
@@ -295,6 +285,16 @@
               </button>
             </form>
           </div>
+
+          <!-- Sign Out Section -->
+          <div class="mt-12 pt-8 border-t border-white/5 flex justify-center md:justify-start">
+            <form method="POST" action="/?/logout">
+              <button type="submit" class="flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent">
+                <LogOut size={18} /> {i18n.t.accountSettings.signOut}
+              </button>
+            </form>
+          </div>
+
           {:else}
           <!-- Not Logged In Section -->
           <div class="bg-black/20 border border-blue-900/30 rounded-[24px] p-8 shadow-inner text-center">

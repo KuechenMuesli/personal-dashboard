@@ -465,6 +465,9 @@
 
 
   function handleMove(e: MouseEvent | TouchEvent) {
+    if (draggingId || resizingId) {
+      if (e.cancelable) e.preventDefault();
+    }
     const container = document.getElementById('grid-container');
     if (!container) return;
     const rect = container.getBoundingClientRect();

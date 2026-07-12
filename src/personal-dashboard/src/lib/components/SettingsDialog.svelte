@@ -62,7 +62,7 @@
 
 <dialog
     bind:this={dialogEl}
-    class="fixed left-1/2 top-1/2 m-0 w-[95vw] {maxWidth} -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl outline-none backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm"
+    class="m-auto w-[95vw] {maxWidth} rounded-2xl border border-black/50 bg-neutral-800 p-0 text-slate-200 shadow-2xl outline-none backdrop:bg-neutral-950/80 backdrop:backdrop-blur-sm"
     oncancel={handleCancel}
 >
   <div class="relative flex flex-col gap-5 p-6 {fixedHeight ? 'h-[85vh]' : 'max-h-[85vh]'} bg-neutral-800 text-slate-200 rounded-2xl">

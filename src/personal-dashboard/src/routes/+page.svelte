@@ -17,22 +17,22 @@
   setContext('secretsLoaded', () => secretsLoaded);
 
   let widgets = $derived({
-    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
-    favorites:        { name: i18n.t.widgets.favorites, load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
-    note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false },
-    parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true },
-    trmnl:            { name: i18n.t.widgets.trmnl, load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true },
-    clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true },
-    embed:            { name: i18n.t.widgets.embed, load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true },
-    TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    sketch:           { name: i18n.t.widgets.sketch, load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false },
-    colorPicker:      { name: i18n.t.widgets.colorPicker, load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', load: () => import("$lib/widgets/ClipboardSync.svelte"), defaultSize: { width: 2, height: 3 }, hasSettings: false },
-    loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true },
+    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: null },
+    favorites:        { name: i18n.t.widgets.favorites, load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false, minSize: { width: 1, height: 2 }, maxSize: { width: null, height: null } },
+    parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    trmnl:            { name: i18n.t.widgets.trmnl, load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: null },
+    embed:            { name: i18n.t.widgets.embed, load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    sketch:           { name: i18n.t.widgets.sketch, load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    colorPicker:      { name: i18n.t.widgets.colorPicker, load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, fixedSize: false },
+    newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, minSize: { width: 2, height: null }, maxSize: { width: null, height: null }, maxCount: null, },
+    calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', load: () => import("$lib/widgets/ClipboardSync.svelte"), defaultSize: { width: 2, height: 3 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: 1 },
+    loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true, unremovable: true, fixedSize: true, maxCount: 1 },
   });
 
   const STORAGE_KEY = "dashboard-layout";
@@ -113,7 +113,11 @@
       selectedWidgetIndex = Math.max(selectedWidgetIndex - columns, 0);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      addWidget(filteredWidgets[selectedWidgetIndex][0]);
+      const [type, config] = filteredWidgets[selectedWidgetIndex];
+      const count = dashboardLayout.filter(w => w.type === type).length;
+      if (!(config as any).maxCount || count < (config as any).maxCount) {
+        addWidget(type);
+      }
     }
   }
 
@@ -134,7 +138,7 @@
     requestAnimationFrame(() => {
       isMounted = true;
     });
-    
+
     const hasLocal = !!localStorage.getItem(STORAGE_KEY);
     const isDefault = localStorage.getItem('dashboard-is-default') === 'true';
 
@@ -564,10 +568,22 @@
       dashboardLayout[index].x = Math.max(0, Math.min(targetX, columns - dashboardLayout[index].width));
       dashboardLayout[index].y = Math.max(0, targetY);
     } else if (resizingId) {
+      const config = widgets[dashboardLayout[index].type as keyof typeof widgets] as any;
+      if (config.fixedSize) return;
+
       const deltaX = (clientX - grabOffset.x) / colPixelWidth;
       const deltaY = (clientY - grabOffset.y) / ROW_HEIGHT;
-      dashboardLayout[index].width = Math.max(1, Math.min(initialPos.w + deltaX, columns - dashboardLayout[index].x));
-      dashboardLayout[index].height = Math.max(1, initialPos.h + deltaY);
+
+      const newWidth = initialPos.w + deltaX;
+      const newHeight = initialPos.h + deltaY;
+
+      const minW = config.minSize?.width || 1;
+      const minH = config.minSize?.height || 1;
+      const maxW = config.maxSize?.width || columns;
+      const maxH = config.maxSize?.height || 100;
+
+      dashboardLayout[index].width = Math.max(minW, Math.min(newWidth, Math.min(maxW, columns - dashboardLayout[index].x)));
+      dashboardLayout[index].height = Math.max(minH, Math.min(newHeight, maxH));
     }
   }
 
@@ -767,20 +783,26 @@
 						>
                             <GripHorizontal size={16} strokeWidth={1} class="text-neutral-500 select-none active:cursor-grabbing" />
                         </div>
+            {#if !(widgetDef as any).unremovable}
 						<button
 								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400 relative z-10"
 								onclick={() => debounceAction(() => deleteWidget(sw.id))}
 						>
 							<X size={16} />
 						</button>
+            {:else}
+              <div class="h-6 w-6"></div>
+            {/if}
 					</div>
 
+          {#if !(widgetDef as any).fixedSize}
 					<div
 							class="absolute bottom-0 right-0 z-50 h-5 w-5 cursor-nwse-resize touch-none rounded-br-lg bg-gradient-to-br from-transparent from-50% to-blue-500/40 to-50%"
 							onmousedown={(e) => startInteraction(e, sw.id, 'resize')}
 							ontouchstart={(e) => startInteraction(e, sw.id, 'resize')}
 							role="presentation"
 					></div>
+          {/if}
 				{/if}
 
 				<div class="h-full w-full overflow-hidden">
@@ -847,28 +869,42 @@
 <SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog} maxWidth="max-w-[900px]" fixedHeight={true}>
 	<div class="mb-6 relative shrink-0">
 		<Search class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
-		<input 
-			type="text" 
-			bind:value={widgetSearchQuery} 
+		<input
+			type="text"
+			bind:value={widgetSearchQuery}
 			onkeydown={handleWidgetSearchKeydown}
-			placeholder={i18n.t.dashboardSettings.searchWidget} 
-			class="w-full bg-black/40 border border-neutral-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50" 
+			placeholder={i18n.t.dashboardSettings.searchWidget}
+			class="w-full bg-black/40 border border-neutral-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50"
 		/>
 	</div>
 
 	<div bind:this={widgetGridContainer} class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
 		{#each filteredWidgets as [type, config], index}
+      {@const count = dashboardLayout.filter(w => w.type === type).length}
+      {@const maxCount = (config as any).maxCount}
+      {@const disabled = maxCount !== undefined && count >= maxCount}
 			<button
-					class="flex h-[140px] flex-col items-center justify-between rounded-xl border p-4 transition-all {index === selectedWidgetIndex ? 'border-blue-500 bg-neutral-800 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-[1.02]' : 'border-neutral-800 bg-neutral-800/50 hover:border-blue-500 active:bg-neutral-800'}"
-					onclick={() => debounceAction(() => addWidget(type))}
+					class="flex h-[140px] flex-col items-center justify-between rounded-xl border p-4 transition-all {disabled ? 'border-neutral-800/30 bg-neutral-900/30 opacity-50 cursor-not-allowed' : index === selectedWidgetIndex ? 'border-blue-500 bg-neutral-800 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-[1.02]' : 'border-neutral-800 bg-neutral-800/50 hover:border-blue-500 active:bg-neutral-800'}"
+					onclick={() => { if (!disabled) debounceAction(() => addWidget(type)) }}
+          disabled={disabled}
 			>
 				<div class="pointer-events-none flex flex-1 items-center justify-center w-full">
 					<div
-							class="rounded-md border-2 border-blue-500/50 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
+							class="rounded-md border-2 border-blue-500/50 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)] flex items-center justify-center overflow-hidden"
 							style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
-					></div>
+					>
+          </div>
 				</div>
-				<span class="pointer-events-none mt-3 text-sm font-medium text-center {index === selectedWidgetIndex ? 'text-white' : 'text-neutral-300'}">{config.name}</span>
+				<div class="pointer-events-none mt-3 text-center flex flex-col items-center">
+            <span class="text-sm font-medium {index === selectedWidgetIndex && !disabled ? 'text-white' : 'text-neutral-300'}">{config.name}</span>
+            {#if disabled}
+               <span class="text-[10px] text-red-400 font-bold uppercase tracking-widest mt-0.5 whitespace-nowrap">Maximal {maxCount}</span>
+            {:else if maxCount}
+               <span class="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-0.5 whitespace-nowrap">{count}/{maxCount}</span>
+            {:else if (config as any).fixedSize}
+               <span class="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-0.5 whitespace-nowrap">Feste Größe</span>
+            {/if}
+        </div>
 			</button>
 		{/each}
 	</div>

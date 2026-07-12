@@ -744,24 +744,26 @@
            </div>
         {:else}
 				{#if isEditing}
-					<div class="absolute top-0 left-0 right-0 z-50 flex items-center gap-1 border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
-						{#if widgetDef.hasSettings}
-						<button
-								class="widget-settings-btn pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
-								onclick={() => debounceAction(() => toggleSettings(sw.id))}
-						>
-							<Settings size={16} strokeWidth={1} />
-						</button>
-						{/if}
-						<GripHorizontal
-								size={16}
-								strokeWidth={1}
+					<div class="absolute top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
+						<div class="flex items-center gap-1 relative z-10 min-w-[24px]">
+                            {#if widgetDef.hasSettings}
+                            <button
+                                    class="widget-settings-btn pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                                    onclick={() => debounceAction(() => toggleSettings(sw.id))}
+                            >
+                                <Settings size={16} strokeWidth={1} />
+                            </button>
+                            {/if}
+                        </div>
+						<div
 								onmousedown={(e) => startInteraction(e, sw.id, 'drag')}
 								ontouchstart={(e) => startInteraction(e, sw.id, 'drag')}
-								class="flex-grow cursor-grab touch-none text-center text-xs font-bold text-neutral-500 select-none active:cursor-grabbing pointer-events-auto"
-						/>
+								class="absolute inset-0 flex h-full w-full cursor-grab touch-none items-center justify-center pointer-events-auto z-0"
+						>
+                            <GripHorizontal size={16} strokeWidth={1} class="text-neutral-500 select-none active:cursor-grabbing" />
+                        </div>
 						<button
-								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400"
+								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400 relative z-10"
 								onclick={() => debounceAction(() => deleteWidget(sw.id))}
 						>
 							<X size={16} />

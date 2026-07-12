@@ -117,32 +117,34 @@
 <WidgetCard isConfigured={true} padding={false}>
 	<div class="flex h-full w-full flex-col font-sans" onkeydown={handleKeyDown}>
 
-		<div class="flex h-8 shrink-0 items-center gap-2 border-b border-black/20 bg-black/10 px-2">
-			<button
-					onclick={onAddNote}
-					title="Add new note"
-					class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-black/20 hover:text-white"
-			>
-				<Plus size={14} strokeWidth={2.5} />
-			</button>
+		<div class="flex h-8 shrink-0 items-center justify-between border-b border-black/20 bg-black/10 px-2 relative">
+            <div class="flex items-center gap-2 relative z-10">
+                <button
+                        onclick={onAddNote}
+                        title="Add new note"
+                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-black/20 hover:text-white"
+                >
+                    <Plus size={14} strokeWidth={2.5} />
+                </button>
 
-			<button
-					onclick={toggleMode}
-					class="flex h-5 items-center gap-1.5 rounded px-2 text-[9px] font-bold uppercase tracking-wider transition-colors shrink-0
-             {!isMarkdownMode ? 'bg-white/10 text-slate-200 shadow-sm' : 'bg-black/20 text-neutral-500 hover:text-white'}"
-			>
-				{#if isMarkdownMode}
-					<PenLine size={10} strokeWidth={2.5} /> {i18n.t.w.note.editMode}
-				{:else}
-					<Eye size={10} strokeWidth={2.5} /> {i18n.t.w.note.viewMode}
-				{/if}
-			</button>
+                <button
+                        onclick={toggleMode}
+                        class="flex h-5 items-center gap-1.5 rounded px-2 text-[9px] font-bold uppercase tracking-wider transition-colors shrink-0
+                 {!isMarkdownMode ? 'bg-white/10 text-slate-200 shadow-sm' : 'bg-black/20 text-neutral-500 hover:text-white'}"
+                >
+                    {#if isMarkdownMode}
+                        <PenLine size={10} strokeWidth={2.5} /> {i18n.t.w.note.editMode}
+                    {:else}
+                        <Eye size={10} strokeWidth={2.5} /> {i18n.t.w.note.viewMode}
+                    {/if}
+                </button>
+            </div>
 
 			<div
 					onmousedown={onDragStart}
 					ontouchstart={onDragStart}
 					role="presentation"
-					class="flex h-full flex-grow cursor-grab touch-none items-center justify-center text-neutral-600 transition-colors hover:text-neutral-400 active:cursor-grabbing"
+					class="absolute inset-0 flex h-full w-full cursor-grab touch-none items-center justify-center text-neutral-600 transition-colors hover:text-neutral-400 active:cursor-grabbing z-0"
 			>
 				<GripHorizontal size={14} strokeWidth={2.5} />
 			</div>
@@ -150,7 +152,7 @@
 			<button
 					onclick={handleDelete}
 					title="Delete note"
-					class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-red-500/20 hover:text-red-400"
+					class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-red-500/20 hover:text-red-400 relative z-10"
 			>
 				<X size={14} strokeWidth={2.5} />
 			</button>

@@ -24,7 +24,7 @@
   let passwordLoading = $state(false);
   let deleteLoading = $state(false);
 
-  let activeTab = $state('integrations'); // 'appearance', 'data', 'account', 'integrations'
+  let activeTab = $state('account'); // 'appearance', 'data', 'account', 'integrations'
   let globalTheme = $state('theme-default');
 
   let THEMES = $derived([
@@ -157,12 +157,14 @@
         >
           <Database size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabData}
         </button>
+        {#if data.user}
         <button
           class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'integrations' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
           onclick={() => activeTab = 'integrations'}
         >
           <Link size={16} class="hidden md:block" /> {i18n.currentLang === 'de' ? 'Verbundene Konten' : 'Connected Accounts'}
         </button>
+        {/if}
       </div>
 
       <!-- Content Area -->
@@ -242,7 +244,7 @@
                   </a>
                 </div>
               {:else}
-                <a href="/auth/microsoft/login" data-sveltekit-reload class="w-full sm:w-auto text-center px-6 py-2.5 rounded-lg font-bold text-xs transition-colors bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+                <a href="/auth/microsoft/login" data-sveltekit-reload class="w-full sm:w-auto text-center px-6 py-2.5 rounded-lg font-bold text-xs transition-colors bg-white text-black hover:bg-neutral-200 shadow-md">
                   {i18n.t.integrations.loginWithMicrosoft}
                 </a>
               {/if}

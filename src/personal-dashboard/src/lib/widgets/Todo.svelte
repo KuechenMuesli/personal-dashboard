@@ -118,6 +118,7 @@
   let copiedApple = $state(false);
   let msNeedsLogin = $state(false);
   
+  const isLoggedIn = $derived(!!($page.data.user || $page.data.session?.user));
   const userId = $derived($page.data.session?.user?.id || id);
   const appleUrlId = $derived(integrations.appleUrlId || userId);
   
@@ -640,6 +641,7 @@
 
 		<div class="flex items-center justify-between">
 			<span class="text-sm font-semibold text-white flex items-center gap-2">Apple Reminders</span>
+			{#if isLoggedIn}
 			<button 
 				onclick={() => {
           integrations.apple = !integrations.apple;
@@ -649,9 +651,17 @@
 			>
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.apple ? 'translate-x-5' : ''}"></div>
 			</button>
+			{/if}
 		</div>
 
-		{#if integrations.apple}
+		{#if !isLoggedIn}
+			<div class="bg-black/20 p-4 rounded-xl border border-white/10 mt-2">
+				<p class="text-xs text-neutral-400 mb-3">{i18n.t.dashboardSettings.signInToSync}</p>
+				<a href="/login" class="bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center w-full">
+					{i18n.currentLang === 'de' ? 'Anmelden' : 'Sign in'}
+				</a>
+			</div>
+		{:else if integrations.apple}
 			<div transition:slide class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4 -mt-2">
 				<div class="flex items-center justify-between">
 					<span class="text-xs font-semibold text-neutral-300">{i18n.t.todoSettings.yourWidgetUrl}</span>
@@ -686,6 +696,7 @@
 
 		<div class="flex items-center justify-between">
 			<span class="text-sm font-semibold text-white flex items-center gap-2">Microsoft To-Do</span>
+			{#if isLoggedIn}
 			<button 
 				onclick={() => {
           integrations.microsoft = !integrations.microsoft;
@@ -695,14 +706,22 @@
 			>
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.microsoft ? 'translate-x-5' : ''}"></div>
 			</button>
+			{/if}
 		</div>
 
-		{#if integrations.microsoft}
+		{#if !isLoggedIn}
+			<div class="bg-black/20 p-4 rounded-xl border border-white/10 mt-2">
+				<p class="text-xs text-neutral-400 mb-3">{i18n.t.dashboardSettings.signInToSync}</p>
+				<a href="/login" class="bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center w-full">
+					{i18n.currentLang === 'de' ? 'Anmelden' : 'Sign in'}
+				</a>
+			</div>
+		{:else if integrations.microsoft}
 			<div transition:slide class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4 -mt-2">
 				{#if msNeedsLogin}
 					<div class="flex items-center justify-between">
 						<span class="text-xs text-red-400">{i18n.t.integrations.notConnected}</span>
-						<a href="/settings" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
+						<a href="/settings" class="bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
 							{i18n.t.todoSettings.connectAccount}
 						</a>
 					</div>

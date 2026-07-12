@@ -161,9 +161,11 @@
         const remoteThemeObj = dbData.theme as any || {};
         const remoteTimestamp = new Date(dbData.updated_at).getTime();
         const localTimestamp = Number(localStorage.getItem('dashboard-timestamp')) || 0;
+        const lastUser = localStorage.getItem('dashboard-user');
+        const isNewLogin = lastUser !== session.user.id;
 
-        // If cloud is newer, OR local is missing, OR local is just the untouched default
-        if (remoteTimestamp > localTimestamp || !hasLocal || isDefault) {
+        // If cloud is newer, OR local is missing, OR local is just the untouched default, OR it's a new login
+        if (remoteTimestamp > localTimestamp || !hasLocal || isDefault || isNewLogin) {
           if (dbData.widgets) {
             const layout = dbData.widgets.map((w: any) => {
               const c = w.custom_data || {};
@@ -192,9 +194,11 @@
           localStorage.setItem('dashboard-timestamp', remoteTimestamp.toString());
           localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
           localStorage.removeItem('dashboard-is-default');
+          localStorage.setItem('dashboard-user', session.user.id);
           return;
         } else if (localTimestamp > remoteTimestamp) {
           syncUp();
+          localStorage.setItem('dashboard-user', session.user.id);
         }
       } else {
         if (!hasLocal) {
@@ -202,6 +206,7 @@
         } else {
           syncUp();
         }
+        localStorage.setItem('dashboard-user', session.user.id);
       }
     } else {
       // User is offline or login failed

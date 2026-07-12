@@ -219,6 +219,15 @@
 
 
   onMount(() => {
+    // Debug MS OAuth errors
+    const params = new URLSearchParams(window.location.search);
+    const msError = params.get('msAuthError');
+    if (msError) {
+      alert("Microsoft Login Error: " + msError);
+      // clean up url
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const intCache = localStorage.getItem(`todo-integrations-${id}`);
     if (intCache) {
       try {

@@ -50,14 +50,19 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
             expires_at: Date.now() + (tokenData.expires_in * 1000)
         };
 
-        await supabase
+        const { error: dbError } = await supabase
             .from('user_secrets')
             .upsert({
                 user_id: session.user.id,
                 secrets: currentSecrets
             });
+            
+        if (dbError) {
+            throw redirect(302, '/?msAuthError=' + encodeURIComponent('DB Error: ' + dbError.message));
+        }
     } else {
         console.error('Failed to get MS token:', tokenData);
+        throw redirect(302, '/?msAuthError=' + encodeURIComponent('Token Error: ' + JSON.stringify(tokenData)));
     }
 
     throw redirect(302, '/');

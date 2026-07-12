@@ -179,16 +179,16 @@
       {#if currentStep === 0}
         <div class="flex gap-2 mb-6">
           <button
-            class="flex-1 py-2 px-3 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all {i18n.currentLang === 'en' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700'}"
+            class="flex-1 py-2 px-3 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all {i18n.currentLang === 'en' ? 'bg-white/15 border-white/20 text-white shadow-md' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700'}"
             onclick={() => i18n.setLang('en')}
           >
-            🇬🇧 English
+            <span class="text-[10px] font-black uppercase tracking-widest text-neutral-500 bg-black/40 px-1.5 py-0.5 rounded mr-1 border border-black/40">EN</span> English
           </button>
           <button
-            class="flex-1 py-2 px-3 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all {i18n.currentLang === 'de' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700'}"
+            class="flex-1 py-2 px-3 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all {i18n.currentLang === 'de' ? 'bg-white/15 border-white/20 text-white shadow-md' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700'}"
             onclick={() => i18n.setLang('de')}
           >
-            🇩🇪 Deutsch
+            <span class="text-[10px] font-black uppercase tracking-widest text-neutral-500 bg-black/40 px-1.5 py-0.5 rounded mr-1 border border-black/40">DE</span> Deutsch
           </button>
         </div>
       {/if}
@@ -200,7 +200,7 @@
         {#if !steps[currentStep].waitForAction}
           <button 
             onclick={nextStep}
-            class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-xl transition-all active:scale-95"
+            class="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white font-medium px-4 py-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-black/20"
           >
             {#if currentStep === steps.length - 1}
               <Check size={16} /> {i18n.currentLang === 'de' ? 'Fertig' : 'Finish'}

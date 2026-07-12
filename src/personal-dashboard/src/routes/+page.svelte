@@ -30,7 +30,7 @@
     newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
     calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
     stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, systemOnly: true },
+    loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true },
   });
 
   const STORAGE_KEY = "dashboard-layout";
@@ -171,7 +171,7 @@
 
       const COLUMNS = 9;
       dashboardLayout = [
-        { id: loginId, type: 'loginPrompt', x: COLUMNS - 1, y: 0, width: 1, height: 3, showSettings: false },
+        { id: loginId, type: 'loginPrompt', x: COLUMNS - 2, y: 0, width: 2, height: 1, showSettings: false },
         { id: searchId, type: 'searchbar', x: Math.floor((COLUMNS - 3) / 2), y: 1, width: 3, height: 2, showSettings: false },
         { id: clockId, type: 'clockWeatherDate', x: Math.floor((COLUMNS - 3) / 2), y: 0, width: 3, height: 1, showSettings: false }
       ];
@@ -281,14 +281,27 @@
 
       // Delete widgets that are no longer in the layout
       const currentIds = widgetsToUpsert.map(w => w.id);
-      if (currentIds.length > 0) {
-        await supabase
-          .from('widgets')
-          .delete()
-          .eq('layout_id', currentLayoutId)
-          .not('id', 'in', `(${currentIds.join(',')})`);
-      } else {
-        await supabase.from('widgets').delete().eq('layout_id', currentLayoutId);
+
+      const { data: existingWidgets } = await supabase
+        .from('widgets')
+        .select('id')
+        .eq('layout_id', currentLayoutId);
+
+      if (existingWidgets) {
+        const idsToDelete = existingWidgets
+          .map(w => w.id)
+          .filter(id => !currentIds.includes(id));
+
+        if (idsToDelete.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('widgets')
+            .delete()
+            .in('id', idsToDelete);
+
+          if (deleteError) {
+            console.error("Failed to delete old widgets:", deleteError);
+          }
+        }
       }
     }
   }

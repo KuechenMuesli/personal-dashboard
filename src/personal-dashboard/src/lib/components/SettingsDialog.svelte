@@ -77,7 +77,7 @@
     <footer class="flex justify-end gap-2 shrink-0 border-t border-black/20 pt-4 mt-2">
       {#if onSave}
         <button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={handleCancel}>{i18n.t.w.common.cancel}</button>
-        <button class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/20" onclick={handleSave}>{i18n.t.w.common.save}</button>
+        <button class="rounded-lg bg-white/15 px-6 py-2 text-sm font-bold text-white hover:bg-white/25 border border-white/20 transition-colors shadow-lg shadow-black/20" onclick={handleSave}>{i18n.t.w.common.save}</button>
       {:else}
         <button class="rounded-lg bg-neutral-700 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-600 transition-colors shadow-lg shadow-black/20" onclick={handleCancel}>{i18n.t.w.common.close}</button>
       {/if}

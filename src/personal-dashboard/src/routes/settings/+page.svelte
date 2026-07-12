@@ -140,17 +140,17 @@
             <h2 class="text-lg font-bold mb-4">{i18n.t.accountSettings.language}</h2>
             <div class="grid grid-cols-2 gap-3 mb-8">
                 <button
-                    class="p-4 rounded-xl border text-left transition-all flex items-center gap-3 {i18n.currentLang === 'en' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                    class="p-4 rounded-xl border text-left transition-all flex items-center gap-4 {i18n.currentLang === 'en' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
                     onclick={() => i18n.setLang('en')}
                 >
-                    <span class="text-2xl">🇬🇧</span>
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-black/40 border border-black/40 text-xs font-black text-neutral-400">EN</div>
                     <span class="font-bold text-base text-slate-200">English</span>
                 </button>
                 <button
-                    class="p-4 rounded-xl border text-left transition-all flex items-center gap-3 {i18n.currentLang === 'de' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                    class="p-4 rounded-xl border text-left transition-all flex items-center gap-4 {i18n.currentLang === 'de' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
                     onclick={() => i18n.setLang('de')}
                 >
-                    <span class="text-2xl">🇩🇪</span>
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-black/40 border border-black/40 text-xs font-black text-neutral-400">DE</div>
                     <span class="font-bold text-base text-slate-200">Deutsch</span>
                 </button>
             </div>
@@ -303,11 +303,11 @@
             <p class="text-sm text-neutral-400 mb-8 max-w-md mx-auto">{i18n.t.dashboardSettings.signInToSync}</p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href="/login" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(37,99,235,0.2)]">
-                <LogIn size={18} /> {i18n.t.login.signInBtn}
-              </a>
-              <a href="/login?signup=true" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all active:scale-[0.98]">
+              <a href="/login?signup=true" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20">
                 <UserPlus size={18} /> {i18n.t.login.signUpBtn}
+              </a>
+              <a href="/login" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-black/20 hover:bg-black/40 border border-white/5 text-neutral-300 hover:text-white font-bold rounded-xl transition-all active:scale-[0.98]">
+                <LogIn size={18} /> {i18n.t.login.signInBtn}
               </a>
             </div>
           </div>

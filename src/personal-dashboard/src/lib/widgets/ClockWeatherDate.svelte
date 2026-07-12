@@ -260,9 +260,9 @@
 		<div class="flex flex-col gap-3 pt-2">
 			<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">Visibility</label>
 			<div class="grid grid-cols-3 gap-2">
-				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showClock ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showClock = !showClock}>{i18n.t.w.clock.clock}</button>
-				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showDate ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showDate = !showDate}>{i18n.t.w.clock.date}</button>
-				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border border-black/40 {showWeather ? 'bg-blue-600 text-white' : 'bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showWeather = !showWeather}>{i18n.t.w.clock.weather}</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border {showClock ? 'bg-white/15 text-white border-white/20 shadow-md' : 'border-black/40 bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showClock = !showClock}>{i18n.t.w.clock.clock}</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border {showDate ? 'bg-white/15 text-white border-white/20 shadow-md' : 'border-black/40 bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showDate = !showDate}>{i18n.t.w.clock.date}</button>
+				<button class="rounded-lg py-2.5 text-xs font-bold transition-colors border {showWeather ? 'bg-white/15 text-white border-white/20 shadow-md' : 'border-black/40 bg-black/30 text-neutral-500 hover:text-white'}" onclick={() => showWeather = !showWeather}>{i18n.t.w.clock.weather}</button>
 			</div>
 		</div>
 	</div>

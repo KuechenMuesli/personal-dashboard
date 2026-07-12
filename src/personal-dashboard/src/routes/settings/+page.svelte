@@ -49,6 +49,12 @@
     }
   });
 
+  async function handleLogout() {
+    localStorage.clear();
+    if (data.supabase) await data.supabase.auth.signOut();
+    window.location.href = '/';
+  }
+
   function exportConfig() {
     const config: Record<string, string> = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -394,11 +400,9 @@
 
           <!-- Sign Out Section -->
           <div class="mt-12 pt-8 border-t border-white/5 flex justify-center md:justify-start">
-            <form method="POST" action="/?/logout">
-              <button type="submit" class="flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent">
+              <button onclick={handleLogout} type="button" class="flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent">
                 <LogOut size={18} /> {i18n.t.accountSettings.signOut}
               </button>
-            </form>
           </div>
 
           {:else}

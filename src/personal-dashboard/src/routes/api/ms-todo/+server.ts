@@ -163,4 +163,8 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
         console.error('MS Graph API Error', e);
         return json({ not_authenticated: true, error: String(e) }, { status: 500, headers: corsHeaders });
     }
+  } catch (outerErr) {
+      console.error('MS Auth Error', outerErr);
+      return json({ not_authenticated: true, error: String(outerErr) }, { status: 500, headers: corsHeaders });
+  }
 };

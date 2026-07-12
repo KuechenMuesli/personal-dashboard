@@ -42,7 +42,61 @@
   let isEditing = $state(false);
   let showPickerDialog = $state(false);
   let widgetSearchQuery = $state('');
+  let selectedWidgetIndex = $state(0);
   let widgetStates = $state<Record<string, { hidden: boolean }>>({});
+
+  let filteredWidgets = $derived(
+    Object.entries(widgets).filter(([_, config]) => !(config as any).systemOnly && config.name.toLowerCase().includes(widgetSearchQuery.toLowerCase()))
+  );
+
+  $effect(() => {
+    widgetSearchQuery;
+    selectedWidgetIndex = 0;
+  });
+
+  $effect(() => {
+    if (!showPickerDialog) {
+      widgetSearchQuery = '';
+      selectedWidgetIndex = 0;
+    }
+  });
+
+  let widgetGridContainer: HTMLElement;
+
+  function handleWidgetSearchKeydown(e: KeyboardEvent) {
+    if (filteredWidgets.length === 0) return;
+
+    let columns = 1;
+    if (widgetGridContainer && widgetGridContainer.children.length > 1) {
+      const firstY = (widgetGridContainer.children[0] as HTMLElement).offsetTop;
+      for (let i = 1; i < widgetGridContainer.children.length; i++) {
+        if ((widgetGridContainer.children[i] as HTMLElement).offsetTop > firstY) {
+          columns = i;
+          break;
+        }
+      }
+      if (columns === 1 && (widgetGridContainer.children[widgetGridContainer.children.length - 1] as HTMLElement).offsetTop === firstY) {
+        columns = widgetGridContainer.children.length;
+      }
+    }
+
+    if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey)) {
+      e.preventDefault();
+      selectedWidgetIndex = (selectedWidgetIndex + 1) % filteredWidgets.length;
+    } else if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
+      e.preventDefault();
+      selectedWidgetIndex = (selectedWidgetIndex - 1 + filteredWidgets.length) % filteredWidgets.length;
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedWidgetIndex = Math.min(selectedWidgetIndex + columns, filteredWidgets.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedWidgetIndex = Math.max(selectedWidgetIndex - columns, 0);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      addWidget(filteredWidgets[selectedWidgetIndex][0]);
+    }
+  }
 
   let showOnboarding = $state(false);
 
@@ -766,13 +820,19 @@
 <SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog} maxWidth="max-w-[900px]" fixedHeight={true}>
 	<div class="mb-6 relative shrink-0">
 		<Search class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
-		<input type="text" bind:value={widgetSearchQuery} placeholder={i18n.t.dashboardSettings.searchWidget} class="w-full bg-black/40 border border-neutral-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50" />
+		<input 
+			type="text" 
+			bind:value={widgetSearchQuery} 
+			onkeydown={handleWidgetSearchKeydown}
+			placeholder={i18n.t.dashboardSettings.searchWidget} 
+			class="w-full bg-black/40 border border-neutral-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50" 
+		/>
 	</div>
 
-	<div class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
-		{#each Object.entries(widgets).filter(([_, config]) => !(config as any).systemOnly && config.name.toLowerCase().includes(widgetSearchQuery.toLowerCase())) as [type, config]}
+	<div bind:this={widgetGridContainer} class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
+		{#each filteredWidgets as [type, config], index}
 			<button
-					class="flex h-[140px] flex-col items-center justify-between rounded-xl border border-neutral-800 bg-neutral-800/50 p-4 transition-all active:border-blue-500 active:bg-neutral-800 hover:border-blue-500"
+					class="flex h-[140px] flex-col items-center justify-between rounded-xl border p-4 transition-all {index === selectedWidgetIndex ? 'border-blue-500 bg-neutral-800 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-[1.02]' : 'border-neutral-800 bg-neutral-800/50 hover:border-blue-500 active:bg-neutral-800'}"
 					onclick={() => debounceAction(() => addWidget(type))}
 			>
 				<div class="pointer-events-none flex flex-1 items-center justify-center w-full">
@@ -781,7 +841,7 @@
 							style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
 					></div>
 				</div>
-				<span class="pointer-events-none mt-3 text-sm font-medium text-center text-neutral-300">{config.name}</span>
+				<span class="pointer-events-none mt-3 text-sm font-medium text-center {index === selectedWidgetIndex ? 'text-white' : 'text-neutral-300'}">{config.name}</span>
 			</button>
 		{/each}
 	</div>

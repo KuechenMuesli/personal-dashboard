@@ -641,7 +641,7 @@
 				{#if msNeedsLogin}
 					<div class="flex items-center justify-between">
 						<span class="text-xs text-neutral-300">Verknüpfe deinen Account:</span>
-						<a href="/auth/microsoft/login" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
+						<a href="/auth/microsoft/login" data-sveltekit-reload class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
 							Mit Microsoft anmelden
 						</a>
 					</div>
@@ -649,7 +649,7 @@
 				{:else}
 					<div class="flex items-center justify-between">
 						<span class="text-xs text-green-400 font-medium flex items-center gap-1.5"><Check size={14}/> Erfolgreich verbunden</span>
-						<a href="/auth/microsoft/login" class="text-[10px] text-neutral-500 hover:text-white transition-colors">Erneut anmelden</a>
+						<a href="/auth/microsoft/login" data-sveltekit-reload class="text-[10px] text-neutral-500 hover:text-white transition-colors">Erneut anmelden</a>
 					</div>
 					<p class="text-[11px] text-neutral-400">Deine Aufgaben werden nun automatisch direkt über die Microsoft Graph API synchronisiert.</p>
 				{/if}

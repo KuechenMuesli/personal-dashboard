@@ -165,8 +165,9 @@ legal: {
     colorPicker: 'Pipette / Farben',
     networkMetrics: 'Netzwerk Metriken',
     calendar: 'Kalender',
-    stockTicker: 'Aktien',
-    todo: 'To-Do Liste'
+    stockTicker: 'Aktienkurse',
+    todo: 'Todos & Tasks',
+    clipboardSync: 'Zwischenablage'
   },
 
   // Theme names
@@ -396,6 +397,20 @@ network: {
       today: 'Heute',
       planned: 'Geplant',
       noEvents: 'Keine Erinnerungen'
+    },
+    clipboardSync: {
+      uploadLocal: 'Lokale Zwischenablage hochladen',
+      copyCloud: 'Aus der Cloud kopieren',
+      success: 'Erfolgreich',
+      error: 'Fehler',
+      upload: 'Upload',
+      copy: 'Kopieren',
+      empty: 'Leer',
+      dropHere: 'Hier ablegen',
+      snippet: 'Text Snippet',
+      expiresIn: 'Noch {h}h {m}m',
+      expired: 'Abgelaufen',
+      share: 'Quickshare Link erstellen'
     }
   },
 

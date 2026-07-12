@@ -19,6 +19,7 @@
   }>();
 
   const getSecrets = getContext<() => Record<string, any>>('secrets');
+  const getSecretsLoaded = getContext<() => boolean>('secretsLoaded');
 
   let content = $state("");
   let isMarkdownMode = $state(false);
@@ -27,9 +28,11 @@
 
   $effect(() => {
     const secrets = getSecrets();
-    if (!isLoaded) {
-      if (secrets[id]) {
-        content = secrets[id].content || "";
+    const secretsLoaded = getSecretsLoaded ? getSecretsLoaded() : true;
+    
+    if (secretsLoaded && !isLoaded) {
+      if (secrets[id] && secrets[id].content !== undefined) {
+        content = secrets[id].content;
         isMarkdownMode = secrets[id].isMarkdownMode || false;
       } else {
         const savedContent = localStorage.getItem(`note-settings-${id}`);

@@ -11,9 +11,10 @@
   let session = $derived(data.session);
   let supabase = $derived(data.supabase);
 
-  // Global secrets state accessible by widgets
   let globalSecrets = $state<Record<string, any>>({});
+  let secretsLoaded = $state(false);
   setContext('secrets', () => globalSecrets);
+  setContext('secretsLoaded', () => secretsLoaded);
 
   let widgets = $derived({
     searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
@@ -30,6 +31,7 @@
     calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
     stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
     todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', load: () => import("$lib/widgets/ClipboardSync.svelte"), defaultSize: { width: 2, height: 3 }, hasSettings: false },
     loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true },
   });
 
@@ -155,6 +157,7 @@
       if (secretsRes.data?.secrets) {
          globalSecrets = secretsRes.data.secrets;
       }
+      secretsLoaded = true;
 
       if (dbData) {
         currentLayoutId = dbData.id;
@@ -220,6 +223,7 @@
         generateWelcomeLayout();
         showOnboarding = true;
       }
+      secretsLoaded = true;
     }
   });
 

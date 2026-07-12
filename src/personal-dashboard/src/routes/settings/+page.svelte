@@ -82,7 +82,7 @@
           const authTokens: Record<string, string> = {};
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && (key.startsWith('sb-') || key.includes('auth-token'))) {
+            if (key && (key.startsWith('sb-') || key.includes('auth-token') || key === 'dashboard-user' || key === 'dashboard-layout-id')) {
               authTokens[key] = localStorage.getItem(key)!;
             }
           }

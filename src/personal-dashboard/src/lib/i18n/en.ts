@@ -164,7 +164,8 @@ legal: {
     networkMetrics: 'Network Metrics',
     calendar: 'Calendar',
     stockTicker: 'Stocks',
-    todo: 'To-Do List'
+    todo: 'To-Do List',
+    clipboardSync: 'Clipboard Sync'
   },
 
   // Theme names
@@ -393,6 +394,20 @@ network: {
       today: 'Today',
       planned: 'Planned',
       noEvents: 'No Reminders'
+    },
+    clipboardSync: {
+      uploadLocal: 'Upload Local Clipboard',
+      copyCloud: 'Copy from Cloud',
+      success: 'Success',
+      error: 'Error',
+      upload: 'Upload',
+      copy: 'Copy',
+      empty: 'Empty',
+      dropHere: 'Drop here',
+      snippet: 'Text Snippet',
+      expiresIn: 'Expires in {h}h {m}m',
+      expired: 'Expired',
+      share: 'Create Quickshare'
     }
   },
 

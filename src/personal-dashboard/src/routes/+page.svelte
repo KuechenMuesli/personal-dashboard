@@ -135,6 +135,9 @@
       isMounted = true;
     });
     
+    const hasLocal = !!localStorage.getItem(STORAGE_KEY);
+    const isDefault = localStorage.getItem('dashboard-is-default') === 'true';
+
     // Background Sync
     if (session && supabase) {
       const [layoutsRes, secretsRes] = await Promise.all([

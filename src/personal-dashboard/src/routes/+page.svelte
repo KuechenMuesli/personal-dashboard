@@ -37,7 +37,23 @@
 
   const STORAGE_KEY = "dashboard-layout";
 
-  let dashboardLayout = $state<(StoredWidget & { showSettings: boolean })[]>([]);
+  function initDashboardLayout() {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          let parsed = JSON.parse(saved).map((w: any) => ({ ...w, showSettings: false }));
+          if (data.session) {
+             parsed = parsed.filter((w: any) => w.type !== 'loginPrompt');
+          }
+          return parsed;
+        } catch(e) {}
+      }
+    }
+    return [];
+  }
+
+  let dashboardLayout = $state<(StoredWidget & { showSettings: boolean })[]>(initDashboardLayout());
   let currentLayoutId = $state<string | null>(null);
   let draggingId = $state<string | null>(null);
   let resizingId = $state<string | null>(null);
@@ -64,6 +80,7 @@
   });
 
   let widgetGridContainer: HTMLElement;
+  let isMounted = $state(false);
 
   function handleWidgetSearchKeydown(e: KeyboardEvent) {
     if (filteredWidgets.length === 0) return;
@@ -111,29 +128,14 @@
     { id: 'theme-light', name: i18n.t.themes.light, colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
     { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] }
   ]);
-  let globalTheme = $state('theme-default');
+  let globalTheme = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard-theme') || 'theme-default') : 'theme-default');
 
   onMount(async () => {
-    // 1. Load local state into memory immediately (Optimistic UI)
-    const hasLocal = !!localStorage.getItem(STORAGE_KEY);
-    const isDefault = localStorage.getItem('dashboard-is-default') === 'true';
-
-    if (hasLocal) {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
-        dashboardLayout = parsed.map((w: any) => ({ ...w, showSettings: false }));
-
-        // Auto-remove login prompt if user is logged in
-        if (session) {
-           dashboardLayout = dashboardLayout.filter((w: any) => w.type !== 'loginPrompt');
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    const savedTheme = localStorage.getItem('dashboard-theme');
-    if (savedTheme) globalTheme = savedTheme;
-
-    // 2. Background Sync
+    requestAnimationFrame(() => {
+      isMounted = true;
+    });
+    
+    // Background Sync
     if (session && supabase) {
       const [layoutsRes, secretsRes] = await Promise.all([
         supabase
@@ -376,7 +378,7 @@
     }
   });
 
-  let containerWidth = $state(0);
+  let containerWidth = $state(typeof document !== 'undefined' ? Math.min(document.documentElement.clientWidth, 1200) : 1200);
   let columns = $derived(containerWidth < 640 ? 2 : containerWidth < 1024 ? 3 : 9);
   let colPixelWidth = $derived(containerWidth / columns);
   const ROW_HEIGHT = 50;
@@ -718,7 +720,7 @@
 
 		<div
 				class="widget-wrapper absolute p-2 box-border will-change-[transform,width,height]
-             {draggingId === sw.id || resizingId === sw.id ? 'z-[100] transition-none' : 'z-10 transition-[transform,width,height] duration-200'}
+             {draggingId === sw.id || resizingId === sw.id || !isMounted ? 'z-[100] transition-none' : 'z-10 transition-[transform,width,height] duration-200'}
              {isHidden ? 'pointer-events-none' : ''}"
         data-widget-type={sw.type}
 				style="

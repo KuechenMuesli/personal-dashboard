@@ -157,24 +157,39 @@ export function getStoredEventsAndReminders() {
       cals.forEach((c: any) => {
          c.events.forEach((e: any) => {
             const fullDesc = [e.location, e.description].filter(Boolean).join('\n\n');
-            events.push({ type: 'CALENDAR', title: e.title, desc: fullDesc, date: new Date(e.start), list: c.name });
+            events.push({ type: 'CALENDAR', title: e.title, desc: fullDesc, date: new Date(e.start), list: c.name, tags: [] });
          });
       });
     } catch(e){}
   }
 
-  if (remStr) {
-    try {
-      const rems = JSON.parse(remStr);
-      ['today', 'future', 'overdue'].forEach(k => {
-         if (rems[k]) {
-           rems[k].forEach((r: any) => {
-              events.push({ type: 'REMINDER', title: r.n, desc: r.o, date: r.d ? new Date(r.d) : null, list: r.l });
-           });
-         }
-      });
-    } catch(e){}
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+
+    if (key.startsWith('todo-apple-cache-') || key.startsWith('todo-ms-cache-')) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+        if (parsed.data && Array.isArray(parsed.data)) {
+          parsed.data.forEach((r: any) => {
+            if (r.completed) return;
+            events.push({ type: 'REMINDER', title: r.title, desc: r.notes, date: r.dueDate ? new Date(r.dueDate) : null, list: r.list, tags: r.tags || [] });
+          });
+        }
+      } catch(e){}
+    } else if (key.startsWith('todo-settings-')) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(parsed)) {
+          parsed.forEach((r: any) => {
+            if (r.completed) return;
+            events.push({ type: 'REMINDER', title: r.title, desc: r.notes, date: r.dueDate ? new Date(r.dueDate) : null, list: 'Lokal', tags: r.tags || [] });
+          });
+        }
+      } catch(e){}
+    }
   }
+
   return events;
 }
 

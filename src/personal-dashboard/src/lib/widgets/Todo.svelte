@@ -288,7 +288,6 @@
 
     return () => {
       if (refreshTimer) clearInterval(refreshTimer);
-      if (cleanupTimer) clearInterval(cleanupTimer);
       window.removeEventListener('cross-widget-todo-update', handleTodoUpdate as EventListener);
     };
   });

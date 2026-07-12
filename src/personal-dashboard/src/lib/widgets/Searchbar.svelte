@@ -173,8 +173,19 @@
        const now = new Date();
        now.setHours(0, 0, 0, 0);
 
+       const isTagSearch = lower.startsWith('#');
+       const tagQuery = isTagSearch ? lower.substring(1).trim() : '';
+
        const matchedEvents = localEvents.filter(e => {
-          const matchesKeyword = e.title.toLowerCase().includes(lower) || (e.desc && e.desc.toLowerCase().includes(lower));
+          let matchesKeyword = false;
+          if (isTagSearch) {
+              if (e.tags && e.tags.length > 0) {
+                 matchesKeyword = e.tags.some((tag: string) => tag.toLowerCase().includes(tagQuery));
+              }
+          } else {
+              matchesKeyword = e.title.toLowerCase().includes(lower) || (e.desc && e.desc.toLowerCase().includes(lower));
+          }
+          
           if (!matchesKeyword) return false;
 
           // Exclude past events/reminders if they have a date before today
@@ -248,7 +259,7 @@
             id: uniqueId,
             title: e.title,
             description: e.desc,
-            subtitle: `${dateStr}${e.list}`,
+            subtitle: `${dateStr}${e.list}${e.tags && e.tags.length > 0 ? ' • ' + e.tags.join(' ') : ''}`,
             badge: e.type,
             expandable: !!e.desc,
             action: () => {

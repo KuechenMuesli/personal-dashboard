@@ -22,7 +22,7 @@
     note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false, minSize: { width: 1, height: 2 }, maxSize: { width: null, height: null } },
     parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     trmnl:            { name: i18n.t.widgets.trmnl, load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
-    clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: null },
+    clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     embed:            { name: i18n.t.widgets.embed, load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     sketch:           { name: i18n.t.widgets.sketch, load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
@@ -816,6 +816,8 @@
 								isEditing={isEditing}
 								bind:showSettings={sw.showSettings}
 								onHeightChange={(newHeight) => updateWidgetHeight(sw.id, newHeight)}
+								onDragStart={(e) => startInteraction(e, sw.id, 'drag')}
+								onResizeStart={(e) => startInteraction(e, sw.id, 'resize')}
                 onHide={(v) => {
              if (!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
              widgetStates[sw.id].hidden = v;

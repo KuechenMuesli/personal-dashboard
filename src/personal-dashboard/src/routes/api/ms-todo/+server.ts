@@ -36,11 +36,28 @@ async function refreshMsToken(refreshToken: string, supabase: any, userId: strin
     return msData.access_token;
 }
 
-export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession } }) => {
-    const { session } = await safeGetSession();
-    if (!session) throw error(401, 'Unauthorized');
+export const OPTIONS: RequestHandler = async () => {
+    return new Response(null, {
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+    });
+};
 
-    const { data: dbData } = await supabase
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession } }) => {
+    try {
+        const { session } = await safeGetSession();
+        if (!session) return json({ not_authenticated: true }, { headers: corsHeaders });
+
+        const { data: dbData } = await supabase
         .from('user_secrets')
         .select('secrets')
         .eq('user_id', session.user.id)
@@ -50,7 +67,7 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
     const msTokenData = currentSecrets['microsoft_todo'];
 
     if (!msTokenData || !msTokenData.refresh_token) {
-        return json({ not_authenticated: true });
+        return json({ not_authenticated: true }, { headers: corsHeaders });
     }
 
     let accessToken = msTokenData.access_token;
@@ -61,7 +78,7 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
             accessToken = await refreshMsToken(msTokenData.refresh_token, supabase, session.user.id, currentSecrets);
         } catch (e) {
             console.error('Failed to refresh MS token', e);
-            return json({ not_authenticated: true });
+            return json({ not_authenticated: true }, { headers: corsHeaders });
         }
     }
 
@@ -141,9 +158,9 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
                 today,
                 future
             }
-        });
+        }, { headers: corsHeaders });
     } catch (e) {
         console.error('MS Graph API Error', e);
-        throw error(500, 'Failed to fetch from MS To Do');
+        return json({ not_authenticated: true, error: String(e) }, { status: 500, headers: corsHeaders });
     }
 };

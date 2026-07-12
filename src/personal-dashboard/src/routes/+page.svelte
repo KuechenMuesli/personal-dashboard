@@ -7,23 +7,6 @@
   import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut, Search} from "lucide-svelte";
   import { i18n } from '$lib/i18n/i18n.svelte';
 
-  import Searchbar from "$lib/widgets/Searchbar.svelte";
-  import Favorites from "$lib/widgets/Favorites.svelte";
-  import Note from "$lib/widgets/Note.svelte";
-  import Parcel from "$lib/widgets/Parcel.svelte";
-  import Trmnl from "$lib/widgets/Trmnl.svelte";
-  import ClockWeatherDate from "$lib/widgets/ClockWeatherDate.svelte";
-  import Embed from "$lib/widgets/Embed.svelte";
-  import TimerStopwatch from "$lib/widgets/TimerStopwatch.svelte";
-  import Sketch from "$lib/widgets/Sketch.svelte";
-  import ColorPicker from "$lib/widgets/ColorPicker.svelte";
-  import NetworkMetrics from "$lib/widgets/NetworkMetrics.svelte";
-  import Calendar from "$lib/widgets/Calendar.svelte";
-  import StockTicker from "$lib/widgets/StockTicker.svelte";
-  import Todo from "$lib/widgets/Todo.svelte";
-  import ClipboardSync from "$lib/widgets/ClipboardSync.svelte";
-  import LoginPrompt from "$lib/widgets/LoginPrompt.svelte";
-
   let { data } = $props();
   let session = $derived(data.session);
   let supabase = $derived(data.supabase);
@@ -34,22 +17,22 @@
   setContext('secretsLoaded', () => secretsLoaded);
 
   let widgets = $derived({
-    searchbar:        { name: i18n.t.widgets.searchbar, component: Searchbar, defaultSize: { width: 2, height: 2 }, hasSettings: true },
-    favorites:        { name: i18n.t.widgets.favorites, component: Favorites, defaultSize: { width: 2, height: 2 }, hasSettings: true },
-    note:             { name: i18n.t.widgets.note, component: Note, defaultSize: { width: 2, height: 5 }, hasSettings: false },
-    parcel:           { name: i18n.t.widgets.parcel, component: Parcel, defaultSize: { width: 1, height: 5 }, hasSettings: true },
-    trmnl:            { name: i18n.t.widgets.trmnl, component: Trmnl, defaultSize: { width: 2, height: 5 }, hasSettings: true },
-    clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, component: ClockWeatherDate, defaultSize: { width: 2, height: 1 }, hasSettings: true },
-    embed:            { name: i18n.t.widgets.embed, component: Embed, defaultSize: { width: 3, height: 5 }, hasSettings: true },
-    TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, component: TimerStopwatch, defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    sketch:           { name: i18n.t.widgets.sketch, component: Sketch, defaultSize: { width: 3, height: 5 }, hasSettings: false },
-    colorPicker:      { name: i18n.t.widgets.colorPicker, component: ColorPicker, defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, component: NetworkMetrics, defaultSize: { width: 1, height: 3 }, hasSettings: false },
-    calendar:         { name: i18n.t.widgets.calendar, component: Calendar, defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    stockTicker:      { name: i18n.t.widgets.stockTicker, component: StockTicker, defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    todo:             { name: i18n.t.widgets.todo, component: Todo, defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', component: ClipboardSync, defaultSize: { width: 2, height: 3 }, hasSettings: false },
-    loginPrompt:      { name: 'Login', component: LoginPrompt, defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true },
+    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
+    favorites:        { name: i18n.t.widgets.favorites, load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true },
+    note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false },
+    parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true },
+    trmnl:            { name: i18n.t.widgets.trmnl, load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true },
+    clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true },
+    embed:            { name: i18n.t.widgets.embed, load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true },
+    TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    sketch:           { name: i18n.t.widgets.sketch, load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false },
+    colorPicker:      { name: i18n.t.widgets.colorPicker, load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
+    calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
+    clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', load: () => import("$lib/widgets/ClipboardSync.svelte"), defaultSize: { width: 2, height: 3 }, hasSettings: false },
+    loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true },
   });
 
   const STORAGE_KEY = "dashboard-layout";
@@ -760,7 +743,6 @@
               {/if}
            </div>
         {:else}
-					{@const Widget = widgetDef.component}
 				{#if isEditing}
 					<div class="absolute top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
 						<div class="flex items-center gap-1 relative z-10 min-w-[24px]">
@@ -797,22 +779,27 @@
 				{/if}
 
 				<div class="h-full w-full overflow-hidden">
+					{#await widgetDef.load() then module}
+						{@const Widget = module.default}
 						<!-- @ts-ignore: Dynamic widget prop injection mismatch -->
 						<Widget
 								id={sw.id}
-								isEditing={isEditing}
 								width={sw.width}
 								height={sw.height}
-								onDragStart={(e: any) => handleInternalDrag(e, sw.id)}
-								onResizeStart={(e: any) => handleInternalResize(e, sw.id)}
-								onAddNote={() => addWidget('note')}
-								onDelete={() => debounceAction(() => deleteWidget(sw.id))}
+								isEditing={isEditing}
 								bind:showSettings={sw.showSettings}
-								bind:hidden={() => widgetStates[sw.id]?.hidden ?? false, (v) => {
-             if(!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
+								onHeightChange={(newHeight) => updateWidgetHeight(sw.id, newHeight)}
+                onHide={(v) => {
+             if (!widgetStates[sw.id]) widgetStates[sw.id] = { hidden: false };
              widgetStates[sw.id].hidden = v;
            }}
 						/>
+					{:catch error}
+						<div class="flex h-full w-full flex-col items-center justify-center gap-2 text-red-500 text-sm p-4 text-center bg-red-900/10">
+							<span class="font-bold">Fehler</span>
+							<span class="text-xs text-red-400">Widget konnte nicht geladen werden.</span>
+						</div>
+					{/await}
 				</div>
         {/if}
 			</div>

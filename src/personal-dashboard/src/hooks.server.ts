@@ -1,16 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { type Handle, redirect } from '@sveltejs/kit'
 import { env } from '$env/dynamic/public'
-import ws from 'ws'
 
 export const handle: Handle = async ({ event, resolve }) => {
   event.locals.supabase = createServerClient(
     env.PUBLIC_SUPABASE_URL || '',
     env.PUBLIC_SUPABASE_ANON_KEY || '',
     {
-      realtime: {
-        transport: ws
-      },
       cookies: {
         getAll: () => event.cookies.getAll(),
         setAll: (cookiesToSet) => {

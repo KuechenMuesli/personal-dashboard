@@ -261,10 +261,7 @@
       localStorage.setItem(`todo-integrations-${id}`, JSON.stringify(integrations));
       
       if (!integrations.apple && appleReminders.length > 0) appleReminders = [];
-      else if (integrations.apple && appleReminders.length === 0 && !isFetchingApple) fetchExternalReminders('apple');
-      
       if (!integrations.microsoft && microsoftTodos.length > 0) microsoftTodos = [];
-      else if (integrations.microsoft && microsoftTodos.length === 0 && !isFetchingMs) fetchExternalReminders('microsoft');
     }
   });
 
@@ -583,7 +580,10 @@
 		<div class="flex items-center justify-between">
 			<span class="text-sm font-semibold text-white flex items-center gap-2">Apple Reminders</span>
 			<button 
-				onclick={() => integrations.apple = !integrations.apple} 
+				onclick={() => {
+          integrations.apple = !integrations.apple;
+          if (integrations.apple) fetchExternalReminders('apple');
+        }} 
 				class="w-10 h-5 rounded-full transition-colors relative {integrations.apple ? 'bg-blue-500' : 'bg-neutral-600'}"
 			>
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.apple ? 'translate-x-5' : ''}"></div>
@@ -626,7 +626,10 @@
 		<div class="flex items-center justify-between">
 			<span class="text-sm font-semibold text-white flex items-center gap-2">Microsoft To-Do</span>
 			<button 
-				onclick={() => integrations.microsoft = !integrations.microsoft} 
+				onclick={() => {
+          integrations.microsoft = !integrations.microsoft;
+          if (integrations.microsoft) fetchExternalReminders('microsoft');
+        }} 
 				class="w-10 h-5 rounded-full transition-colors relative {integrations.microsoft ? 'bg-blue-500' : 'bg-neutral-600'}"
 			>
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.microsoft ? 'translate-x-5' : ''}"></div>

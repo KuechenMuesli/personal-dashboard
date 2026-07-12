@@ -207,7 +207,7 @@ common: {
       title: 'Kalender',
       today: 'Heute',
       week: 'Woche',
-      month: 'Monat',
+      month: 'Kalender',
       noEvents: 'Keine anstehenden Termine.',
       noMoreEvents: 'Keine weiteren Termine heute.',
       noAdded: 'Noch keine Kalender hinzugefügt.',

@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ url }) => {
     }
 
     const redirectUri = `${url.origin}/auth/microsoft/callback`;
-    const scopes = 'offline_access Tasks.Read Tasks.ReadWrite';
+    const scopes = 'offline_access Tasks.Read Tasks.ReadWrite Calendars.Read';
 
     const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=query&scope=${encodeURIComponent(scopes)}`;
     

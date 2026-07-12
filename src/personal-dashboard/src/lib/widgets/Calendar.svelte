@@ -2,7 +2,7 @@
   import { onMount, onDestroy, getContext } from "svelte";
   import { slide } from "svelte/transition";
   import { page } from "$app/stores";
-  import { Clock, MapPin, FileText, Pencil, X, GripVertical } from "lucide-svelte";
+  import { Clock, MapPin, FileText, Pencil, X, GripVertical, Check, ChevronDown, Eye, EyeOff } from "lucide-svelte";
   // @ts-ignore
   import ICAL from 'ical.js';
   import { i18n } from '$lib/i18n/i18n.svelte';
@@ -13,9 +13,11 @@
 
   interface StoredCalendar {
     id: string;
-    url: string;
+    url?: string;
     name: string;
     color: string;
+    type?: 'webcal' | 'microsoft';
+    hidden?: boolean;
   }
 
   interface CalendarEvent {
@@ -52,6 +54,9 @@
   let storedConfigs = $state<StoredCalendar[]>([]);
   let calendarsData = $state<Calendar[]>([]);
   let viewMode = $state<"today" | "upcoming" | "grouped">("upcoming");
+  let integrations = $state({ microsoft: false });
+  let collapsedCalendars = $state<string[]>([]);
+  let msNeedsLogin = $state(false);
 
   let dialogEl = $state<HTMLDialogElement | null>(null);
   let isLoading = $state(false);
@@ -61,6 +66,7 @@
   let newCalUrl = $state("");
   let newCalName = $state("");
   let newCalColor = $state("#3b82f6");
+  let editingCalType = $state<'webcal' | 'microsoft'>('webcal');
 
   const PROXY_URL = "/api/proxy";
 
@@ -123,10 +129,15 @@
     if (savedMode === "grouped" || savedMode === "upcoming" || savedMode === "today") {
       viewMode = savedMode;
     }
+    const intCache = localStorage.getItem(`calendar-integrations-${id}`);
+    if (intCache) {
+      try { integrations = { ...integrations, ...JSON.parse(intCache) }; } catch(e) {}
+    }
   }
 
   function saveSettingsLocally() {
     localStorage.setItem(`calendar-viewmode-${id}`, viewMode);
+    localStorage.setItem(`calendar-integrations-${id}`, JSON.stringify(integrations));
   }
 
   async function saveConfigsToCloud() {
@@ -146,9 +157,12 @@
     isLoading = true;
     const loadedCalendars: Calendar[] = [];
 
+    // 1. Fetch webcals
     for (const config of storedConfigs) {
+      if (config.hidden || config.type === 'microsoft') continue;
+      
       try {
-        const url = `${PROXY_URL}?target=${encodeURIComponent(config.url)}${force ? '&force=true' : ''}`;
+        const url = `${PROXY_URL}?target=${encodeURIComponent(config.url || '')}${force ? '&force=true' : ''}`;
         const response = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
 
         if (!response.ok) continue;
@@ -157,6 +171,7 @@
         const data = parseICS(text);
 
         loadedCalendars.push({
+          id: config.id,
           name: config.name,
           color: config.color,
           events: data
@@ -165,18 +180,87 @@
         console.error(`Failed to fetch calendar: ${config.name}`, e);
       }
     }
+
+    // 2. Fetch MS Calendars
+    if (integrations.microsoft) {
+        try {
+            const res = await fetch('/api/ms-calendar', force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
+            if (res.ok) {
+                const json = await res.json();
+                if (json.not_authenticated) {
+                    msNeedsLogin = true;
+                } else if (json.calendars) {
+                    msNeedsLogin = false;
+                    let configsChanged = false;
+                    
+                    for (const cal of json.calendars) {
+                        let existing = storedConfigs.find(c => c.id === cal.id);
+                        if (!existing) {
+                            existing = {
+                                id: cal.id,
+                                name: cal.name,
+                                color: cal.color,
+                                type: 'microsoft',
+                                hidden: false
+                            };
+                            storedConfigs = [...storedConfigs, existing];
+                            configsChanged = true;
+                        }
+
+                        if (!existing.hidden) {
+                            loadedCalendars.push({
+                                id: existing.id,
+                                name: existing.name,
+                                color: existing.color,
+                                events: cal.events.map((ev: any) => ({
+                                    ...ev,
+                                    start: new Date(ev.start),
+                                    end: new Date(ev.end)
+                                }))
+                            });
+                        }
+                    }
+                    if (configsChanged) saveConfigsToCloud();
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch MS Calendar", e);
+        }
+    }
+
+    // Sort based on storedConfigs order
+    loadedCalendars.sort((a, b) => {
+        const idxA = storedConfigs.findIndex(c => c.id === a.id || c.id === a.name /* fallback */);
+        const idxB = storedConfigs.findIndex(c => c.id === b.id || c.id === b.name /* fallback */);
+        return idxA - idxB;
+    });
+
     calendarsData = loadedCalendars;
     localStorage.setItem('global-calendar-events', JSON.stringify(loadedCalendars));
     isLoading = false;
   }
 
+  function toggleCalendarCollapse(name: string) {
+    if (collapsedCalendars.includes(name)) {
+      collapsedCalendars = collapsedCalendars.filter(n => n !== name);
+    } else {
+      collapsedCalendars = [...collapsedCalendars, name];
+    }
+  }
+
+  function toggleHideCalendar(calId: string) {
+    storedConfigs = storedConfigs.map(c => c.id === calId ? { ...c, hidden: !c.hidden } : c);
+    saveConfigsToCloud();
+    fetchAllCalendars(true);
+  }
+
   function saveCalendar() {
-    if (!newCalUrl || !newCalName) return;
+    if ((!newCalUrl && editingCalType !== 'microsoft') || !newCalName) return;
 
     if (editingCalId) {
       storedConfigs = storedConfigs.map(c =>
         c.id === editingCalId
-          ? { ...c, url: newCalUrl.replace("webcal://", "https://").trim(), name: newCalName.trim(), color: newCalColor }
+          ? { ...c, url: newCalUrl ? newCalUrl.replace("webcal://", "https://").trim() : c.url, name: newCalName.trim(), color: newCalColor }
           : c
       );
       editingCalId = null;
@@ -185,7 +269,8 @@
         id: Math.random().toString(36).substr(2, 9),
         url: newCalUrl.replace("webcal://", "https://").trim(),
         name: newCalName.trim(),
-        color: newCalColor
+        color: newCalColor,
+        type: 'webcal'
       }];
     }
     resetForm();
@@ -196,8 +281,9 @@
   function editCalendar(config: StoredCalendar) {
     editingCalId = config.id;
     newCalName = config.name;
-    newCalUrl = config.url;
+    newCalUrl = config.url || "";
     newCalColor = config.color;
+    editingCalType = config.type || 'webcal';
   }
 
   function resetForm() {
@@ -205,6 +291,7 @@
     newCalUrl = "";
     newCalName = "";
     newCalColor = "#3b82f6";
+    editingCalType = 'webcal';
   }
 
   function deleteCalendar(calId: string) {
@@ -419,17 +506,29 @@
 			<div class="space-y-5 pb-2">
 				{#each calendarsData as calendar}
 					<section>
-						<h3 class="flex items-center gap-2 text-xs font-bold mb-2 uppercase tracking-wide" style="color: {calendar.color}">
-							<span class="w-2 h-2 rounded-full bg-current shrink-0"></span>
-							<span class="truncate">{calendar.name}</span>
-						</h3>
-						{#if calendar.events.filter(e => e.end > new Date()).length === 0}
-							<div class="text-[10px] text-neutral-600 pl-4">{i18n.t.w.calendar.noEvents}</div>
-						{:else}
-							<div class="flex flex-col gap-0.5 pl-4 border-l border-black/40 ml-1">
-								{#each calendar.events.filter(e => e.end > new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 5) as event (event.id)}
-									{@render groupedEventItem(event)}
-								{/each}
+						<button 
+							class="w-full flex items-center justify-between text-xs font-bold mb-2 uppercase tracking-wide cursor-pointer hover:opacity-80 transition-opacity" 
+							style="color: {calendar.color}"
+							onclick={() => toggleCalendarCollapse(calendar.name)}
+						>
+							<div class="flex items-center gap-2 overflow-hidden">
+								<span class="w-2 h-2 rounded-full bg-current shrink-0"></span>
+								<span class="truncate">{calendar.name}</span>
+							</div>
+							<ChevronDown size={14} class="shrink-0 transition-transform {collapsedCalendars.includes(calendar.name) ? '-rotate-90' : ''}" />
+						</button>
+						
+						{#if !collapsedCalendars.includes(calendar.name)}
+							<div transition:slide={{ duration: 200 }}>
+								{#if calendar.events.filter(e => e.end > new Date()).length === 0}
+									<div class="text-[10px] text-neutral-600 pl-4">{i18n.t.w.calendar.noEvents}</div>
+								{:else}
+									<div class="flex flex-col gap-0.5 pl-4 border-l border-black/40 ml-1">
+										{#each calendar.events.filter(e => e.end > new Date()).sort((a,b) => a.start.getTime() - b.start.getTime()).slice(0, 5) as event (event.id)}
+											{@render groupedEventItem(event)}
+										{/each}
+									</div>
+								{/if}
 							</div>
 						{/if}
 					</section>
@@ -442,8 +541,8 @@
 <SettingsDialog
 		title="{i18n.t.w.calendar.settings}"
 		bind:show={showSettings}
-		data={[storedConfigs, viewMode] as any}
-		onRevert={(restored) => { storedConfigs = restored[0]; viewMode = restored[1]; }}
+		data={[storedConfigs, viewMode, integrations] as any}
+		onRevert={(restored) => { storedConfigs = restored[0]; viewMode = restored[1]; integrations = restored[2]; }}
 		onSave={saveAndCloseSettings}
 >
 	<div class="space-y-6">
@@ -464,10 +563,20 @@
 								<div class="drag-handle cursor-grab active:cursor-grabbing text-neutral-500 hover:text-white transition-colors shrink-0 px-1">
 									<GripVertical size={16} strokeWidth={2.5} />
 								</div>
-								<div class="w-3 h-3 rounded-full shrink-0" style="background-color: {config.color}"></div>
-								<span class="font-medium text-sm truncate text-slate-200 {editingCalId === config.id ? 'text-blue-400' : ''}">{config.name}</span>
+								<div class="w-3 h-3 rounded-full shrink-0 transition-opacity {config.hidden ? 'opacity-30' : ''}" style="background-color: {config.color}"></div>
+								<span class="font-medium text-sm truncate transition-colors {config.hidden ? 'text-neutral-500' : 'text-slate-200'} {editingCalId === config.id ? 'text-blue-400' : ''}">{config.name}</span>
+								{#if config.type === 'microsoft'}
+									<span class="text-[9px] uppercase tracking-wider font-bold bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded ml-1 shrink-0">MS</span>
+								{/if}
 							</div>
 							<div class="flex items-center gap-1">
+								<button
+										onclick={() => toggleHideCalendar(config.id)}
+										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-neutral-400 hover:text-white transition-colors"
+										title={config.hidden ? 'Einblenden' : 'Ausblenden'}
+								>
+									{#if config.hidden} <EyeOff size={12} strokeWidth={2.5} /> {:else} <Eye size={12} strokeWidth={2.5} /> {/if}
+								</button>
 								<button
 										onclick={() => editCalendar(config)}
 										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
@@ -475,13 +584,15 @@
 								>
 									<Pencil size={12} strokeWidth={2.5} />
 								</button>
-								<button
-										onclick={() => removeCalendar(config.id)}
-										class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
-										title="{i18n.t.w.calendar.remove}"
-								>
-									<X size={12} strokeWidth={2.5} />
-								</button>
+								{#if config.type !== 'microsoft'}
+									<button
+											onclick={() => removeCalendar(config.id)}
+											class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+											title="{i18n.t.w.calendar.remove}"
+									>
+										<X size={12} strokeWidth={2.5} />
+									</button>
+								{/if}
 							</div>
 					{/snippet}
 				</DraggableList>
@@ -503,15 +614,51 @@
 				<input type="color" bind:value={newCalColor} class="h-[42px] w-[42px] rounded-lg cursor-pointer border border-black/40 bg-neutral-900" title="Pick a color" />
 			</div>
 
-			<input bind:value={newCalUrl} placeholder="{i18n.t.w.calendar.urlPlaceholder}" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 font-mono text-[11px]" onkeydown={(e) => e.stopPropagation()} />
+			{#if !editingCalId || editingCalType !== 'microsoft'}
+				<input bind:value={newCalUrl} placeholder="{i18n.t.w.calendar.urlPlaceholder}" class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 font-mono text-[11px]" onkeydown={(e) => e.stopPropagation()} />
+			{/if}
 
 			<button
 					onclick={saveCalendar}
-					disabled={!newCalUrl || !newCalName}
+					disabled={(!newCalUrl && editingCalType !== 'microsoft') || !newCalName}
 					class="w-full rounded-lg bg-black/40 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-black/40"
 			>
 				{editingCalId ? i18n.t.w.common.save : i18n.t.w.calendar.add}
 			</button>
+		</div>
+
+		<div class="space-y-3 border-t border-black/40 pt-5">
+			<div class="flex items-center justify-between">
+				<span class="text-sm font-semibold text-white flex items-center gap-2">{i18n.t.integrations.microsoftServices}</span>
+				<button 
+					onclick={() => {
+						integrations.microsoft = !integrations.microsoft;
+						if (integrations.microsoft) fetchAllCalendars(true);
+					}} 
+					class="w-10 h-5 rounded-full transition-colors relative {integrations.microsoft ? 'bg-blue-500' : 'bg-neutral-600'}"
+				>
+					<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.microsoft ? 'translate-x-5' : ''}"></div>
+				</button>
+			</div>
+
+			{#if integrations.microsoft}
+				<div transition:slide class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4">
+					{#if msNeedsLogin}
+						<div class="flex items-center justify-between">
+							<span class="text-xs text-red-400">{i18n.t.integrations.notConnected}</span>
+							<a href="/settings" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
+								{i18n.t.todoSettings.connectAccount}
+							</a>
+						</div>
+						<p class="text-[11px] text-neutral-400 mt-2">{i18n.t.todoSettings.connectAccountDesc}</p>
+					{:else}
+						<div class="flex items-center justify-between">
+							<span class="text-xs text-green-400 font-medium flex items-center gap-1.5"><Check size={14}/> {i18n.t.todoSettings.successfullyConnected}</span>
+							<a href="/settings" class="text-[10px] text-neutral-500 hover:text-white transition-colors">{i18n.t.todoSettings.manageAccount}</a>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 	</div>

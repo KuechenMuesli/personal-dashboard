@@ -15,6 +15,14 @@
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
+		<script>
+			try {
+				var savedTheme = localStorage.getItem('dashboard-theme');
+				if (savedTheme) {
+					document.body.className = savedTheme;
+				}
+			} catch (e) {}
+		</script>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

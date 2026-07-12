@@ -548,7 +548,7 @@
                 {#if todo.dueDate || todo.tags.length > 0 || todo.list}
                   <div class="flex items-center gap-1.5 mt-1 text-[10px] text-neutral-500 font-medium truncate flex-wrap">
                     {#if todo.dueDate}
-                      <span class="flex items-center gap-0.5"><Calendar size={9} /> {new Date(todo.dueDate).toLocaleDateString(i18n.currentLang)}</span>
+                      <span class="flex items-center gap-0.5"><Calendar size={9} /> {i18n.formatDate(new Date(todo.dueDate), 'short')}</span>
                     {/if}
                     
                     {#if todo.list}

@@ -207,7 +207,7 @@
     if (!dateStr) return "";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+    return d.toLocaleDateString(i18n.dateLocale, { month: '2-digit', day: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString(i18n.timeLocale, { hour: '2-digit', minute:'2-digit', hour12: i18n.hour12 });
   }
 
   $effect(() => {

@@ -9,11 +9,13 @@
     id,
     isEditing,
     height,
+    width = 2,
     showSettings = $bindable(false)
   } = $props<{
     id: string;
     isEditing: boolean;
     height: number;
+    width?: number;
     showSettings: boolean;
   }>();
 
@@ -22,6 +24,7 @@
   let currentTime = $state(new Date());
   let weather = $state<{ temp: number; code: number } | null>(null);
   let dialogEl = $state<HTMLDialogElement | null>(null);
+  let containerWidth = $state(0);
 
   let city = $state("Berlin");
   let lat = $state<number | null>(52.5200);
@@ -31,7 +34,6 @@
   let showWeather = $state(true);
 
   let unit = $state<"celsius" | "fahrenheit">("celsius");
-  let hour12 = $state(false);
   let isLoaded = $state(false);
 
   $effect(() => {
@@ -47,7 +49,6 @@
         showDate = parsed.showDate ?? true;
         showWeather = parsed.showWeather ?? true;
         unit = parsed.unit || "celsius";
-        hour12 = parsed.hour12 ?? false;
         loadedSomething = true;
       } else {
         const saved = localStorage.getItem(`general-settings-${id}`);
@@ -61,7 +62,6 @@
             showDate = parsed.showDate ?? true;
             showWeather = parsed.showWeather ?? true;
             unit = parsed.unit || "celsius";
-            hour12 = parsed.hour12 ?? false;
             loadedSomething = true;
           } catch (e) { console.error(e); }
         }
@@ -81,25 +81,34 @@
   const isLarge = $derived(height >= 4);
   const isConfigured = $derived(city.trim() !== "" && (lat !== null || !showWeather));
 
+  const is1x1 = $derived(width === 1 && height === 1);
+  const is1x2 = $derived(width === 1 && height === 2);
+  const is2x2 = $derived(width === 2 && height === 2);
+  const isVertical = $derived(width === 1 || height >= 3 || (is2x2 && containerWidth > 0 && containerWidth < 280));
+
   const showingTimeGroup = $derived(showClock || showDate);
 
-  const timeString = $derived(currentTime.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: hour12
-  }));
+  const timeParts = $derived.by(() => {
+    const t = i18n.formatTime(currentTime);
+    const match = t.match(/^(.*?)(\s*[a-zA-Z. äöüß]+)$/i);
+    if (match) return { time: match[1], ampm: match[2].trim() };
+    return { time: t, ampm: "" };
+  });
 
-  const dateStringShort = $derived(currentTime.toLocaleDateString([], {
-    weekday: 'short', month: 'short', day: 'numeric'
-  }));
+  const dateStringShort = $derived(i18n.formatDate(currentTime, 'short'));
+  const dateStringFull = $derived(i18n.formatDate(currentTime, 'full'));
+  const dateStringYear = $derived(i18n.formatDate(currentTime, 'year'));
 
-  const dateStringFull = $derived(currentTime.toLocaleDateString([], {
-    weekday: 'long', month: 'long', day: 'numeric'
-  }));
-
-  const dateStringYear = $derived(currentTime.toLocaleDateString([], {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  }));
+  const dateParts = $derived.by(() => {
+     const str = isLarge ? dateStringYear : (isHeight3 || isHeight2) ? dateStringFull : dateStringShort;
+     if (is2x2) {
+       const p = str.split(',');
+       if (p.length > 1) {
+         return { first: p[0] + ',', second: p.slice(1).join(',').trim() };
+       }
+     }
+     return { first: str, second: "" };
+  });
 
   onMount(() => {
     const timer = setInterval(() => (currentTime = new Date()), 1000);
@@ -138,7 +147,7 @@
       } catch (e) { console.error("Geocoding failed", e); }
     }
     
-    const settings = { city, lat, lon, showClock, showDate, showWeather, unit, hour12 };
+    const settings = { city, lat, lon, showClock, showDate, showWeather, unit };
     
     localStorage.setItem(`general-settings-${id}`, JSON.stringify(settings));
     showSettings = false;
@@ -162,7 +171,7 @@
     return i18n.t.w.weather.conditions.thunderstorm;
   }
 
-  const iconSize = $derived(isLarge ? 32 : isHeight3 ? 24 : 20);
+  const iconSize = $derived(isLarge ? 32 : isHeight3 ? 24 : is1x1 ? 12 : is1x2 ? 16 : 20);
 </script>
 
 {#snippet WeatherIcon(code: number, size: number)}
@@ -175,42 +184,50 @@
 {/snippet}
 
 <WidgetCard bind:showSettings={showSettings} isConfigured={isConfigured} padding={false}>
-	<div class="flex h-full w-full transition-all {isHeight1 ? 'items-center px-4' : 'p-3 sm:p-4'}">
+	<div bind:clientWidth={containerWidth} class="flex h-full w-full transition-all {is1x1 ? 'items-center justify-center p-1' : is1x2 ? 'items-center justify-center p-2' : isHeight1 ? 'items-center px-4' : 'p-3 sm:p-4'}">
 		{#if !isConfigured && showWeather}
 			<button onclick={() => showSettings = true} class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors">
 				<Settings size={14} strokeWidth={2.5} /> Configure Location
 			</button>
 		{:else}
-			<div class="flex w-full {isHeight1 || isHeight2 ? 'flex-row justify-between' : 'flex-col justify-center'} {isHeight1 ? 'gap-0' : 'gap-4'}">
+			<div class="flex w-full {isVertical && !is1x1 ? 'flex-col justify-center items-center text-center' : is1x1 ? 'flex-row justify-center items-center' : 'flex-row justify-between items-center'} {is1x1 ? 'gap-2' : is1x2 ? 'gap-1.5' : isVertical ? 'gap-3' : isHeight1 ? 'gap-0' : 'gap-4'}">
 
 				{#if showingTimeGroup}
-					<div class="flex {isHeight1 || isHeight2 ? 'items-center' : 'items-baseline'} gap-3 {!isHeight1 && !isHeight2 ? 'flex-col items-start mb-2' : 'flex-row'}">
+					<div class="flex {isVertical && !is1x1 && !is2x2 ? 'flex-col items-center' : is2x2 ? 'items-center' : 'items-baseline'} {is1x1 ? 'gap-0 mb-0' : is1x2 ? 'gap-0 mb-1' : isVertical && !is2x2 ? 'gap-1 mb-1' : 'gap-3 mb-2'} {isVertical && !is1x1 && !is2x2 ? 'flex-col' : 'flex-row'}">
 						{#if showClock}
-          <span class="font-bold tabular-nums tracking-tight text-slate-200 {isLarge ? 'text-5xl' : isHeight3 ? 'text-3xl' : isHeight2 ? 'text-2xl' : 'text-xl'}">
-            {timeString}
+          <span class="font-bold tabular-nums tracking-tight text-slate-200 flex items-baseline gap-0.5 {isLarge ? 'text-5xl' : isHeight3 ? 'text-3xl' : (isHeight2 && !is1x2) ? 'text-2xl' : is1x1 ? 'text-[17px]' : 'text-lg'} leading-none">
+            {timeParts.time}
+            {#if timeParts.ampm}
+               <span class="text-[0.35em] text-neutral-400 font-bold uppercase">{timeParts.ampm}</span>
+            {/if}
           </span>
 						{/if}
 
-						{#if showDate}
-          <span class="font-medium uppercase tracking-wider {isLarge ? 'text-sm text-blue-400' : isHeight3 || isHeight2 ? 'text-xs text-blue-400' : 'text-[11px] text-neutral-400'}">
-            {isLarge ? dateStringYear : (isHeight3 || isHeight2) ? dateStringFull : dateStringShort}
+						{#if showDate && !is1x1}
+          <span class="font-medium uppercase tracking-wider {isLarge ? 'text-sm text-blue-400' : isHeight3 || (isHeight2 && !is1x2) ? 'text-xs text-blue-400' : 'text-[9px] text-neutral-400'} leading-tight">
+            {#if is2x2 && dateParts.second}
+               <div>{dateParts.first}</div>
+               <div>{dateParts.second}</div>
+            {:else}
+               {dateParts.first}
+            {/if}
           </span>
 						{/if}
 					</div>
 				{/if}
 
 				{#if showWeather && weather}
-					<div class="flex items-center {isHeight1 || isHeight2 ? 'gap-2 border-l border-black/30 pl-4' : 'flex-col items-start border-t border-black/30 pt-3'}">
+					<div class="flex items-center {isVertical && !is1x1 ? 'flex-col items-center ' : is1x1 ? '' : 'gap-2 border-l border-black/30 pl-4 '} {is1x1 ? '' : is1x2 ? 'border-t border-black/30 pt-1.5' : isVertical ? 'border-t border-black/30 pt-2' : ''}">
 
 						{#if isLarge}
 							<div class="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">{city}</div>
 						{/if}
 
-						<div class="flex items-center gap-2 text-slate-200">
+						<div class="flex items-center {is1x1 ? 'gap-0.5' : 'gap-1.5'} text-slate-200">
 							{@render WeatherIcon(weather.code, iconSize)}
-							<span class="{isLarge ? 'text-2xl' : isHeight3 ? 'text-lg' : 'text-sm'} font-semibold tabular-nums">{weather.temp}°</span>
+							<span class="{isLarge ? 'text-2xl' : isHeight3 ? 'text-lg' : is1x1 ? 'text-[13px]' : 'text-xs'} font-semibold tabular-nums leading-none">{weather.temp}°</span>
 
-							{#if !isHeight1}
+							{#if width >= 2 && height >= 2 && !isVertical}
 								<span class="ml-1 text-neutral-400 {isLarge ? 'text-xs' : 'text-[10px]'}">{getWeatherLabel(weather.code)}</span>
 							{/if}
 						</div>
@@ -224,8 +241,8 @@
 <SettingsDialog 
 	title="{i18n.t.w.clock.generalInfo}" 
 	bind:show={showSettings} 
-	data={[city, showClock, showDate, showWeather, hour12]} 
-	onRevert={(r: any) => { city = r[0]; showClock = r[1]; showDate = r[2]; showWeather = r[3]; hour12 = r[4]; }} 
+	data={[city, showClock, showDate, showWeather]} 
+	onRevert={(r: any) => { city = r[0]; showClock = r[1]; showDate = r[2]; showWeather = r[3]; }} 
 	onSave={saveSettings}
 >
 	<div class="space-y-4">
@@ -240,19 +257,12 @@
       />
 		</div>
 
-		<div class="grid grid-cols-2 gap-4">
+		<div>
 			<div class="space-y-1.5">
 				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.w.clock.temperature}</label>
 				<select bind:value={unit} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer">
 					<option value="celsius">Celsius (°C)</option>
 					<option value="fahrenheit">Fahrenheit (°F)</option>
-				</select>
-			</div>
-			<div class="space-y-1.5">
-				<label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.w.clock.timeFormat}</label>
-				<select bind:value={hour12} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer">
-					<option value={false}>24h (13:00)</option>
-					<option value={true}>12h (1:00 PM)</option>
 				</select>
 			</div>
 		</div>

@@ -86,7 +86,10 @@ legal: {
     language: 'Language / Sprache',
     tabAccount: 'Konto',
     tabAppearance: 'Darstellung',
-    tabData: 'Daten'
+    tabData: 'Daten',
+    dateFormat: 'Datumsformat',
+    timeFormat: 'Uhrzeitformat',
+    formatAuto: 'Auto (Sprachstandard)'
   },
 
   // Dashboard Settings

@@ -144,9 +144,9 @@
        dashboardRes = matchedEvents.map((e, i) => {
           const uniqueId = `dash-evt-${i}`;
 
-          let dateStr = e.date.toLocaleDateString('de-DE');
+          let dateStr = e.date.toLocaleDateString(i18n.dateLocale);
           if (e.type === 'CALENDAR' || (e.date.getHours() !== 0 || e.date.getMinutes() !== 0)) {
-              dateStr += ` ${e.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+              dateStr += ` ${e.date.toLocaleTimeString(i18n.timeLocale, { hour: '2-digit', minute: '2-digit', hour12: i18n.hour12 })}`;
           }
 
           return {
@@ -219,9 +219,9 @@
            let description = nextEvent.desc || '';
            if (futureEvents.length > 0) {
                const futureDates = futureEvents.slice(0, 5).map(e => {
-                   let dStr = e.date.toLocaleDateString('de-DE');
+                   let dStr = e.date.toLocaleDateString(i18n.dateLocale);
                    if (e.type === 'CALENDAR' || (e.date.getHours() !== 0 || e.date.getMinutes() !== 0)) {
-                       dStr += ` ${e.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+                       dStr += ` ${e.date.toLocaleTimeString(i18n.timeLocale, { hour: '2-digit', minute: '2-digit', hour12: i18n.hour12 })}`;
                    }
                    return `• ${dStr}`;
                });
@@ -248,9 +248,9 @@
 
           let dateStr = '';
           if (e.date && !isNaN(e.date.getTime())) {
-              dateStr = e.date.toLocaleDateString('de-DE');
+              dateStr = e.date.toLocaleDateString(i18n.dateLocale);
               if (e.type === 'CALENDAR' || (e.date.getHours() !== 0 || e.date.getMinutes() !== 0)) {
-                  dateStr += ` ${e.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+                  dateStr += ` ${e.date.toLocaleTimeString(i18n.timeLocale, { hour: '2-digit', minute: '2-digit', hour12: i18n.hour12 })}`;
               }
               dateStr += ' • ';
           }
@@ -475,7 +475,7 @@
              const geo = geoData.results?.[0];
              if (geo && geo.timezone) {
                try {
-                 const timeStr = new Date().toLocaleTimeString("de-DE", { timeZone: geo.timezone, timeStyle: "short" });
+                 const timeStr = new Date().toLocaleTimeString(i18n.timeLocale, { timeZone: geo.timezone, hour: '2-digit', minute: '2-digit', hour12: i18n.hour12 });
                  const answer = `${geo.name}: ${timeStr} Uhr`;
                  smartAnswer = {
                    id: 'smart-time', title: answer, subtitle: i18n.t.w.search.subtitles.copyToClipboard, badge: 'TIME',

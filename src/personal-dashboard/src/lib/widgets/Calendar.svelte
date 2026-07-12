@@ -362,15 +362,15 @@
   }
 
   function formatDateShort(date: Date) {
-    return date.toLocaleDateString([], { weekday: 'short', day: '2-digit', month: '2-digit' });
+    return date.toLocaleDateString(i18n.dateLocale, { weekday: 'short', day: '2-digit', month: '2-digit' });
   }
 
   function formatDateTimeFull(date: Date) {
-    return date.toLocaleDateString([], { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString(i18n.dateLocale, { weekday: 'short', day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString(i18n.timeLocale, { hour: '2-digit', minute: '2-digit', hour12: i18n.hour12 });
   }
 
   function formatTime(date: Date) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(i18n.timeLocale, { hour: '2-digit', minute: '2-digit', hour12: i18n.hour12 });
   }
 
   function toggleExpand(eventId: string) {

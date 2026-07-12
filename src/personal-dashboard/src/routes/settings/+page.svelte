@@ -190,6 +190,34 @@
                 </button>
             </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              <div>
+                <h2 class="text-sm font-bold mb-3">{i18n.t.accountSettings.dateFormat}</h2>
+                <select 
+                  class="w-full rounded-lg border border-neutral-700 bg-neutral-800/50 p-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
+                  value={i18n.dateFormat}
+                  onchange={(e) => i18n.setDateFormat(e.currentTarget.value as any)}
+                >
+                  <option value="auto">{i18n.t.accountSettings.formatAuto}</option>
+                  <option value="DD.MM.YYYY">DD.MM.YYYY (31.12.2026)</option>
+                  <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD (2026-12-31)</option>
+                </select>
+              </div>
+              <div>
+                <h2 class="text-sm font-bold mb-3">{i18n.t.accountSettings.timeFormat}</h2>
+                <select 
+                  class="w-full rounded-lg border border-neutral-700 bg-neutral-800/50 p-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
+                  value={i18n.timeFormat}
+                  onchange={(e) => i18n.setTimeFormat(e.currentTarget.value as any)}
+                >
+                  <option value="auto">{i18n.t.accountSettings.formatAuto}</option>
+                  <option value="24h">24h (13:00)</option>
+                  <option value="12h">12h (1:00 PM)</option>
+                </select>
+              </div>
+            </div>
+
             <h2 class="text-lg font-bold mb-4">{i18n.t.dashboardSettings.theme}</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {#each THEMES as theme}

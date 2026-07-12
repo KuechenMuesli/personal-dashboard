@@ -2,6 +2,9 @@ import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ss
 import { env } from '$env/dynamic/public'
 import type { LayoutLoad } from './$types'
 
+export const ssr = false;
+export const prerender = false;
+
 export const load: LayoutLoad = async ({ fetch, data, depends }) => {
   depends('supabase:auth')
 

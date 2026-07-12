@@ -1,7 +1,20 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { fade } from 'svelte/transition';
-  import { ArrowLeft, Download, Upload, AlertTriangle, Palette, Database, User, LogOut, LogIn, UserPlus } from 'lucide-svelte';
+  import {
+    ArrowLeft,
+    Download,
+    Upload,
+    AlertTriangle,
+    Palette,
+    Database,
+    User,
+    LogOut,
+    LogIn,
+    UserPlus,
+    Check,
+    Link
+  } from 'lucide-svelte';
   import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount } from 'svelte';
   import LegalFooter from "$lib/components/LegalFooter.svelte";
@@ -11,7 +24,7 @@
   let passwordLoading = $state(false);
   let deleteLoading = $state(false);
 
-  let activeTab = $state('appearance'); // 'appearance', 'data', 'account'
+  let activeTab = $state('integrations'); // 'appearance', 'data', 'account', 'integrations'
   let globalTheme = $state('theme-default');
 
   let THEMES = $derived([
@@ -90,6 +103,21 @@
     };
     reader.readAsText(file);
   }
+
+  let unlinkLoading = $state(false);
+  async function unlinkMicrosoft() {
+    if (!confirm(i18n.t.integrations.unlinkConfirm)) return;
+    unlinkLoading = true;
+    try {
+      await fetch('/api/ms-todo', { method: 'DELETE' });
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert(i18n.t.integrations.unlinkError);
+    } finally {
+      unlinkLoading = false;
+    }
+  }
 </script>
 
 <div class="h-screen overflow-hidden flex items-center justify-center p-4 font-sans text-white relative" style="background-color: var(--theme-body-bg, #121212);">
@@ -103,8 +131,7 @@
         <a href="/" class="inline-flex items-center text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mb-6">
           <ArrowLeft size={14} class="mr-2" /> {i18n.t.accountSettings.backToDash}
         </a>
-        <h1 class="text-3xl font-bold">{i18n.t.accountSettings.title}</h1>
-        <p class="text-neutral-400 mt-2">{i18n.t.accountSettings.desc}</p>
+        <h1 class="text-3xl font-bold">{i18n.currentLang === 'de' ? 'Einstellungen' : 'Settings'}</h1>
       </div>
     </div>
 
@@ -129,6 +156,12 @@
           onclick={() => activeTab = 'data'}
         >
           <Database size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabData}
+        </button>
+        <button
+          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'integrations' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
+          onclick={() => activeTab = 'integrations'}
+        >
+          <Link size={16} class="hidden md:block" /> {i18n.currentLang === 'de' ? 'Verbundene Konten' : 'Connected Accounts'}
         </button>
       </div>
 
@@ -170,6 +203,49 @@
                         </div>
                     </button>
                 {/each}
+            </div>
+          </div>
+
+        {:else if activeTab === 'integrations'}
+          <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner">
+            <h2 class="text-lg font-bold mb-4">{i18n.currentLang === 'de' ? 'Verbundene Konten' : 'Connected Accounts'}</h2>
+
+            <div class="bg-neutral-800/50 border border-neutral-700 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex items-center gap-4 w-full sm:w-auto">
+                <div class="w-12 h-12 bg-white/5 flex items-center justify-center rounded-lg shadow-inner shrink-0 border border-white/10">
+                  <svg width="24" height="24" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+                    <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+                    <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">{i18n.t.integrations.microsoftServices}</h3>
+                  {#if data.msConnected}
+                    <div class="flex items-center gap-1.5 text-xs font-semibold text-green-400 mt-0.5">
+                      <Check size={12} strokeWidth={3} /> {i18n.t.integrations.connectedActive}
+                    </div>
+                  {:else}
+                    <div class="text-xs text-neutral-400 mt-0.5">{i18n.t.integrations.notConnected}</div>
+                  {/if}
+                </div>
+              </div>
+
+              {#if data.msConnected}
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                  <button onclick={unlinkMicrosoft} disabled={unlinkLoading} class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg font-bold text-xs transition-colors bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 disabled:opacity-50">
+                    {unlinkLoading ? i18n.t.integrations.unlinking : i18n.t.integrations.unlink}
+                  </button>
+                  <a href="/auth/microsoft/login" data-sveltekit-reload class="flex-1 sm:flex-none text-center px-4 py-2.5 rounded-lg font-bold text-xs transition-colors bg-neutral-700 hover:bg-neutral-600 text-white">
+                    {i18n.t.integrations.reauthorize}
+                  </a>
+                </div>
+              {:else}
+                <a href="/auth/microsoft/login" data-sveltekit-reload class="w-full sm:w-auto text-center px-6 py-2.5 rounded-lg font-bold text-xs transition-colors bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+                  {i18n.t.integrations.loginWithMicrosoft}
+                </a>
+              {/if}
             </div>
           </div>
 

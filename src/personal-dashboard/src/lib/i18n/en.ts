@@ -107,6 +107,47 @@ legal: {
     searchWidget: 'Search widgets...'
   },
 
+  // Integrations
+  integrations: {
+    title: 'Connected Accounts',
+    microsoftServices: 'Microsoft Services',
+    connectedActive: 'Connected & Active',
+    notConnected: 'Not connected',
+    unlink: 'Unlink',
+    unlinking: 'Unlinking...',
+    reauthorize: 'Reauthorize',
+    loginWithMicrosoft: 'Sign in with Microsoft',
+    unlinkConfirm: 'Are you sure you want to unlink your Microsoft account? All connected widgets will lose their connection.',
+    unlinkError: 'Error unlinking account.'
+  },
+
+  // Todo Settings
+  todoSettings: {
+    title: 'Todo Settings',
+    deleteCompleted: 'Delete completed',
+    immediately: 'Immediately',
+    after1h: 'After 1 hour',
+    after24h: 'After 24 hours',
+    never: 'Never',
+    yourWidgetUrl: 'Your Widget URL:',
+    hideTutorial: 'Hide Tutorial',
+    howToSetup: 'How do I set this up?',
+    copied: 'Copied!',
+    copy: 'Copy',
+    urlLeaked: 'URL leaked?',
+    rotateUrl: 'Rotate URL',
+    tutorialIntro: 'To display your reminders here, use our pre-made iOS/macOS Shortcut:',
+    tutorialStep1: 'Download the shortcut:',
+    installShortcut: 'Install Shortcut',
+    tutorialStep2: 'Open it in the Shortcuts app and paste your copied Widget URL into the URL field at the top.',
+    tutorialStep3: 'Run the shortcut (or create an automation to run it regularly).',
+    connectAccount: 'Connect Account',
+    connectAccountDesc: 'Connect your Microsoft account in the general Dashboard settings to use this feature.',
+    successfullyConnected: 'Successfully connected',
+    manageAccount: 'Manage Account',
+    msSyncActive: 'Your tasks are now automatically synchronized directly via the Microsoft Graph API.'
+  },
+
   // Widgets
   widgets: {
     searchbar: 'Searchbar',

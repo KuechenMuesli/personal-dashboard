@@ -214,3 +214,31 @@ export const POST: RequestHandler = async ({ request, locals: { supabase, safeGe
         return json({ error: String(e) }, { status: 500, headers: corsHeaders });
     }
 };
+
+export const DELETE: RequestHandler = async ({ locals: { supabase, safeGetSession } }) => {
+    try {
+        const { session } = await safeGetSession();
+        if (!session) return json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
+
+        const { data: dbData } = await supabase
+            .from('user_secrets')
+            .select('secrets')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+        const currentSecrets = dbData?.secrets || {};
+        delete currentSecrets['microsoft_todo'];
+
+        await supabase
+            .from('user_secrets')
+            .upsert({
+                user_id: session.user.id,
+                secrets: currentSecrets
+            });
+
+        return json({ success: true }, { headers: corsHeaders });
+    } catch (e) {
+        console.error('Failed to unlink MS account', e);
+        return json({ error: String(e) }, { status: 500, headers: corsHeaders });
+    }
+};

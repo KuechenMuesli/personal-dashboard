@@ -1,11 +1,25 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { safeGetSession } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
   const { session } = await safeGetSession();
+  
+  let msConnected = false;
+  if (session) {
+    const { data } = await supabase
+      .from('user_secrets')
+      .select('secrets')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+      
+    const msData = data?.secrets?.microsoft_todo;
+    if (msData && msData.refresh_token) msConnected = true;
+  }
+
   // Return the user if logged in, otherwise null. Local users can access settings too.
   return {
-    user: session?.user || null
+    user: session?.user || null,
+    msConnected
   };
 };
 

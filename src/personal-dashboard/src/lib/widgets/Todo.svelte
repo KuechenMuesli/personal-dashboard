@@ -205,7 +205,11 @@
             data: appleReminders
           }));
         } else {
-          microsoftTodos = mapped;
+          // Keep locally completed MS tasks that haven't been cleaned up yet
+          const mappedIds = new Set(mapped.map(t => t.id));
+          const keepCompleted = microsoftTodos.filter(t => t.completed && !mappedIds.has(t.id));
+          microsoftTodos = [...keepCompleted, ...mapped];
+          
           localStorage.setItem(`todo-ms-cache-${userId}`, JSON.stringify({
             timestamp: lastFetchedMs,
             data: microsoftTodos
@@ -260,13 +264,33 @@
       } catch (e) {}
     }
 
-    if (integrations.apple) fetchExternalReminders('apple');
+    const handleTodoUpdate = (e: CustomEvent) => {
+      const { widgetId, type, todoId, completed, completedAt } = e.detail;
+      
+      // Update Microsoft Todos across ALL widgets
+      if (type === 'microsoft') {
+        microsoftTodos = microsoftTodos.map(t => t.id === todoId ? { ...t, completed, completedAt } : t);
+      }
+      // Update Local Todos only for the specific widget instance, unless it's a global sync
+      else if (type === 'local' && widgetId === id) {
+        todos = todos.map(t => t.id === todoId ? { ...t, completed, completedAt } : t);
+      }
+    };
+    window.addEventListener('cross-widget-todo-update', handleTodoUpdate as EventListener);
+
+    if (integrations.apple && appleUrlId !== 'pending') fetchExternalReminders('apple');
     if (integrations.microsoft) fetchExternalReminders('microsoft');
 
     refreshTimer = setInterval(() => {
       if (integrations.apple) fetchExternalReminders('apple');
       if (integrations.microsoft) fetchExternalReminders('microsoft');
     }, COOLDOWN_MS);
+
+    return () => {
+      if (refreshTimer) clearInterval(refreshTimer);
+      if (cleanupTimer) clearInterval(cleanupTimer);
+      window.removeEventListener('cross-widget-todo-update', handleTodoUpdate as EventListener);
+    };
   });
 
   $effect(() => {
@@ -276,10 +300,6 @@
       if (!integrations.apple && appleReminders.length > 0) appleReminders = [];
       if (!integrations.microsoft && microsoftTodos.length > 0) microsoftTodos = [];
     }
-  });
-
-  onDestroy(() => {
-    if (refreshTimer) clearInterval(refreshTimer);
   });
 
   function saveTodos() {
@@ -357,7 +377,12 @@
             body: JSON.stringify({ taskId: todoId, listId, completed: isCompleted })
           }).catch(console.error);
           
-          return { ...t, completed: isCompleted, completedAt: isCompleted ? Date.now() : null };
+          const completedAt = isCompleted ? Date.now() : null;
+          window.dispatchEvent(new CustomEvent('cross-widget-todo-update', {
+            detail: { type: 'microsoft', todoId, completed: isCompleted, completedAt }
+          }));
+          
+          return { ...t, completed: isCompleted, completedAt };
         }
         return t;
       });
@@ -367,7 +392,13 @@
     todos = todos.map(t => {
       if (t.id === todoId) {
         const isCompleted = !t.completed;
-        return { ...t, completed: isCompleted, completedAt: isCompleted ? Date.now() : null };
+        const completedAt = isCompleted ? Date.now() : null;
+        
+        window.dispatchEvent(new CustomEvent('cross-widget-todo-update', {
+          detail: { type: 'local', widgetId: id, todoId, completed: isCompleted, completedAt }
+        }));
+        
+        return { ...t, completed: isCompleted, completedAt };
       }
       return t;
     });
@@ -589,20 +620,20 @@
 </WidgetCard>
 
 <SettingsDialog
-	title={i18n.currentLang === 'de' ? 'Todo Einstellungen' : 'Todo Settings'}
+	title={i18n.t.todoSettings.title}
 	bind:show={showSettings}
 >
 	<div class="space-y-6">
 		<div class="flex items-center justify-between">
-			<span class="text-sm font-semibold text-white">{i18n.currentLang === 'de' ? 'Erledigte löschen' : 'Delete completed'}</span>
+			<span class="text-sm font-semibold text-white">{i18n.t.todoSettings.deleteCompleted}</span>
 			<select 
 				bind:value={integrations.autoDeleteHours}
 				class="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500/50"
 			>
-				<option value={0}>{i18n.currentLang === 'de' ? 'Sofort' : 'Immediately'}</option>
-				<option value={1}>{i18n.currentLang === 'de' ? 'Nach 1 Stunde' : 'After 1 hour'}</option>
-				<option value={24}>{i18n.currentLang === 'de' ? 'Nach 24 Stunden' : 'After 24 hours'}</option>
-				<option value={null}>{i18n.currentLang === 'de' ? 'Nie' : 'Never'}</option>
+				<option value={0}>{i18n.t.todoSettings.immediately}</option>
+				<option value={1}>{i18n.t.todoSettings.after1h}</option>
+				<option value={24}>{i18n.t.todoSettings.after24h}</option>
+				<option value={null}>{i18n.t.todoSettings.never}</option>
 			</select>
 		</div>
 
@@ -624,9 +655,9 @@
 		{#if integrations.apple}
 			<div transition:slide class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4 -mt-2">
 				<div class="flex items-center justify-between">
-					<span class="text-xs font-semibold text-neutral-300">Deine Widget-URL:</span>
+					<span class="text-xs font-semibold text-neutral-300">{i18n.t.todoSettings.yourWidgetUrl}</span>
 					<button onclick={() => showTutorialApple = !showTutorialApple} class="text-[10px] uppercase tracking-widest font-bold text-blue-500 hover:text-blue-400 transition-colors">
-						{showTutorialApple ? 'Tutorial ausblenden' : 'Wie richte ich das ein?'}
+						{showTutorialApple ? i18n.t.todoSettings.hideTutorial : i18n.t.todoSettings.howToSetup}
 					</button>
 				</div>
 
@@ -634,21 +665,21 @@
           <div class="flex items-center gap-2">
             <input type="text" readonly value={endpointUrlApple} class="flex-1 rounded-lg border border-white/10 bg-black/40 p-3 text-xs font-mono text-white outline-none select-all" />
             <button onclick={() => copyUrl()} class="h-[42px] px-4 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold transition-colors">
-              {copiedApple ? 'Kopiert!' : 'Kopieren'}
+              {copiedApple ? i18n.t.todoSettings.copied : i18n.t.todoSettings.copy}
             </button>
           </div>
           <div class="flex justify-between items-center px-1">
-            <span class="text-[10px] text-neutral-500">URL geleaked?</span>
-            <button onclick={() => rotateUrl()} class="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-widest flex items-center gap-1"><RefreshCw size={10} /> URL Rotieren</button>
+            <span class="text-[10px] text-neutral-500">{i18n.t.todoSettings.urlLeaked}</span>
+            <button onclick={() => rotateUrl()} class="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-widest flex items-center gap-1"><RefreshCw size={10} /> {i18n.t.todoSettings.rotateUrl}</button>
           </div>
 				</div>
 
 				{#if showTutorialApple}
 					<div transition:slide class="bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-neutral-300 leading-relaxed">
-						<p class="mb-3 font-semibold text-white">Um deine Erinnerungen hier anzuzeigen, nutze unseren vorgefertigten iOS/macOS Kurzbefehl:</p>
-						<p class="mb-2"><strong class="text-white">1.</strong> Lade den Kurzbefehl herunter: <a href={shortcutUrlApple} target="_blank" class="text-blue-400 hover:underline">Shortcut installieren</a></p>
-						<p class="mb-2"><strong class="text-white">2.</strong> Öffne ihn in der Kurzbefehle-App und füge oben in das URL-Feld deine kopierte <strong>Widget-URL</strong> ein.</p>
-						<p><strong class="text-white">3.</strong> Führe den Kurzbefehl aus (oder erstelle eine Automation, die ihn regelmäßig ausführt).</p>
+						<p class="mb-3 font-semibold text-white">{i18n.t.todoSettings.tutorialIntro}</p>
+						<p class="mb-2"><strong class="text-white">1.</strong> {i18n.t.todoSettings.tutorialStep1} <a href={shortcutUrlApple} target="_blank" class="text-blue-400 hover:underline">{i18n.t.todoSettings.installShortcut}</a></p>
+						<p class="mb-2"><strong class="text-white">2.</strong> {i18n.t.todoSettings.tutorialStep2}</p>
+						<p><strong class="text-white">3.</strong> {i18n.t.todoSettings.tutorialStep3}</p>
 					</div>
 				{/if}
 			</div>
@@ -671,18 +702,18 @@
 			<div transition:slide class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4 -mt-2">
 				{#if msNeedsLogin}
 					<div class="flex items-center justify-between">
-						<span class="text-xs text-neutral-300">Verknüpfe deinen Account:</span>
-						<a href="/auth/microsoft/login" data-sveltekit-reload class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
-							Mit Microsoft anmelden
+						<span class="text-xs text-red-400">{i18n.t.integrations.notConnected}</span>
+						<a href="/settings" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
+							{i18n.t.todoSettings.connectAccount}
 						</a>
 					</div>
-					<p class="text-xs text-neutral-400 mt-2">Nutze die offizielle Microsoft Graph API, um deine Aufgaben in Echtzeit zu synchronisieren.</p>
+					<p class="text-[11px] text-neutral-400 mt-2">{i18n.t.todoSettings.connectAccountDesc}</p>
 				{:else}
 					<div class="flex items-center justify-between">
-						<span class="text-xs text-green-400 font-medium flex items-center gap-1.5"><Check size={14}/> Erfolgreich verbunden</span>
-						<a href="/auth/microsoft/login" data-sveltekit-reload class="text-[10px] text-neutral-500 hover:text-white transition-colors">Erneut anmelden</a>
+						<span class="text-xs text-green-400 font-medium flex items-center gap-1.5"><Check size={14}/> {i18n.t.todoSettings.successfullyConnected}</span>
+						<a href="/settings" class="text-[10px] text-neutral-500 hover:text-white transition-colors">{i18n.t.todoSettings.manageAccount}</a>
 					</div>
-					<p class="text-[11px] text-neutral-400">Deine Aufgaben werden nun automatisch direkt über die Microsoft Graph API synchronisiert.</p>
+					<p class="text-[11px] text-neutral-400">{i18n.t.todoSettings.msSyncActive}</p>
 				{/if}
 			</div>
 		{/if}

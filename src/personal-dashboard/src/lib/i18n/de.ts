@@ -109,6 +109,47 @@ legal: {
     searchWidget: 'Widgets durchsuchen...'
   },
 
+  // Integrations
+  integrations: {
+    title: 'Verbundene Konten',
+    microsoftServices: 'Microsoft Dienste',
+    connectedActive: 'Verbunden & Aktiv',
+    notConnected: 'Nicht verbunden',
+    unlink: 'Trennen',
+    unlinking: 'Trennen...',
+    reauthorize: 'Erneut autorisieren',
+    loginWithMicrosoft: 'Mit Microsoft anmelden',
+    unlinkConfirm: 'Möchtest du das Microsoft Konto wirklich trennen? Alle verbundenen Widgets werden die Verbindung verlieren.',
+    unlinkError: 'Fehler beim Trennen des Kontos.'
+  },
+
+  // Todo Settings
+  todoSettings: {
+    title: 'Todo Einstellungen',
+    deleteCompleted: 'Erledigte löschen',
+    immediately: 'Sofort',
+    after1h: 'Nach 1 Stunde',
+    after24h: 'Nach 24 Stunden',
+    never: 'Nie',
+    yourWidgetUrl: 'Deine Widget-URL:',
+    hideTutorial: 'Tutorial ausblenden',
+    howToSetup: 'Wie richte ich das ein?',
+    copied: 'Kopiert!',
+    copy: 'Kopieren',
+    urlLeaked: 'URL geleaked?',
+    rotateUrl: 'URL Rotieren',
+    tutorialIntro: 'Um deine Erinnerungen hier anzuzeigen, nutze unseren vorgefertigten iOS/macOS Kurzbefehl:',
+    tutorialStep1: 'Lade den Kurzbefehl herunter:',
+    installShortcut: 'Shortcut installieren',
+    tutorialStep2: 'Öffne ihn in der Kurzbefehle-App und füge oben in das URL-Feld deine kopierte Widget-URL ein.',
+    tutorialStep3: 'Führe den Kurzbefehl aus (oder erstelle eine Automation, die ihn regelmäßig ausführt).',
+    connectAccount: 'Konto verbinden',
+    connectAccountDesc: 'Verbinde dein Microsoft-Konto in den allgemeinen Dashboard-Einstellungen, um diese Funktion zu nutzen.',
+    successfullyConnected: 'Erfolgreich verbunden',
+    manageAccount: 'Konto verwalten',
+    msSyncActive: 'Deine Aufgaben werden nun automatisch direkt über die Microsoft Graph API synchronisiert.'
+  },
+
   // Widgets
   widgets: {
     searchbar: 'Suchleiste',

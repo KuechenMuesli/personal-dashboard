@@ -250,15 +250,12 @@
   async function uploadFromClipboard() {
     try {
       let handled = false;
-      let lastError = "";
-      let foundTypes: string[] = [];
       
       if (navigator.clipboard.read) {
         try {
           const clipboardItems = await navigator.clipboard.read();
           for (const item of clipboardItems) {
             const types = Array.from(item.types);
-            foundTypes.push(...types);
             const imageType = types.find(t => t.startsWith('image/') || t.includes('png') || t.includes('jpeg'));
             if (imageType) {
               const blob = await item.getType(imageType);
@@ -270,9 +267,24 @@
             }
           }
         } catch (e: any) {
-          lastError = e.message || String(e);
           console.error("Clipboard read error:", e);
         }
+      }
+
+      if (!handled && navigator.clipboard.readText) {
+          try {
+              const text = await navigator.clipboard.readText();
+              if (text && text.trim().length > 0) {
+                  if (text.length > MAX_SIZE_BYTES) {
+                      setUploadStatus('error', 'Too long');
+                      return;
+                  }
+                  await saveToCloud(text, 'text/plain', 'Pasted Text');
+                  handled = true;
+              }
+          } catch(e) {
+              console.error("Clipboard readText error:", e);
+          }
       }
 
       if (!handled) {

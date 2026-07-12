@@ -9,7 +9,6 @@
 	let { supabase, session } = $derived(data);
 
 	onMount(() => {
-		i18n.init();
 		const { data: authListener } = supabase.auth.onAuthStateChange((event, newSession) => {
 			if (newSession?.expires_at !== session?.expires_at) {
 				invalidate('supabase:auth');

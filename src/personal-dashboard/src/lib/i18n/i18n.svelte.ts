@@ -13,6 +13,10 @@ class I18nState {
   dateFormat = $state<'auto' | 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'>('auto');
   timeFormat = $state<'auto' | '24h' | '12h'>('auto');
 
+  constructor() {
+    this.init();
+  }
+
   get t() {
     return dictionaries[this.currentLang];
   }
@@ -74,17 +78,31 @@ class I18nState {
     return undefined;
   }
 
+  #formatters = new Map<string, Intl.DateTimeFormat>();
+
+  private getFormatter(locale: string, options: Intl.DateTimeFormatOptions) {
+    const key = locale + JSON.stringify(options);
+    if (!this.#formatters.has(key)) {
+      this.#formatters.set(key, new Intl.DateTimeFormat(locale, options));
+    }
+    return this.#formatters.get(key)!;
+  }
+
   formatDate(date: Date, style: 'short' | 'full' | 'year' = 'short') {
-    let options: Intl.DateTimeFormatOptions = {};
+    let options: Intl.DateTimeFormatOptions;
+
     if (style === 'short') {
       options = { weekday: 'short', month: 'short', day: 'numeric' };
     } else if (style === 'full') {
       options = { weekday: 'short', month: 'long', day: 'numeric' };
     } else if (style === 'year') {
       options = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' };
+    } else {
+      options = { weekday: 'short', month: 'short', day: 'numeric' }; // Fallback
     }
 
-    let str = date.toLocaleDateString(this.dateLocale, options);
+    const formatter = this.getFormatter(this.dateLocale, options);
+    let str = formatter.format(date);
     
     // In German, 'short' weekdays often have a dot (e.g. "Mo.", "Di."). We remove this dot to make it look cleaner, 
     // but keep dots for the day number (e.g. "1. Januar").
@@ -93,11 +111,12 @@ class I18nState {
   }
 
   formatTime(date: Date) {
-    return date.toLocaleTimeString(this.timeLocale, {
+    const formatter = this.getFormatter(this.timeLocale, {
       hour: '2-digit',
       minute: '2-digit',
       hour12: this.hour12
     });
+    return formatter.format(date);
   }
 }
 

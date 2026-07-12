@@ -35,26 +35,14 @@ export const POST: RequestHandler = async ({ request, locals: { supabase, safeGe
     if (dbError) throw error(500, dbError.message);
 
     // Invalidate old Quickshare links for this specific widget/service
-    try {
-        const SHARE_DIR = path.join(process.cwd(), '.shares');
-        if (fs.existsSync(SHARE_DIR)) {
-            const files = fs.readdirSync(SHARE_DIR);
-            for (const file of files) {
-                if (file.endsWith('.json')) {
-                    const fp = path.join(SHARE_DIR, file);
-                    try {
-                        const shareData = JSON.parse(fs.readFileSync(fp, 'utf-8'));
-                        if (shareData.userId === session.user.id && shareData.serviceId === service) {
-                            fs.unlinkSync(fp);
-                        }
-                    } catch (e) {
-                        // ignore parse errors for individual files
-                    }
-                }
-            }
-        }
-    } catch (e) {
-        console.error("Failed to invalidate old shares:", e);
+    const { error: deleteError } = await supabase
+        .from('quickshares')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('service_id', service);
+
+    if (deleteError) {
+        console.error("Failed to invalidate old shares:", deleteError);
     }
 
     return json({ success: true });

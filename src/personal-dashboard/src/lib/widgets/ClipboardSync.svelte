@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getContext } from 'svelte';
+  import { page } from '$app/stores';
   import { i18n } from '$lib/i18n/i18n.svelte';
   import { Clipboard, X, GripHorizontal, ClipboardPaste, DownloadCloud, File as FileIcon, Image as ImageIcon, FileText, Check, Share2, FilePlus } from 'lucide-svelte';
   import WidgetCard from '$lib/components/WidgetCard.svelte';
@@ -72,6 +73,11 @@
   async function generateShareLink(e: MouseEvent) {
     e.stopPropagation();
     if (!cloudContent || isSharing) return;
+    
+    if (!$page.data.session) {
+        alert("You must be logged in to create Quickshare links.");
+        return;
+    }
     
     if (shareLink) {
         window.open(shareLink, '_blank');
@@ -152,6 +158,10 @@
   }
 
   async function saveToCloud(data: string, type: string, name?: string) {
+    if (!$page.data.session) {
+      setUploadStatus('error', 'Login required');
+      return;
+    }
     isUploading = true;
     const item = { data, type, name, timestamp: Date.now() };
     try {
@@ -225,6 +235,10 @@
       setUploadStatus('error', 'Too large');
       return;
     }
+    if (!$page.data.session) {
+      setUploadStatus('error', 'Login required');
+      return;
+    }
     try {
       const b64 = await fileToBase64(file);
       await saveToCloud(b64, file.type || 'application/octet-stream', file.name);
@@ -267,7 +281,11 @@
       }
     } catch (err) {
       console.error(err);
-      setUploadStatus('error', 'No permission');
+      if (!$page.data.session) {
+        setUploadStatus('error', 'Login required');
+      } else {
+        setUploadStatus('error', 'No permission');
+      }
     }
   }
 

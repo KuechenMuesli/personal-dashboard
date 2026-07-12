@@ -17,7 +17,7 @@
   setContext('secretsLoaded', () => secretsLoaded);
 
   let widgets = $derived({
-    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: null },
+    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: 2 }, maxCount: null },
     favorites:        { name: i18n.t.widgets.favorites, load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false, minSize: { width: 1, height: 2 }, maxSize: { width: null, height: null } },
     parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
@@ -28,9 +28,9 @@
     sketch:           { name: i18n.t.widgets.sketch, load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     colorPicker:      { name: i18n.t.widgets.colorPicker, load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, fixedSize: false },
     newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, minSize: { width: 2, height: null }, maxSize: { width: null, height: null }, maxCount: null, },
-    calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: 2, height: 4 }, maxSize: { width: null, height: null } },
     stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
-    todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
+    todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: 2, height: 4 }, maxSize: { width: null, height: null } },
     clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', load: () => import("$lib/widgets/ClipboardSync.svelte"), defaultSize: { width: 2, height: 3 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: 1 },
     loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true, unremovable: true, fixedSize: true, maxCount: 1 },
   });

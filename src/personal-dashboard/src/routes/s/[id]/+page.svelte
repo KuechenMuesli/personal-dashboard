@@ -15,6 +15,12 @@
     let codeElement = $state<HTMLElement>();
     let isFullscreen = $state(false);
 
+    $effect(() => {
+        if (typeof document !== 'undefined') {
+            document.body.className = 'theme-default';
+        }
+    });
+
     let isText = $derived.by(() => {
         if (!content) return false;
         const type = content.type.toLowerCase();

@@ -104,66 +104,119 @@
   }
 
   // Integrations State
-  let integrations = $state<{ apple: boolean; microsoft: boolean; autoDeleteHours: number | null }>({ apple: true, microsoft: false, autoDeleteHours: 1 });
-  let showTutorial = $state(false);
-  let copied = $state(false);
-  const endpointUrl = $derived(`https://dashboard.paul-simon.dev/post-reminders/${userId}`);
-  const iCloudShortcutUrl = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
+  type Integrations = {
+    apple: boolean;
+    microsoft: boolean;
+    autoDeleteHours: number | null;
+    appleUrlId?: string;
+    microsoftUrlId?: string;
+  };
+  let integrations = $state<Integrations>({ apple: true, microsoft: false, autoDeleteHours: 1 });
+  let showTutorialApple = $state(false);
+  let copiedApple = $state(false);
+  let msNeedsLogin = $state(false);
+  
+  const userId = $derived($page.data.session?.user?.id || id);
+  const appleUrlId = $derived(integrations.appleUrlId || userId);
+  
+  const endpointUrlApple = $derived(`https://dashboard.paul-simon.dev/post-reminders/${appleUrlId}`);
+  
+  const shortcutUrlApple = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
 
   function copyUrl() {
-    navigator.clipboard.writeText(endpointUrl);
-    copied = true;
-    setTimeout(() => copied = false, 2000);
+    navigator.clipboard.writeText(endpointUrlApple);
+    copiedApple = true;
+    setTimeout(() => copiedApple = false, 2000);
   }
 
-  // Apple Reminders Integration
+  function rotateUrl() {
+    integrations.appleUrlId = crypto.randomUUID();
+    
+    // Immediately fetch with new URL (will be empty) and clear cache
+    appleReminders = [];
+    localStorage.removeItem(`todo-apple-cache-${userId}`);
+  }
+
+  // External Reminders Integration
   let appleReminders = $state<Todo[]>([]);
+  let microsoftTodos = $state<Todo[]>([]);
   let isFetchingApple = $state(false);
+  let isFetchingMs = $state(false);
   let lastFetchedApple = $state<number>(0);
+  let lastFetchedMs = $state<number>(0);
   let refreshTimer: ReturnType<typeof setInterval>;
   const COOLDOWN_MS = 10 * 60 * 1000;
-  const userId = $derived($page.data.session?.user?.id || id);
 
-  async function fetchAppleReminders(force = false) {
-    const timeSinceLast = Date.now() - lastFetchedApple;
-    if (!force && timeSinceLast < COOLDOWN_MS && appleReminders.length > 0) return;
+  async function fetchExternalReminders(type: 'apple' | 'microsoft', force = false) {
+    const timeSinceLast = Date.now() - (type === 'apple' ? lastFetchedApple : lastFetchedMs);
+    const hasData = (type === 'apple' ? appleReminders : microsoftTodos).length > 0;
+    
+    if (!force && timeSinceLast < COOLDOWN_MS && hasData) return;
 
-    isFetchingApple = true;
-    lastFetchedApple = Date.now();
+    if (type === 'apple') isFetchingApple = true;
+    else isFetchingMs = true;
 
     try {
-      const url = `/post-reminders/${userId}`;
+      if (type === 'apple') lastFetchedApple = Date.now();
+      else lastFetchedMs = Date.now();
+
+      let url = '';
+      if (type === 'apple') {
+        if (appleUrlId === 'pending') return;
+        url = `/post-reminders/${appleUrlId}`;
+      } else {
+        url = `/api/ms-todo`;
+      }
+
       const res = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const json = await res.json();
+
+      if (type === 'microsoft' && json.not_authenticated) {
+        msNeedsLogin = true;
+        return;
+      }
+      if (type === 'microsoft') msNeedsLogin = false;
       
       if (json && json.merge_variables) {
         const mv = json.merge_variables;
-        const allApple: any[] = [...(mv.overdue || []), ...(mv.today || []), ...(mv.future || [])];
+        const allItems: any[] = [...(mv.overdue || []), ...(mv.today || []), ...(mv.future || [])];
         
-        appleReminders = allApple.map((item, index) => ({
-          id: `apple-${index}-${item.n}`,
+        const mapped = allItems.map((item, index) => ({
+          id: `${type}-${index}-${item.n}`,
           title: item.n,
           completed: false,
           dueDate: item.d ? item.d : null,
           priority: item.p === 'Hoch' ? 'high' : item.p === 'Mittel' ? 'medium' : item.p === 'Niedrig' ? 'low' : null,
           notes: item.o || "",
           tags: item.t ? item.t.split('\n').filter((t: string) => t.trim()) : [],
-          isAppleReminder: true,
-          list: item.l
+          isAppleReminder: true, // Reused flag to disable checkboxes
+          list: item.l || (type === 'apple' ? 'Apple' : 'Microsoft')
         }));
 
-        localStorage.setItem(`todo-apple-cache-${userId}`, JSON.stringify({
-          timestamp: lastFetchedApple,
-          data: appleReminders
-        }));
+        if (type === 'apple') {
+          appleReminders = mapped;
+          localStorage.setItem(`todo-apple-cache-${userId}`, JSON.stringify({
+            timestamp: lastFetchedApple,
+            data: appleReminders
+          }));
+        } else {
+          microsoftTodos = mapped;
+          localStorage.setItem(`todo-ms-cache-${userId}`, JSON.stringify({
+            timestamp: lastFetchedMs,
+            data: microsoftTodos
+          }));
+        }
       }
     } catch (e) {
-      console.error("Apple Reminders sync failed", e);
+      console.error(`${type} sync failed`, e);
     } finally {
-      isFetchingApple = false;
+      if (type === 'apple') isFetchingApple = false;
+      else isFetchingMs = false;
     }
   }
+
+
 
   onMount(() => {
     const intCache = localStorage.getItem(`todo-integrations-${id}`);
@@ -172,34 +225,46 @@
         integrations = { ...integrations, ...JSON.parse(intCache) };
       } catch(e) {}
     }
+    
+    // Ensure URL IDs exist
+    if (!integrations.appleUrlId) integrations.appleUrlId = userId;
 
-    const cache = localStorage.getItem(`todo-apple-cache-${userId}`);
-    if (cache) {
+    const cacheApple = localStorage.getItem(`todo-apple-cache-${userId}`);
+    if (cacheApple) {
       try {
-        const parsed = JSON.parse(cache);
+        const parsed = JSON.parse(cacheApple);
         appleReminders = parsed.data || [];
         lastFetchedApple = parsed.timestamp || 0;
-      } catch (e) { console.error(e); }
+      } catch (e) {}
     }
 
-    if (integrations.apple) {
-      const isStale = Date.now() - lastFetchedApple > COOLDOWN_MS;
-      if (appleReminders.length === 0 || isStale) fetchAppleReminders();
+    const cacheMs = localStorage.getItem(`todo-ms-cache-${userId}`);
+    if (cacheMs) {
+      try {
+        const parsed = JSON.parse(cacheMs);
+        microsoftTodos = parsed.data || [];
+        lastFetchedMs = parsed.timestamp || 0;
+      } catch (e) {}
     }
+
+    if (integrations.apple) fetchExternalReminders('apple');
+    if (integrations.microsoft) fetchExternalReminders('microsoft');
 
     refreshTimer = setInterval(() => {
-      if (integrations.apple) fetchAppleReminders();
+      if (integrations.apple) fetchExternalReminders('apple');
+      if (integrations.microsoft) fetchExternalReminders('microsoft');
     }, COOLDOWN_MS);
   });
 
   $effect(() => {
     if (isLoaded) {
       localStorage.setItem(`todo-integrations-${id}`, JSON.stringify(integrations));
-      if (!integrations.apple && appleReminders.length > 0) {
-        appleReminders = [];
-      } else if (integrations.apple && appleReminders.length === 0 && !isFetchingApple) {
-        fetchAppleReminders();
-      }
+      
+      if (!integrations.apple && appleReminders.length > 0) appleReminders = [];
+      else if (integrations.apple && appleReminders.length === 0 && !isFetchingApple) fetchExternalReminders('apple');
+      
+      if (!integrations.microsoft && microsoftTodos.length > 0) microsoftTodos = [];
+      else if (integrations.microsoft && microsoftTodos.length === 0 && !isFetchingMs) fetchExternalReminders('microsoft');
     }
   });
 
@@ -290,7 +355,7 @@
     expandedTodos[todoId] = !expandedTodos[todoId];
   }
 
-  let sortedTodos = $derived([...todos, ...appleReminders].sort((a, b) => {
+  let sortedTodos = $derived([...todos, ...appleReminders, ...microsoftTodos].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
     if (a.priority !== b.priority) {
       const pMap = { 'high': 3, 'medium': 2, 'low': 1, null: 0 };
@@ -322,9 +387,9 @@
 </script>
 
 {#snippet headerButtons()}
-  {#if integrations.apple}
-    <button onclick={(e) => { e.stopPropagation(); fetchAppleReminders(true); }} title={i18n.currentLang === 'de' ? 'Apple Reminders aktualisieren' : 'Refresh Apple Reminders'} class="h-5 w-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-black/40 transition-colors">
-      <RefreshCw size={10} strokeWidth={2.5} class={isFetchingApple ? 'animate-spin' : ''} />
+  {#if integrations.apple || integrations.microsoft}
+    <button onclick={(e) => { e.stopPropagation(); if(integrations.apple) fetchExternalReminders('apple', true); if(integrations.microsoft) fetchExternalReminders('microsoft', true); }} title={i18n.currentLang === 'de' ? 'Aktualisieren' : 'Refresh'} class="h-5 w-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-black/40 transition-colors">
+      <RefreshCw size={10} strokeWidth={2.5} class={isFetchingApple || isFetchingMs ? 'animate-spin' : ''} />
     </button>
   {/if}
   <button onclick={() => showAddForm = true} class="h-5 w-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-black/40 transition-colors">
@@ -485,7 +550,7 @@
           {/each}
         {/if}
         
-        {#if todos.length === 0 && appleReminders.length === 0}
+        {#if todos.length === 0 && appleReminders.length === 0 && microsoftTodos.length === 0}
           <div class="flex flex-col items-center justify-center h-full text-center p-6 opacity-50">
             <Check size={48} class="mb-4 text-neutral-600" />
             <p class="text-sm font-medium text-neutral-400">{i18n.currentLang === 'de' ? 'Keine Aufgaben. Genieß den Tag!' : 'No tasks. Enjoy your day!'}</p>
@@ -529,22 +594,28 @@
 			<div transition:slide class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4 -mt-2">
 				<div class="flex items-center justify-between">
 					<span class="text-xs font-semibold text-neutral-300">Deine Widget-URL:</span>
-					<button onclick={() => showTutorial = !showTutorial} class="text-[10px] uppercase tracking-widest font-bold text-blue-500 hover:text-blue-400 transition-colors">
-						{showTutorial ? 'Tutorial ausblenden' : 'Wie richte ich das ein?'}
+					<button onclick={() => showTutorialApple = !showTutorialApple} class="text-[10px] uppercase tracking-widest font-bold text-blue-500 hover:text-blue-400 transition-colors">
+						{showTutorialApple ? 'Tutorial ausblenden' : 'Wie richte ich das ein?'}
 					</button>
 				</div>
 
-				<div class="flex items-center gap-2">
-					<input type="text" readonly value={endpointUrl} class="flex-1 rounded-lg border border-white/10 bg-black/40 p-3 text-xs font-mono text-white outline-none select-all" />
-					<button onclick={copyUrl} class="h-[42px] px-4 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold transition-colors">
-						{copied ? 'Kopiert!' : 'Kopieren'}
-					</button>
+				<div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <input type="text" readonly value={endpointUrlApple} class="flex-1 rounded-lg border border-white/10 bg-black/40 p-3 text-xs font-mono text-white outline-none select-all" />
+            <button onclick={() => copyUrl()} class="h-[42px] px-4 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold transition-colors">
+              {copiedApple ? 'Kopiert!' : 'Kopieren'}
+            </button>
+          </div>
+          <div class="flex justify-between items-center px-1">
+            <span class="text-[10px] text-neutral-500">URL geleaked?</span>
+            <button onclick={() => rotateUrl()} class="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-widest flex items-center gap-1"><RefreshCw size={10} /> URL Rotieren</button>
+          </div>
 				</div>
 
-				{#if showTutorial}
+				{#if showTutorialApple}
 					<div transition:slide class="bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-neutral-300 leading-relaxed">
 						<p class="mb-3 font-semibold text-white">Um deine Erinnerungen hier anzuzeigen, nutze unseren vorgefertigten iOS/macOS Kurzbefehl:</p>
-						<p class="mb-2"><strong class="text-white">1.</strong> Lade den Kurzbefehl herunter: <a href={iCloudShortcutUrl} target="_blank" class="text-blue-400 hover:underline">Shortcut installieren</a></p>
+						<p class="mb-2"><strong class="text-white">1.</strong> Lade den Kurzbefehl herunter: <a href={shortcutUrlApple} target="_blank" class="text-blue-400 hover:underline">Shortcut installieren</a></p>
 						<p class="mb-2"><strong class="text-white">2.</strong> Öffne ihn in der Kurzbefehle-App und füge oben in das URL-Feld deine kopierte <strong>Widget-URL</strong> ein.</p>
 						<p><strong class="text-white">3.</strong> Führe den Kurzbefehl aus (oder erstelle eine Automation, die ihn regelmäßig ausführt).</p>
 					</div>
@@ -552,11 +623,34 @@
 			</div>
 		{/if}
 
-		<div class="flex items-center justify-between opacity-50">
-			<span class="text-sm font-semibold text-white flex items-center gap-2">Microsoft To-Do <span class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-white font-bold uppercase">Bald</span></span>
-			<button class="w-10 h-5 rounded-full bg-neutral-600 relative cursor-not-allowed">
-				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full"></div>
+		<div class="flex items-center justify-between">
+			<span class="text-sm font-semibold text-white flex items-center gap-2">Microsoft To-Do</span>
+			<button 
+				onclick={() => integrations.microsoft = !integrations.microsoft} 
+				class="w-10 h-5 rounded-full transition-colors relative {integrations.microsoft ? 'bg-blue-500' : 'bg-neutral-600'}"
+			>
+				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.microsoft ? 'translate-x-5' : ''}"></div>
 			</button>
 		</div>
+
+		{#if integrations.microsoft}
+			<div transition:slide class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4 -mt-2">
+				{#if msNeedsLogin}
+					<div class="flex items-center justify-between">
+						<span class="text-xs text-neutral-300">Verknüpfe deinen Account:</span>
+						<a href="/auth/microsoft/login" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors inline-block text-center">
+							Mit Microsoft anmelden
+						</a>
+					</div>
+					<p class="text-xs text-neutral-400 mt-2">Nutze die offizielle Microsoft Graph API, um deine Aufgaben in Echtzeit zu synchronisieren.</p>
+				{:else}
+					<div class="flex items-center justify-between">
+						<span class="text-xs text-green-400 font-medium flex items-center gap-1.5"><Check size={14}/> Erfolgreich verbunden</span>
+						<a href="/auth/microsoft/login" class="text-[10px] text-neutral-500 hover:text-white transition-colors">Erneut anmelden</a>
+					</div>
+					<p class="text-[11px] text-neutral-400">Deine Aufgaben werden nun automatisch direkt über die Microsoft Graph API synchronisiert.</p>
+				{/if}
+			</div>
+		{/if}
 	</div>
 </SettingsDialog>

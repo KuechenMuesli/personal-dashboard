@@ -30,7 +30,9 @@
     notes: string;
     tags: string[];
     isAppleReminder?: boolean;
+    isMicrosoftReminder?: boolean;
     list?: string;
+    listId?: string;
     completedAt?: number | null;
   };
 
@@ -183,14 +185,16 @@
         const allItems: any[] = [...(mv.overdue || []), ...(mv.today || []), ...(mv.future || [])];
         
         const mapped = allItems.map((item, index) => ({
-          id: `${type}-${index}-${item.n}`,
+          id: type === 'microsoft' ? item.tid : `${type}-${index}-${item.n}`,
+          listId: type === 'microsoft' ? item.lid : undefined,
           title: item.n,
           completed: false,
           dueDate: item.d ? item.d : null,
           priority: item.p === 'Hoch' ? 'high' : item.p === 'Mittel' ? 'medium' : item.p === 'Niedrig' ? 'low' : null,
           notes: item.o || "",
           tags: item.t ? item.t.split('\n').filter((t: string) => t.trim()) : [],
-          isAppleReminder: true, // Reused flag to disable checkboxes
+          isAppleReminder: type === 'apple',
+          isMicrosoftReminder: type === 'microsoft',
           list: item.l || (type === 'apple' ? 'Apple' : 'Microsoft')
         }));
 
@@ -341,7 +345,25 @@
     newTags = newTags.filter(t => t !== tagToRemove);
   }
 
-  function toggleTodo(todoId: string) {
+  function toggleTodo(todoId: string, isMicrosoft = false, listId?: string) {
+    if (isMicrosoft && listId) {
+      microsoftTodos = microsoftTodos.map(t => {
+        if (t.id === todoId) {
+          const isCompleted = !t.completed;
+          
+          fetch('/api/ms-todo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ taskId: todoId, listId, completed: isCompleted })
+          }).catch(console.error);
+          
+          return { ...t, completed: isCompleted, completedAt: isCompleted ? Date.now() : null };
+        }
+        return t;
+      });
+      return;
+    }
+
     todos = todos.map(t => {
       if (t.id === todoId) {
         const isCompleted = !t.completed;
@@ -474,7 +496,7 @@
             onkeydown={(e) => { if (e.key === 'Enter' && todo.notes) toggleExpand(todo.id); }}
           >
             <div class="relative flex items-start gap-3 p-3 pr-10">
-              <button onclick={(e) => { e.stopPropagation(); !todo.isAppleReminder && toggleTodo(todo.id); }} class="shrink-0 mt-0.5 text-neutral-400 {todo.isAppleReminder ? 'opacity-30 cursor-not-allowed' : 'hover:text-white'} transition-colors">
+              <button onclick={(e) => { e.stopPropagation(); !todo.isAppleReminder && toggleTodo(todo.id, todo.isMicrosoftReminder, todo.listId); }} class="shrink-0 mt-0.5 text-neutral-400 {todo.isAppleReminder ? 'opacity-30 cursor-not-allowed' : 'hover:text-white'} transition-colors">
                 {#if todo.completed}
                   <Check size={18} class="text-blue-400" />
                 {:else}

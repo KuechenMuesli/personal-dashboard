@@ -103,7 +103,8 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
                 // MS To Do dueDateTime is in UTC
                 let d = null;
                 if (t.dueDateTime && t.dueDateTime.dateTime) {
-                    d = t.dueDateTime.dateTime.split('T')[0];
+                    const dateObj = new Date(t.dueDateTime.dateTime + 'Z');
+                    d = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
                 }
 
                 // Map importance: low, normal, high
@@ -124,7 +125,9 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
                     p: p,
                     o: t.body?.content?.trim() || null,
                     t: tagStr || null,
-                    l: list.displayName
+                    l: list.displayName,
+                    tid: t.id,
+                    lid: list.id
                 };
                 
                 tasks.push(item);
@@ -167,4 +170,47 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
       console.error('MS Auth Error', outerErr);
       return json({ not_authenticated: true, error: String(outerErr) }, { status: 500, headers: corsHeaders });
   }
+};
+
+export const POST: RequestHandler = async ({ request, locals: { supabase, safeGetSession } }) => {
+    try {
+        const { session } = await safeGetSession();
+        if (!session) return json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
+
+        const body = await request.json();
+        const { taskId, listId, completed } = body;
+        if (!taskId || !listId) return json({ error: 'Missing ids' }, { status: 400, headers: corsHeaders });
+
+        const { data: dbData } = await supabase
+            .from('user_secrets')
+            .select('secrets')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+        const currentSecrets = dbData?.secrets || {};
+        const msTokenData = currentSecrets['microsoft_todo'];
+        if (!msTokenData || !msTokenData.refresh_token) return json({ error: 'Not linked' }, { status: 401, headers: corsHeaders });
+
+        let accessToken = msTokenData.access_token;
+        if (Date.now() > msTokenData.expires_at - 300000) {
+            accessToken = await refreshMsToken(msTokenData.refresh_token, supabase, session.user.id, currentSecrets);
+        }
+
+        const res = await fetch(`https://graph.microsoft.com/v1.0/me/todo/lists/${listId}/tasks/${taskId}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: completed ? 'completed' : 'notStarted'
+            })
+        });
+
+        if (!res.ok) throw new Error(`Graph API failed: ${res.status}`);
+        return json({ success: true }, { headers: corsHeaders });
+    } catch (e) {
+        console.error('Failed to complete MS To Do task', e);
+        return json({ error: String(e) }, { status: 500, headers: corsHeaders });
+    }
 };

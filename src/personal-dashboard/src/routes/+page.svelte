@@ -21,7 +21,6 @@
     note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false },
     parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true },
     trmnl:            { name: i18n.t.widgets.trmnl, load: () => import("$lib/widgets/Trmnl.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: true },
-    trmnlReminders:   { name: i18n.t.widgets.trmnlReminders, load: () => import("$lib/widgets/TrmnlReminders.svelte"), defaultSize: { width: 1, height: 4 }, hasSettings: true },
     clockWeatherDate: { name: i18n.t.widgets.clockWeatherDate, load: () => import("$lib/widgets/ClockWeatherDate.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true },
     embed:            { name: i18n.t.widgets.embed, load: () => import("$lib/widgets/Embed.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true },
     TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
@@ -30,7 +29,7 @@
     newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false },
     calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
     stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
-    todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: false },
+    todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true },
     loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true },
   });
 
@@ -721,7 +720,20 @@
       "
 		>
 			<div class="relative flex h-full flex-col overflow-hidden rounded-lg {isEditing ? 'border border-dashed border-blue-500/40 bg-neutral-900/50' : ''}">
-
+        {#if !widgetDef}
+           <div class="flex h-full w-full flex-col items-center justify-center gap-2 text-red-500 text-sm p-4 text-center bg-red-900/10 border border-red-500/20 rounded-lg relative">
+              <span class="font-bold">Unbekanntes Widget</span>
+              <span class="text-xs text-red-400 opacity-70">Das Widget '{sw.type}' existiert nicht mehr.</span>
+              {#if isEditing}
+                <button
+                    class="pointer-events-auto mt-2 flex h-8 px-3 items-center justify-center rounded bg-red-900/40 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                    onclick={() => debounceAction(() => deleteWidget(sw.id))}
+                >
+                  Löschen
+                </button>
+              {/if}
+           </div>
+        {:else}
 				{#if isEditing}
 					<div class="absolute top-0 left-0 right-0 z-50 flex items-center gap-1 border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
 						{#if widgetDef.hasSettings}
@@ -781,6 +793,7 @@
 						</div>
 					{/await}
 				</div>
+        {/if}
 			</div>
 		</div>
 	{/each}

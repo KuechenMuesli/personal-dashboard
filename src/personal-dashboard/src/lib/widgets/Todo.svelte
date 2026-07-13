@@ -110,8 +110,6 @@
     apple: boolean;
     microsoft: boolean;
     autoDeleteHours: number | null;
-    appleUrlId?: string;
-    microsoftUrlId?: string;
   };
   let integrations = $state<Integrations>({ apple: true, microsoft: false, autoDeleteHours: 1 });
   let showTutorialApple = $state(false);
@@ -120,11 +118,31 @@
   
   const isLoggedIn = $derived(!!($page.data.user || $page.data.session?.user));
   const userId = $derived($page.data.session?.user?.id || id);
-  const appleUrlId = $derived(integrations.appleUrlId || userId);
+  
+  let globalAppleUrlId = $state<string | null>(null);
+  const appleUrlId = $derived(globalAppleUrlId || userId);
   
   const endpointUrlApple = $derived(`https://dashboard.paul-simon.dev/post-reminders/${appleUrlId}`);
   
   const shortcutUrlApple = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
+
+  async function saveGlobalAppleUrlId(urlId: string) {
+    globalAppleUrlId = urlId;
+    if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(`apple-reminders-url-${userId}`, urlId);
+    }
+    if (isLoggedIn) {
+      try {
+        await fetch('/api/secrets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ service: 'apple_reminders_global', key: { urlId } })
+        });
+      } catch (e) {
+        console.error('Failed to save appleUrlId', e);
+      }
+    }
+  }
 
   function copyUrl() {
     navigator.clipboard.writeText(endpointUrlApple);
@@ -133,7 +151,7 @@
   }
 
   function rotateUrl() {
-    integrations.appleUrlId = crypto.randomUUID();
+    saveGlobalAppleUrlId(crypto.randomUUID());
     
     // Immediately fetch with new URL (will be empty) and clear cache
     appleReminders = [];
@@ -240,12 +258,36 @@
     const intCache = localStorage.getItem(`todo-integrations-${id}`);
     if (intCache) {
       try {
-        integrations = { ...integrations, ...JSON.parse(intCache) };
+        const parsed = JSON.parse(intCache);
+        integrations = { ...integrations, ...parsed };
+        
+        // Handle migration of appleUrlId if it exists in the old integrations
+        if (parsed.appleUrlId && !localStorage.getItem(`apple-reminders-url-${userId}`)) {
+           localStorage.setItem(`apple-reminders-url-${userId}`, parsed.appleUrlId);
+        }
       } catch(e) {}
     }
     
-    // Ensure URL IDs exist
-    if (!integrations.appleUrlId) integrations.appleUrlId = userId;
+    // Load Global Apple URL ID
+    const loadGlobalAppleUrlId = () => {
+        const secrets = getSecrets();
+        let foundUrlId = secrets['apple_reminders_global']?.urlId;
+        
+        if (!foundUrlId) {
+            foundUrlId = localStorage.getItem(`apple-reminders-url-${userId}`);
+        }
+        
+        if (foundUrlId) {
+            globalAppleUrlId = foundUrlId;
+            // Sync up if it's missing in secrets but we have it locally
+            if (!secrets['apple_reminders_global']?.urlId && isLoggedIn) {
+                saveGlobalAppleUrlId(foundUrlId);
+            }
+        } else {
+            saveGlobalAppleUrlId(crypto.randomUUID());
+        }
+    };
+    loadGlobalAppleUrlId();
 
     const cacheApple = localStorage.getItem(`todo-apple-cache-${userId}`);
     if (cacheApple) {

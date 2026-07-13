@@ -199,10 +199,6 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
             dashboardLayout = layout;
           }
-          if (remoteThemeObj.theme) {
-            localStorage.setItem('dashboard-theme', remoteThemeObj.theme);
-            globalTheme = remoteThemeObj.theme;
-          }
           localStorage.setItem('dashboard-timestamp', remoteTimestamp.toString());
           localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
           localStorage.removeItem('dashboard-is-default');
@@ -262,14 +258,11 @@
        currentLayoutId = localStorage.getItem('dashboard-layout-id');
     }
 
-    const themeObj = { theme: globalTheme };
-
     if (!currentLayoutId) {
       const { data } = await supabase.from('layouts').insert({
         user_id: session.user.id,
         name: 'Main Layout',
         is_active: true,
-        theme: themeObj,
         updated_at: new Date().toISOString()
       }).select('id').single();
 
@@ -279,7 +272,6 @@
       }
     } else {
       const { error: updateError } = await supabase.from('layouts').update({
-        theme: themeObj,
         is_active: true,
         updated_at: new Date().toISOString()
       }).eq('id', currentLayoutId);

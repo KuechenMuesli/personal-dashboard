@@ -19,9 +19,17 @@
 
   const isCompactHeight = $derived(height <= 3);
   const isSmallWidth = $derived(width <= 1);
+  const is1x1 = $derived(width === 1 && height === 1);
+
+  const showHex = $derived(true);
+  const showRgb = $derived(!(height <= 2 && width === 1));
+
+  const inputsLayoutClass = $derived(
+    height <= 2 ? 'flex-row items-center' : 'flex-col justify-center'
+  );
 
   const displayRgb = $derived(
-    isSmallWidth ? rgbColor.replace(/^rgb\((.*)\)$/, '$1') : rgbColor
+    isSmallWidth || (height <= 2 && width <= 3) ? rgbColor.replace(/^rgb\((.*)\)$/, '$1') : rgbColor
   );
 
   onMount(() => {
@@ -95,9 +103,9 @@
 		title={isCompactHeight ? undefined : "Color Picker"}
 		isConfigured={true}
 		bind:showSettings={showSettings}
-		padding={true}
+		padding={height > 1}
 >
-	<div class="flex h-full w-full items-stretch py-0.5 overflow-hidden {isSmallWidth ? 'gap-1.5' : 'gap-2.5'}">
+	<div class="flex h-full w-full items-stretch py-0.5 overflow-hidden {isSmallWidth ? 'gap-1.5' : 'gap-2.5'} {height === 1 ? 'px-2 py-1' : ''}">
 
 		<button
 				onclick={openEyeDropper}
@@ -111,21 +119,24 @@
 			</div>
 		</button>
 
-		<div class="flex flex-col gap-2 flex-grow min-w-0 justify-center">
+        {#if showHex}
+		<div class="flex {inputsLayoutClass} gap-2 flex-grow min-w-0 justify-center w-full">
 
-			<div class="relative min-w-0">
-				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none {isSmallWidth ? 'left-2' : 'left-2.5'}">{i18n.t.w.colorPicker.hex}</span>
-				<div class="relative flex items-center">
+			<div class="relative min-w-0 flex-1">
+				{#if height > 2}
+				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none left-2.5">{i18n.t.w.colorPicker.hex}</span>
+				{/if}
+				<div class="relative flex items-center h-full">
 					<input
 							type="text"
 							value={hexColor}
 							oninput={(e) => updateColor(e.currentTarget.value)}
-							class="w-full bg-black/20 border border-white/5 rounded-lg pt-3.5 pb-1 text-[10px] font-mono text-white focus:border-blue-500/50 outline-none transition-all uppercase truncate {isSmallWidth ? 'pl-2 pr-6' : 'pl-2.5 pr-7'}"
+							class="w-full bg-black/20 border border-white/5 rounded-lg {height <= 2 ? 'py-1' : 'pt-3.5 pb-1'} text-[10px] font-mono text-white focus:border-blue-500/50 outline-none transition-all uppercase truncate pl-2.5 pr-7"
 							spellcheck="false"
 					/>
 					<button
 							onclick={() => copy(hexColor, 'hex')}
-							class="absolute right-0 top-0 bottom-0 flex items-center justify-center text-neutral-500 hover:text-white transition-colors {isSmallWidth ? 'px-1.5' : 'px-2.5'}"
+							class="absolute right-0 top-0 bottom-0 flex items-center justify-center text-neutral-500 hover:text-white transition-colors px-2.5"
 							title="Kopieren"
 					>
 						{#if copiedHex}<Check size={11} class="text-emerald-400" />{:else}<Copy size={11} />{/if}
@@ -133,26 +144,31 @@
 				</div>
 			</div>
 
-			<div class="relative min-w-0">
-				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none {isSmallWidth ? 'left-2' : 'left-2.5'}">{i18n.t.w.colorPicker.rgb}</span>
-				<div class="relative flex items-center">
+            {#if showRgb}
+			<div class="relative min-w-0 flex-1">
+				{#if height > 2}
+				<span class="absolute top-1 text-[7px] font-black text-neutral-500 uppercase tracking-widest leading-none z-10 pointer-events-none left-2.5">{i18n.t.w.colorPicker.rgb}</span>
+				{/if}
+				<div class="relative flex items-center h-full">
 					<input
 							type="text"
 							value={displayRgb}
 							oninput={(e) => updateColor(e.currentTarget.value)}
-							class="w-full bg-black/20 border border-white/5 rounded-lg pt-3.5 pb-1 text-[10px] font-mono text-white focus:border-blue-500/50 outline-none transition-all truncate {isSmallWidth ? 'pl-2 pr-6' : 'pl-2.5 pr-7'}"
+							class="w-full bg-black/20 border border-white/5 rounded-lg {height <= 2 ? 'py-1' : 'pt-3.5 pb-1'} text-[10px] font-mono text-white focus:border-blue-500/50 outline-none transition-all truncate pl-2.5 pr-7"
 							spellcheck="false"
 					/>
 					<button
 							onclick={() => copy(rgbColor, 'rgb')}
-							class="absolute right-0 top-0 bottom-0 flex items-center justify-center text-neutral-500 hover:text-white transition-colors {isSmallWidth ? 'px-1.5' : 'px-2.5'}"
+							class="absolute right-0 top-0 bottom-0 flex items-center justify-center text-neutral-500 hover:text-white transition-colors px-2.5"
 							title="Kopieren"
 					>
 						{#if copiedRgb}<Check size={11} class="text-emerald-400" />{:else}<Copy size={11} />{/if}
 					</button>
 				</div>
 			</div>
+            {/if}
 
 		</div>
+        {/if}
 	</div>
 </WidgetCard>

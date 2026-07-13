@@ -13,7 +13,8 @@
     LogIn,
     UserPlus,
     Check,
-    Link
+    Link,
+    Trash2
   } from 'lucide-svelte';
   import { i18n } from '$lib/i18n/i18n.svelte';
   import { onMount } from 'svelte';
@@ -144,6 +145,19 @@
       }
       if (globalTheme === `custom_${id}`) globalTheme = 'theme-default';
       showThemeEditor = false;
+    }
+  }
+
+  async function handleThemeChange(themeId: string) {
+    globalTheme = themeId;
+    const activeLayoutId = localStorage.getItem('dashboard-layout-id');
+    if (activeLayoutId && data.supabase) {
+      const { data: layoutData } = await data.supabase.from('layouts').select('theme').eq('id', activeLayoutId).single();
+      if (layoutData) {
+        const currentThemeObj = layoutData.theme || {};
+        const newThemeObj = { ...currentThemeObj, theme: themeId };
+        await data.supabase.from('layouts').update({ theme: newThemeObj }).eq('id', activeLayoutId);
+      }
     }
   }
 
@@ -322,7 +336,7 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between mb-4 mt-8">
               <h2 class="text-lg font-bold">{i18n.t.dashboardSettings.theme}</h2>
               {#if data.user}
                 <button 
@@ -338,7 +352,7 @@
                 {#each ALL_THEMES as theme}
                     <button
                         class="relative p-4 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[90px] gap-2 {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
-                        onclick={() => globalTheme = theme.id}
+                        onclick={() => handleThemeChange(theme.id)}
                     >
                         {#if theme.isCustom}
                           <button 
@@ -347,6 +361,14 @@
                             title="Edit Custom Theme"
                           >
                             <Palette size={14} />
+                          </button>
+                          
+                          <button 
+                            class="absolute top-3 right-11 p-1.5 rounded-lg bg-black/40 text-neutral-400 hover:text-white hover:bg-red-500 transition-colors"
+                            onclick={(e) => { e.stopPropagation(); handleDeleteTheme(theme.id.replace('custom_', '')); }}
+                            title="Delete Custom Theme"
+                          >
+                            <Trash2 size={14} />
                           </button>
                         {/if}
                         <div class="font-bold text-sm text-slate-200 break-words leading-tight pr-6">{theme.name}</div>

@@ -76,10 +76,10 @@
 
     <footer class="flex justify-end gap-2 shrink-0 border-t border-black/20 pt-4 mt-2">
       {#if onSave}
-        <button class="rounded-lg px-4 py-2 text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={handleCancel}>{i18n.t.w.common.cancel}</button>
-        <button class="rounded-lg bg-white/15 px-6 py-2 text-sm font-bold text-white hover:bg-white/25 border border-white/20 transition-colors shadow-lg shadow-black/20" onclick={handleSave}>{i18n.t.w.common.save}</button>
+        <button class="rounded-lg bg-transparent px-4 py-2.5 text-sm font-bold text-neutral-400 hover:text-white transition-colors" onclick={handleCancel}>{i18n.t.w.common.cancel}</button>
+        <button class="rounded-lg bg-black/40 px-6 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors border border-black/40 shadow-lg shadow-black/20" onclick={handleSave}>{i18n.t.w.common.save}</button>
       {:else}
-        <button class="rounded-lg bg-neutral-700 px-6 py-2 text-sm font-medium text-white hover:bg-neutral-600 transition-colors shadow-lg shadow-black/20" onclick={handleCancel}>{i18n.t.w.common.close}</button>
+        <button class="rounded-lg bg-black/40 px-6 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors border border-black/40 shadow-lg shadow-black/20" onclick={handleCancel}>{i18n.t.w.common.close}</button>
       {/if}
     </footer>
   </div>
@@ -90,7 +90,7 @@
         <h4 class="text-lg font-bold text-white mb-2">{i18n.t.w.common.discardChanges}</h4>
         <p class="text-sm text-neutral-400 mb-6">{i18n.t.w.common.discardMsg}</p>
         <div class="flex justify-end gap-2">
-          <button class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors" onclick={() => showConfirm = false}>{i18n.t.w.common.keepEditing}</button>
+          <button class="px-4 py-2 rounded-lg text-sm font-medium text-neutral-400 hover:bg-black/40 hover:text-white transition-colors" onclick={() => showConfirm = false}>{i18n.t.w.common.keepEditing}</button>
           <button class="px-4 py-2 rounded-lg bg-red-600 text-sm font-bold text-white hover:bg-red-500 shadow-lg shadow-red-900/20 transition-colors" onclick={confirmCancel}>{i18n.t.w.common.discard}</button>
         </div>
       </div>

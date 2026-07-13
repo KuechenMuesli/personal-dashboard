@@ -176,7 +176,7 @@ legal: {
     default: 'Default Dark',
     oled: 'OLED Black',
     midnight: 'Midnight Blue',
-    hacker: 'Hacker Green',
+    hacker: 'Forest Green',
     sunset: 'Crimson Sunset',
     light: 'Modern Light',
     paper: 'Solarized Paper'

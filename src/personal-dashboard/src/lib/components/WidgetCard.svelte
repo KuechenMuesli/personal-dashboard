@@ -22,8 +22,8 @@
   } = $props();
 </script>
 
-<div class="flex h-full w-full flex-col font-sans text-slate-200 overflow-hidden transition-all
-  {transparent ? '' : 'rounded-xl border border-black/40 bg-neutral-800 shadow-xl'}
+<div class="flex h-full w-full flex-col font-sans text-slate-200 transition-all
+  {transparent ? 'overflow-visible' : 'overflow-hidden rounded-xl border border-black/40 bg-neutral-800 shadow-xl'}
   {padding ? 'p-3 sm:p-4' : ''}">
 
 	{#if !isConfigured}

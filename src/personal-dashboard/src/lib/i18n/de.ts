@@ -178,7 +178,7 @@ legal: {
     default: 'Standard Dunkel',
     oled: 'OLED Schwarz',
     midnight: 'Mitternachtsblau',
-    hacker: 'Hacker Grün',
+    hacker: 'Forest Green',
     sunset: 'Purpur Sonnenuntergang',
     light: 'Modernes Hell',
     paper: 'Solarized Papier'

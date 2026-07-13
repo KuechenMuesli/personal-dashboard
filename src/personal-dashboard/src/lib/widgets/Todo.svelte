@@ -20,6 +20,8 @@
   }>();
 
   const getSecrets = getContext<() => Record<string, any>>('secrets');
+  const getSecretsLoaded = getContext<() => boolean>('secretsLoaded');
+  const GLOBAL_SERVICE_ID = 'global-todo-sync';
 
   type Todo = {
     id: string;
@@ -61,10 +63,12 @@
   $effect(() => {
     if (!isLoaded) {
       const secrets = getSecrets();
-      if (secrets[id] && secrets[id].todos) {
+      if (secrets[GLOBAL_SERVICE_ID] && secrets[GLOBAL_SERVICE_ID].todos) {
+        todos = secrets[GLOBAL_SERVICE_ID].todos;
+      } else if (secrets[id] && secrets[id].todos) { // Fallback
         todos = secrets[id].todos;
       } else {
-        const saved = localStorage.getItem(`todo-settings-${id}`);
+        const saved = localStorage.getItem(`todo-settings-global`) || localStorage.getItem(`todo-settings-${id}`);
         if (saved) {
           try {
             todos = JSON.parse(saved);
@@ -129,7 +133,7 @@
   async function saveGlobalAppleUrlId(urlId: string) {
     globalAppleUrlId = urlId;
     if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(`apple-reminders-url-${userId}`, urlId);
+        localStorage.setItem(`apple-reminders-url-global`, urlId);
     }
     if (isLoggedIn) {
       try {
@@ -155,7 +159,7 @@
     
     // Immediately fetch with new URL (will be empty) and clear cache
     appleReminders = [];
-    localStorage.removeItem(`todo-apple-cache-${userId}`);
+    localStorage.removeItem(`todo-apple-cache-global`);
   }
 
   // External Reminders Integration
@@ -219,7 +223,7 @@
 
         if (type === 'apple') {
           appleReminders = mapped;
-          localStorage.setItem(`todo-apple-cache-${userId}`, JSON.stringify({
+          localStorage.setItem(`todo-apple-cache-global`, JSON.stringify({
             timestamp: lastFetchedApple,
             data: appleReminders
           }));
@@ -229,7 +233,7 @@
           const keepCompleted = microsoftTodos.filter(t => t.completed && !mappedIds.has(t.id));
           microsoftTodos = [...keepCompleted, ...mapped];
           
-          localStorage.setItem(`todo-ms-cache-${userId}`, JSON.stringify({
+          localStorage.setItem(`todo-ms-cache-global`, JSON.stringify({
             timestamp: lastFetchedMs,
             data: microsoftTodos
           }));
@@ -255,15 +259,15 @@
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    const intCache = localStorage.getItem(`todo-integrations-${id}`);
+    const intCache = localStorage.getItem(`todo-integrations-global`) || localStorage.getItem(`todo-integrations-${id}`);
     if (intCache) {
       try {
         const parsed = JSON.parse(intCache);
         integrations = { ...integrations, ...parsed };
         
         // Handle migration of appleUrlId if it exists in the old integrations
-        if (parsed.appleUrlId && !localStorage.getItem(`apple-reminders-url-${userId}`)) {
-           localStorage.setItem(`apple-reminders-url-${userId}`, parsed.appleUrlId);
+        if (parsed.appleUrlId && !localStorage.getItem(`apple-reminders-url-global`)) {
+           localStorage.setItem(`apple-reminders-url-global`, parsed.appleUrlId);
         }
       } catch(e) {}
     }
@@ -274,7 +278,7 @@
         let foundUrlId = secrets['apple_reminders_global']?.urlId;
         
         if (!foundUrlId) {
-            foundUrlId = localStorage.getItem(`apple-reminders-url-${userId}`);
+            foundUrlId = localStorage.getItem(`apple-reminders-url-global`);
         }
         
         if (foundUrlId) {
@@ -289,7 +293,7 @@
     };
     loadGlobalAppleUrlId();
 
-    const cacheApple = localStorage.getItem(`todo-apple-cache-${userId}`);
+    const cacheApple = localStorage.getItem(`todo-apple-cache-global`);
     if (cacheApple) {
       try {
         const parsed = JSON.parse(cacheApple);
@@ -298,7 +302,7 @@
       } catch (e) {}
     }
 
-    const cacheMs = localStorage.getItem(`todo-ms-cache-${userId}`);
+    const cacheMs = localStorage.getItem(`todo-ms-cache-global`);
     if (cacheMs) {
       try {
         const parsed = JSON.parse(cacheMs);
@@ -337,7 +341,7 @@
 
   $effect(() => {
     if (isLoaded) {
-      localStorage.setItem(`todo-integrations-${id}`, JSON.stringify(integrations));
+      localStorage.setItem(`todo-integrations-global`, JSON.stringify(integrations));
       
       if (!integrations.apple && appleReminders.length > 0) appleReminders = [];
       if (!integrations.microsoft && microsoftTodos.length > 0) microsoftTodos = [];
@@ -345,13 +349,13 @@
   });
 
   function saveTodos() {
-    localStorage.setItem(`todo-settings-${id}`, JSON.stringify(todos));
+    localStorage.setItem(`todo-settings-global`, JSON.stringify(todos));
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
       fetch('/api/secrets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service: id, key: { todos } })
+        body: JSON.stringify({ service: GLOBAL_SERVICE_ID, key: { todos } })
       }).catch(console.error);
     }, 500);
   }

@@ -20,6 +20,7 @@
 
   const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB configurable limit
   const EXPIRY_TIME_MS = 24 * 60 * 60 * 1000; // 24 hours
+  const GLOBAL_SERVICE_ID = 'global-clipboard-sync';
 
   let cloudContent = $state<{ data: string, type: string, name?: string, timestamp: number } | null>(null);
   let isLoaded = $state(false);
@@ -37,7 +38,12 @@
     const secretsLoaded = getSecretsLoaded ? getSecretsLoaded() : true;
     
     if (secretsLoaded && !isLoaded) {
-      if (secrets[id] && secrets[id].clipboard) {
+      if (secrets[GLOBAL_SERVICE_ID] && secrets[GLOBAL_SERVICE_ID].clipboard) {
+        const item = secrets[GLOBAL_SERVICE_ID].clipboard;
+        if (Date.now() - item.timestamp < EXPIRY_TIME_MS) {
+            cloudContent = item;
+        }
+      } else if (secrets[id] && secrets[id].clipboard) { // Fallback to old widget-specific id
         const item = secrets[id].clipboard;
         if (Date.now() - item.timestamp < EXPIRY_TIME_MS) {
             cloudContent = item;
@@ -95,7 +101,7 @@
         const res = await fetch('/api/share', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...cloudContent, serviceId: id })
+            body: JSON.stringify({ ...cloudContent, serviceId: GLOBAL_SERVICE_ID })
         });
         const data = await res.json();
         if (data.id) {
@@ -168,7 +174,7 @@
       await fetch('/api/secrets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service: id, key: { clipboard: item } })
+        body: JSON.stringify({ service: GLOBAL_SERVICE_ID, key: { clipboard: item } })
       });
       cloudContent = item;
       setUploadStatus('success');

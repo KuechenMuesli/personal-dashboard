@@ -17,7 +17,7 @@
   setContext('secretsLoaded', () => secretsLoaded);
 
   let widgets = $derived({
-    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: 2 }, maxCount: null },
+    searchbar:        { name: i18n.t.widgets.searchbar, load: () => import("$lib/widgets/Searchbar.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: 2 }, maxCount: 1 },
     favorites:        { name: i18n.t.widgets.favorites, load: () => import("$lib/widgets/Favorites.svelte"), defaultSize: { width: 2, height: 2 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     note:             { name: i18n.t.widgets.note, load: () => import("$lib/widgets/Note.svelte"), defaultSize: { width: 2, height: 5 }, hasSettings: false, minSize: { width: 1, height: 2 }, maxSize: { width: null, height: null } },
     parcel:           { name: i18n.t.widgets.parcel, load: () => import("$lib/widgets/Parcel.svelte"), defaultSize: { width: 1, height: 5 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
@@ -27,11 +27,12 @@
     TimerStopwatch:   { name: i18n.t.widgets.timerStopwatch, load: () => import("$lib/widgets/TimerStopwatch.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     sketch:           { name: i18n.t.widgets.sketch, load: () => import("$lib/widgets/Sketch.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     colorPicker:      { name: i18n.t.widgets.colorPicker, load: () => import("$lib/widgets/ColorPicker.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, fixedSize: false },
-    newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 1, height: 3 }, hasSettings: false, minSize: { width: 2, height: null }, maxSize: { width: null, height: null }, maxCount: null, },
+    newtorkMetrics:   { name: i18n.t.widgets.networkMetrics, load: () => import("$lib/widgets/NetworkMetrics.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, minSize: { width: 2, height: null }, maxSize: { width: null, height: null }, maxCount: 1 },
     calendar:         { name: i18n.t.widgets.calendar, load: () => import("$lib/widgets/Calendar.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: 2, height: 4 }, maxSize: { width: null, height: null } },
     stockTicker:      { name: i18n.t.widgets.stockTicker, load: () => import("$lib/widgets/StockTicker.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: null, height: null }, maxSize: { width: null, height: null } },
     todo:             { name: i18n.t.widgets.todo, load: () => import("$lib/widgets/Todo.svelte"), defaultSize: { width: 2, height: 4 }, hasSettings: true, minSize: { width: 2, height: 4 }, maxSize: { width: null, height: null } },
     clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', load: () => import("$lib/widgets/ClipboardSync.svelte"), defaultSize: { width: 2, height: 3 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: 1 },
+    workspaces:       { name: 'Workspaces', load: () => import("$lib/widgets/Workspaces.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true, minSize: { width: 1, height: 1 }, maxSize: { width: 2, height: 2 }, maxCount: 1 },
     loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true, unremovable: true, fixedSize: true, maxCount: 1 },
   });
 
@@ -115,7 +116,8 @@
       e.preventDefault();
       const [type, config] = filteredWidgets[selectedWidgetIndex];
       const count = dashboardLayout.filter(w => w.type === type).length;
-      if (!(config as any).maxCount || count < (config as any).maxCount) {
+      const maxCount = (config as any).maxCount;
+      if (maxCount === undefined || maxCount === null || count < maxCount) {
         addWidget(type);
       }
     }
@@ -127,12 +129,88 @@
     { id: 'theme-default', name: i18n.t.themes.default, colors: ['#121212', '#262626', '#3b82f6'] },
     { id: 'theme-oled', name: i18n.t.themes.oled, colors: ['#000000', '#0a0a0a', '#38bdf8'] },
     { id: 'theme-midnight', name: i18n.t.themes.midnight, colors: ['#020617', '#0f172a', '#818cf8'] },
-    { id: 'theme-hacker', name: i18n.t.themes.hacker, colors: ['#050505', '#022c22', '#10b981'] },
+    { id: 'theme-forest', name: i18n.t.themes.hacker, colors: ['#041f14', '#022c22', '#10b981'] },
     { id: 'theme-sunset', name: i18n.t.themes.sunset, colors: ['#2a111a', '#3a1623', '#f43f5e'] },
     { id: 'theme-light', name: i18n.t.themes.light, colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
     { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] }
   ]);
   let globalTheme = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard-theme') || 'theme-default') : 'theme-default');
+
+  setContext('dashboardActions', {
+    switchLayout: async (newLayoutId: string) => {
+      if (!session || !supabase || newLayoutId === currentLayoutId) return;
+
+      // 1. Sync current layout up before switching
+      await syncUp();
+
+      // 2. Set the new layout as active in DB
+      if (currentLayoutId) {
+        await supabase.from('layouts').update({ is_active: false }).eq('id', currentLayoutId);
+      }
+      await supabase.from('layouts').update({ is_active: true }).eq('id', newLayoutId);
+
+      // 3. Fetch the new layout and widgets
+      const { data: newLayoutData } = await supabase
+        .from('layouts')
+        .select(`
+          id, theme, updated_at,
+          widgets ( id, type, x, y, w, h, custom_data )
+        `)
+        .eq('id', newLayoutId)
+        .single();
+
+      if (newLayoutData) {
+        currentLayoutId = newLayoutData.id;
+
+        // 4. Update the local theme if the workspace has one
+        const remoteThemeObj = newLayoutData.theme as any || {};
+        if (remoteThemeObj.theme) {
+            globalTheme = remoteThemeObj.theme;
+            localStorage.setItem('dashboard-theme', globalTheme);
+            document.body.className = globalTheme;
+        }
+
+        // 5. Update the widgets
+        if (newLayoutData.widgets) {
+          const layout = newLayoutData.widgets.map((w: any) => {
+            const c = w.custom_data || {};
+            if (c.calendarViewmode) localStorage.setItem(`calendar-viewmode-${w.id}`, c.calendarViewmode);
+            if (c.generalSettings) localStorage.setItem(`general-settings-${w.id}`, c.generalSettings);
+            if (c.colorpicker) localStorage.setItem(`colorpicker-${w.id}`, c.colorpicker);
+            if (c.webviewSettings) localStorage.setItem(`webview-settings-${w.id}`, c.webviewSettings);
+            if (c.favoritesSettings) localStorage.setItem(`favorites-settings-${w.id}`, c.favoritesSettings);
+            if (c.noteSettings) localStorage.setItem(`note-settings-${w.id}`, c.noteSettings);
+            if (c.noteMode) localStorage.setItem(`note-mode-${w.id}`, c.noteMode);
+            if (c.parcelSettings) localStorage.setItem(`parcel-settings-${w.id}`, c.parcelSettings);
+            if (c.searchHistory) localStorage.setItem(`search-history-${w.id}`, c.searchHistory);
+            if (c.searchSettings) localStorage.setItem(`search-settings-${w.id}`, c.searchSettings);
+            if (c.stockSettings) localStorage.setItem(`stock-settings-${w.id}`, c.stockSettings);
+            if (c.timerSettings) localStorage.setItem(`timer-settings-${w.id}`, c.timerSettings);
+
+            return { id: w.id, type: w.type, x: w.x, y: w.y, width: w.w, height: w.h, showSettings: false };
+          });
+
+          // Check if workspaces widget exists, if not, automatically add it
+          if (!layout.some((w: any) => w.type === 'workspaces')) {
+             const { x, y } = findFirstAvailableSpace(2, 1);
+             layout.push({ id: crypto.randomUUID() as any, type: 'workspaces', x, y, width: 2, height: 1, showSettings: false });
+          }
+
+          dashboardLayout = layout;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+        } else {
+          // If no widgets, add the workspaces widget so they are not trapped
+          const layout = [{ id: crypto.randomUUID() as any, type: 'workspaces', x: 0, y: 0, width: 2, height: 1, showSettings: false }];
+          dashboardLayout = layout;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+        }
+
+        const remoteTimestamp = new Date(newLayoutData.updated_at).getTime();
+        localStorage.setItem('dashboard-timestamp', remoteTimestamp.toString());
+        localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
+      }
+    }
+  });
 
   onMount(async () => {
     requestAnimationFrame(() => {
@@ -196,9 +274,22 @@
 
               return { id: w.id, type: w.type, x: w.x, y: w.y, width: w.w, height: w.h, showSettings: false };
             });
+
+            if (!layout.some((w: any) => w.type === 'workspaces')) {
+               const { x, y } = findFirstAvailableSpace(2, 1);
+               layout.push({ id: crypto.randomUUID() as any, type: 'workspaces', x, y, width: 2, height: 1, showSettings: false });
+            }
+
             localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
             dashboardLayout = layout;
           }
+
+          if (remoteThemeObj.theme) {
+            globalTheme = remoteThemeObj.theme;
+            localStorage.setItem('dashboard-theme', globalTheme);
+            document.body.className = globalTheme;
+          }
+
           localStorage.setItem('dashboard-timestamp', remoteTimestamp.toString());
           localStorage.setItem('dashboard-layout-id', currentLayoutId as string);
           localStorage.removeItem('dashboard-is-default');
@@ -751,7 +842,7 @@
 
 		<div
 				class="widget-wrapper absolute p-2 box-border will-change-[transform,width,height]
-             {draggingId === sw.id || resizingId === sw.id || !isMounted ? 'z-[100] transition-none' : 'z-10 transition-[transform,width,height] duration-200'}
+             {draggingId === sw.id || resizingId === sw.id || !isMounted ? 'z-[100] transition-none' : (sw.type === 'workspaces' ? 'z-[60] transition-[transform,width,height] duration-200' : 'z-10 transition-[transform,width,height] duration-200')}
              {isHidden ? 'pointer-events-none' : ''}"
         data-widget-type={sw.type}
 				style="
@@ -761,7 +852,7 @@
         display: {isHidden ? 'none' : 'block'};
       "
 		>
-			<div class="relative flex h-full flex-col overflow-hidden rounded-lg {isEditing ? 'border border-dashed border-blue-500/40 bg-neutral-900/50' : ''}">
+			<div class="relative flex h-full flex-col {sw.type === 'workspaces' ? 'overflow-visible z-50' : 'overflow-hidden'} rounded-lg {isEditing ? 'border border-dashed border-blue-500/40 bg-neutral-900/50' : ''}">
         {#if !widgetDef}
            <div class="flex h-full w-full flex-col items-center justify-center gap-2 text-red-500 text-sm p-4 text-center bg-red-900/10 border border-red-500/20 rounded-lg relative">
               <span class="font-bold">Unbekanntes Widget</span>
@@ -817,7 +908,7 @@
           {/if}
 				{/if}
 
-				<div class="h-full w-full overflow-hidden">
+				<div class="h-full w-full {sw.type === 'workspaces' ? 'overflow-visible' : 'overflow-hidden'}">
 					{#await widgetDef.load() then module}
 						{@const Widget = module.default}
 						<!-- @ts-ignore: Dynamic widget prop injection mismatch -->
@@ -896,7 +987,7 @@
 		{#each filteredWidgets as [type, config], index}
       {@const count = dashboardLayout.filter(w => w.type === type).length}
       {@const maxCount = (config as any).maxCount}
-      {@const disabled = maxCount !== undefined && count >= maxCount}
+      {@const disabled = maxCount !== undefined && maxCount !== null && count >= maxCount}
 			<button
 					class="flex h-[140px] flex-col items-center justify-between rounded-xl border p-4 transition-all {disabled ? 'border-neutral-800/30 bg-neutral-900/30 opacity-50 cursor-not-allowed' : index === selectedWidgetIndex ? 'border-blue-500 bg-neutral-800 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-[1.02]' : 'border-neutral-800 bg-neutral-800/50 hover:border-blue-500 active:bg-neutral-800'}"
 					onclick={() => { if (!disabled) debounceAction(() => addWidget(type)) }}
@@ -912,8 +1003,8 @@
 				<div class="pointer-events-none mt-3 text-center flex flex-col items-center">
             <span class="text-sm font-medium {index === selectedWidgetIndex && !disabled ? 'text-white' : 'text-neutral-300'}">{config.name}</span>
             {#if disabled}
-               <span class="text-[10px] text-red-400 font-bold uppercase tracking-widest mt-0.5 whitespace-nowrap">Maximal {maxCount}</span>
-            {:else if maxCount}
+               <span class="text-[10px] text-red-400 font-bold uppercase tracking-widest mt-0.5 whitespace-nowrap">Max ({count}/{maxCount})</span>
+            {:else if maxCount !== undefined && maxCount !== null}
                <span class="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-0.5 whitespace-nowrap">{count}/{maxCount}</span>
             {:else if (config as any).fixedSize}
                <span class="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-0.5 whitespace-nowrap">Feste Größe</span>

@@ -103,10 +103,7 @@ class I18nState {
 
     const formatter = this.getFormatter(this.dateLocale, options);
     let str = formatter.format(date);
-    
-    // In German, 'short' weekdays often have a dot (e.g. "Mo.", "Di."). We remove this dot to make it look cleaner, 
-    // but keep dots for the day number (e.g. "1. Januar").
-    // We replace the dot if it immediately follows the weekday abbreviation at the start.
+
     return str.replace(/^([a-zA-ZÄÖÜäöüß]+)\.,?/, '$1,');
   }
 

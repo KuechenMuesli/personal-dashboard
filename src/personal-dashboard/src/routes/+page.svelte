@@ -132,7 +132,8 @@
     { id: 'theme-forest', name: i18n.t.themes.hacker, colors: ['#041f14', '#022c22', '#10b981'] },
     { id: 'theme-sunset', name: i18n.t.themes.sunset, colors: ['#2a111a', '#3a1623', '#f43f5e'] },
     { id: 'theme-light', name: i18n.t.themes.light, colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
-    { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] }
+    { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] },
+    { id: 'theme-princess', name: i18n.t.themes.princess, colors: ['#fff0f5', '#ffffff', '#ff1493'] }
   ]);
   let globalTheme = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard-theme') || 'theme-default') : 'theme-default');
 

@@ -181,12 +181,14 @@ legal: {
     hacker: 'Forest Green',
     sunset: 'Purpur Sonnenuntergang',
     light: 'Modernes Hell',
-    paper: 'Solarized Papier'
+    paper: 'Solarized Papier',
+    princess: 'Prinzessinnen-Pink'
   },
 
   // Widget specific strings
   w: {
 common: {
+      name: 'Name',
       cancel: 'Abbrechen',
       save: 'Speichern',
       close: 'Schließen',
@@ -206,6 +208,15 @@ common: {
       copy: 'Kopieren',
       copyDetails: 'Details kopieren',
       back: 'Zurück'
+    },
+    workspaces: {
+      editWorkspace: 'Workspace bearbeiten',
+      theme: 'Theme',
+      workspaceFallback: 'Workspace',
+      newWorkspace: 'Workspace {num}',
+      deleteOnlyError: 'Du kannst deinen einzigen Workspace nicht löschen.',
+      deleteCurrentError: 'Bitte wechsle zu einem anderen Workspace, bevor du diesen löschst.',
+      deleteConfirm: 'Bist du sicher, dass du diesen Workspace löschen möchtest?'
     },
     calendar: {
       title: 'Kalender',

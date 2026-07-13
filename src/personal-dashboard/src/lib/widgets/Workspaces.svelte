@@ -78,6 +78,7 @@
     { id: 'theme-sunset', name: i18n.t.themes.sunset },
     { id: 'theme-light', name: i18n.t.themes.light },
     { id: 'theme-paper', name: i18n.t.themes.paper },
+    { id: 'theme-princess', name: i18n.t.themes.princess },
     ...customThemes.map(t => ({ id: `custom_${t.id}`, name: t.name }))
   ]);
 
@@ -124,7 +125,7 @@
 
   async function createWorkspace() {
     if (!session || !supabase) return;
-    const newName = `Workspace ${layouts.length + 1}`;
+    const newName = i18n.t.w.workspaces.newWorkspace.replace('{num}', (layouts.length + 1).toString());
     
     const { data } = await supabase.from('layouts').insert({
       user_id: session.user.id,
@@ -140,15 +141,15 @@
 
   async function deleteWorkspace(layoutId: string) {
     if (layouts.length <= 1) {
-      alert("You cannot delete your only workspace.");
+      alert(i18n.t.w.workspaces.deleteOnlyError);
       return;
     }
     if (layoutId === currentLayoutId) {
-      alert("Please switch to another workspace before deleting this one.");
+      alert(i18n.t.w.workspaces.deleteCurrentError);
       return;
     }
     
-    const confirmed = confirm("Are you sure you want to delete this workspace?");
+    const confirmed = confirm(i18n.t.w.workspaces.deleteConfirm);
     if (!confirmed) return;
 
     await supabase.from('layouts').delete().eq('id', layoutId);
@@ -238,7 +239,7 @@
           class="flex items-center gap-2 bg-transparent border-none text-lg sm:text-xl font-bold text-white outline-none focus:ring-0 cursor-pointer tracking-tight"
           onclick={() => isDropdownOpen = !isDropdownOpen}
         >
-          {layouts.find(l => l.id === currentLayoutId)?.name || 'Workspace'}
+          {layouts.find(l => l.id === currentLayoutId)?.name || i18n.t.w.workspaces.workspaceFallback}
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-neutral-400 opacity-50 group-hover:opacity-100 transition-opacity {isDropdownOpen ? 'rotate-180' : ''}"><path d="m6 9 6 6 6-6"/></svg>
         </button>
 
@@ -274,7 +275,7 @@
     
     {#if editingLayout}
       <div class="bg-black/20 p-4 rounded-xl border border-white/10 space-y-4">
-        <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Edit Workspace</h4>
+        <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">{i18n.t.w.workspaces.editWorkspace}</h4>
         
         <div class="space-y-3 pt-2">
           <div class="space-y-1">
@@ -282,7 +283,7 @@
             <input type="text" bind:value={editName} class="w-full rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50" />
           </div>
           <div class="space-y-1">
-            <label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.settings.appearance.theme}</label>
+            <label class="text-[10px] uppercase font-black text-neutral-500 tracking-widest">{i18n.t.w.workspaces.theme}</label>
             <CustomDropdown 
               bind:value={editTheme} 
               options={THEMES.map(t => ({ value: t.id, label: t.name }))} 
@@ -291,8 +292,8 @@
         </div>
 
         <div class="flex gap-2 pt-2">
-          <button onclick={cancelEdit} class="flex-1 rounded-lg bg-transparent py-2.5 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</button>
-          <button onclick={saveEdit} class="flex-1 rounded-lg bg-black/40 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors border border-black/40">Save</button>
+          <button onclick={cancelEdit} class="flex-1 rounded-lg bg-transparent py-2.5 text-sm font-bold text-neutral-400 hover:text-white transition-colors">{i18n.t.w.common.cancel}</button>
+          <button onclick={saveEdit} class="flex-1 rounded-lg bg-black/40 py-2.5 text-sm font-bold text-white hover:bg-black/60 transition-colors border border-black/40">{i18n.t.w.common.save}</button>
         </div>
       </div>
     {:else}

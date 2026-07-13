@@ -37,11 +37,11 @@
     { id: 'theme-default', name: i18n.t.themes.default, colors: ['#121212', '#262626', '#3b82f6'] },
     { id: 'theme-oled', name: i18n.t.themes.oled, colors: ['#000000', '#0a0a0a', '#38bdf8'] },
     { id: 'theme-midnight', name: i18n.t.themes.midnight, colors: ['#020617', '#0f172a', '#818cf8'] },
-    { id: 'theme-forest', name: 'Forest Green', colors: ['#041f14', '#022c22', '#10b981'] },
+    { id: 'theme-forest', name: i18n.t.themes.hacker, colors: ['#041f14', '#022c22', '#10b981'] },
     { id: 'theme-sunset', name: i18n.t.themes.sunset, colors: ['#2a111a', '#3a1623', '#f43f5e'] },
     { id: 'theme-light', name: i18n.t.themes.light, colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
     { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] },
-    { id: 'theme-princess', name: 'Princess Pink', colors: ['#fff0f5', '#ffffff', '#ff1493'] },
+    { id: 'theme-princess', name: i18n.t.themes.princess, colors: ['#fff0f5', '#ffffff', '#ff1493'] },
     ...customThemes.map(t => ({
       id: `custom_${t.id}`,
       name: t.name,

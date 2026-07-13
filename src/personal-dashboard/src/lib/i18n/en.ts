@@ -179,12 +179,14 @@ legal: {
     hacker: 'Forest Green',
     sunset: 'Crimson Sunset',
     light: 'Modern Light',
-    paper: 'Solarized Paper'
+    paper: 'Solarized Paper',
+    princess: 'Princess Pink'
   },
 
   // Widget specific strings
   w: {
 common: {
+      name: 'Name',
       cancel: 'Cancel',
       save: 'Save',
       close: 'Close',
@@ -204,6 +206,15 @@ common: {
       copy: 'Copy',
       copyDetails: 'Copy details',
       back: 'Back'
+    },
+    workspaces: {
+      editWorkspace: 'Edit Workspace',
+      theme: 'Theme',
+      workspaceFallback: 'Workspace',
+      newWorkspace: 'Workspace {num}',
+      deleteOnlyError: 'You cannot delete your only workspace.',
+      deleteCurrentError: 'Please switch to another workspace before deleting this one.',
+      deleteConfirm: 'Are you sure you want to delete this workspace?'
     },
     calendar: {
       title: 'Calendar',

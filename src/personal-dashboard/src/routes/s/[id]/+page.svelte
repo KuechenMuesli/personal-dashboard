@@ -309,16 +309,16 @@
         </div>
 
         {#if !isFullscreen}
-        <div class="w-full md:w-80 shrink-0 flex flex-col gap-4 sm:gap-6 min-h-0">
-            <div class="flex-grow bg-neutral-900/80 border border-white/10 rounded-[2rem] p-6 sm:p-8 flex flex-col items-center justify-center gap-6 shadow-2xl min-h-0 overflow-y-auto">
-                <div class="p-4 sm:p-5 bg-black/40 rounded-[2rem] border border-white/5 shadow-inner shrink-0 flex items-center justify-center">
+        <div class="w-full md:w-80 shrink-0 flex flex-col gap-3 sm:gap-6 min-h-0">
+            <div class="flex-grow bg-neutral-900/80 border border-white/10 rounded-[2rem] p-4 sm:p-8 flex flex-col items-center justify-center gap-3 sm:gap-6 shadow-2xl min-h-0 overflow-y-auto">
+                <div class="p-3 sm:p-5 bg-black/40 rounded-3xl sm:rounded-[2rem] border border-white/5 shadow-inner shrink-0 flex items-center justify-center">
                     <img src={qrUrl} alt="QR Code" class="w-24 h-24 sm:w-40 sm:h-40 object-contain opacity-90 mix-blend-screen" />
                 </div>
                 
-                <div class="text-center space-y-3 w-full shrink-0 flex flex-col items-center">
-                    <div>
-                        <h2 class="text-xl font-bold text-white">Quickshare</h2>
-                        <p class="text-sm font-medium text-neutral-500 bg-black/20 py-1.5 px-3 rounded-xl border border-white/5 mt-1.5 inline-block">{timeRemaining}</p>
+                <div class="text-center gap-2 sm:gap-3 w-full shrink-0 flex flex-col items-center">
+                    <div class="flex flex-col items-center">
+                        <h2 class="hidden sm:block text-xl font-bold text-white">Quickshare</h2>
+                        <p class="text-xs sm:text-sm font-medium text-neutral-500 bg-black/20 py-1 sm:py-1.5 px-3 rounded-xl border border-white/5 sm:mt-1.5 inline-block">{timeRemaining}</p>
                     </div>
                     
                     <button 

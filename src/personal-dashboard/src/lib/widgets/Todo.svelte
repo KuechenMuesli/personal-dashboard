@@ -251,7 +251,7 @@
           dueDate: item.d ? item.d : null,
           priority: item.p === 'Hoch' ? 'high' : item.p === 'Mittel' ? 'medium' : item.p === 'Niedrig' ? 'low' : null,
           notes: item.o || "",
-          tags: item.t ? item.t.split('\n').filter((t: string) => t.trim()) : [],
+          tags: item.t ? (Array.isArray(item.t) ? item.t : (typeof item.t === 'string' ? item.t.split('\n') : [])).filter((t: any) => typeof t === 'string' && t.trim()) : [],
           isAppleReminder: type === 'apple',
           isMicrosoftReminder: type === 'microsoft',
           list: item.l || (type === 'apple' ? 'Apple' : 'Microsoft')
@@ -623,9 +623,8 @@
               <div class="flex-1 min-w-0 flex flex-col justify-center py-0.5">
                 <div class="flex items-start justify-between gap-2">
                   <span class="text-sm font-medium leading-tight {todo.completed ? 'line-through text-neutral-500' : 'text-slate-200'}">
-                    {#if todo.priority === 'high'}<span class="text-red-500 font-bold mr-1 tracking-tighter">!!!</span>
-                    {:else if todo.priority === 'medium'}<span class="text-yellow-500 font-bold mr-1 tracking-tighter">!!</span>
-                    {:else if todo.priority === 'low'}<span class="text-blue-500 font-bold mr-1 tracking-tighter">!</span>{/if}
+                    {#if todo.priority === 'high'}<span class="text-red-500 font-bold mr-1 tracking-tighter">!!</span>
+                    {:else if todo.priority === 'medium'}<span class="text-yellow-500 font-bold mr-1 tracking-tighter">!</span>{/if}
                     {todo.title}
                   </span>
                 </div>

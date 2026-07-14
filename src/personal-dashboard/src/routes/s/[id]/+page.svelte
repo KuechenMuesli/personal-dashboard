@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { marked } from 'marked';
-    import { DownloadCloud, Check, X, FileText, Image as ImageIcon, File as FileIcon, Copy, Maximize, Minimize } from 'lucide-svelte';
+    import { DownloadCloud, Check, X, FileText, Image as ImageIcon, File as FileIcon, Copy, Maximize, Minimize, Link } from 'lucide-svelte';
     import LegalFooter from '$lib/components/LegalFooter.svelte';
     let { data } = $props<{ data: import('./$types').PageData }>();
 
@@ -130,6 +130,8 @@
     });
 
     let downloadStatus = $state('idle');
+    let copyStatus = $state('idle');
+    let linkStatus = $state('idle');
 
     async function triggerDownload(dataUrl: string, name: string) {
         const res = await fetch(dataUrl);
@@ -146,7 +148,7 @@
 
     async function copyAction() {
         if (!content) return;
-        downloadStatus = 'idle';
+        copyStatus = 'idle';
         try {
             if (isText) {
                 await navigator.clipboard.writeText(decodedText);
@@ -172,11 +174,12 @@
                     new ClipboardItem({ 'image/png': convertPromise })
                 ]);
             }
-            downloadStatus = 'success';
-            setTimeout(() => downloadStatus = 'idle', 3000);
+            copyStatus = 'success';
+            setTimeout(() => copyStatus = 'idle', 3000);
         } catch (e) {
             console.error(e);
-            downloadStatus = 'error';
+            copyStatus = 'error';
+            setTimeout(() => copyStatus = 'idle', 3000);
         }
     }
 
@@ -190,6 +193,20 @@
         } catch (e) {
             console.error(e);
             downloadStatus = 'error';
+            setTimeout(() => downloadStatus = 'idle', 3000);
+        }
+    }
+
+    async function copyLinkAction() {
+        linkStatus = 'idle';
+        try {
+            await navigator.clipboard.writeText(url);
+            linkStatus = 'success';
+            setTimeout(() => linkStatus = 'idle', 3000);
+        } catch (e) {
+            console.error(e);
+            linkStatus = 'error';
+            setTimeout(() => linkStatus = 'idle', 3000);
         }
     }
 </script>
@@ -226,7 +243,7 @@
         {:else}
         <div class="{isFullscreen ? 'w-full h-full' : 'max-w-5xl w-full h-full max-h-[850px]'} flex flex-col md:flex-row gap-4 sm:gap-6 transition-all duration-300">
         
-        <div class="flex-grow {isFullscreen ? 'bg-[#0a0a0a] rounded-none border-none' : 'bg-neutral-900/80 border border-white/10 rounded-[2rem]'} overflow-hidden flex flex-col min-h-0 shadow-2xl transition-all duration-300">
+        <div class="{isFullscreen ? 'flex-1 bg-neutral-900/80 rounded-none border-none' : 'flex-none h-60 md:flex-1 md:h-auto bg-neutral-900/80 border border-white/10 rounded-[2rem]'} overflow-hidden flex flex-col min-h-0 shadow-2xl transition-all duration-300">
            <div class="h-14 border-b border-white/5 bg-black/20 flex items-center px-4 sm:px-6 gap-3 shrink-0">
                {#if content.type.startsWith('image/')}
                    <ImageIcon size={18} class="text-neutral-500 shrink-0" />
@@ -240,7 +257,7 @@
                {#if content.type.startsWith('image/') || isText || isMarkdown}
                <button 
                    onclick={() => isFullscreen = !isFullscreen}
-                   class="p-2 -mr-2 hover:bg-white/10 rounded-lg text-neutral-400 hover:text-white transition-colors shrink-0 flex items-center justify-center"
+                   class="p-2 -mr-2 hover:bg-white/10 rounded-lg text-neutral-400 hover:text-white transition-colors shrink-0 {isFullscreen ? 'flex' : 'hidden md:flex'} items-center justify-center"
                    title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
                >
                    {#if isFullscreen}
@@ -252,28 +269,42 @@
                {/if}
            </div>
            
-           <div class="flex-grow {isFullscreen ? 'p-4 sm:p-10' : 'p-4 sm:p-6'} flex items-center justify-center bg-black/20 overflow-hidden relative transition-all duration-300">
-               {#if content.type.startsWith('image/')}
-                   <img src={content.data} alt="Shared Image" class="w-full h-full object-contain drop-shadow-md rounded-xl" />
-               {:else if isMarkdown}
-                   <div class="w-full h-full overflow-y-auto text-left bg-black/40 border border-white/5 rounded-xl p-4 sm:p-8 prose prose-invert max-w-none">
-                       {@html htmlContent}
+           <div class="flex-grow p-0 flex items-center justify-center bg-transparent overflow-hidden relative transition-all duration-300">
+               {#if !isFullscreen && (content.type.startsWith('image/') || isText || isMarkdown)}
+               <button 
+                   onclick={() => isFullscreen = true}
+                   class="md:hidden w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-white/5 transition-all"
+               >
+                   <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center border border-white/10 shadow-lg">
+                       <Maximize size={24} class="text-white" />
                    </div>
-               {:else if isText}
-                   <div class="w-full h-full overflow-y-auto text-left bg-black/40 border border-white/5 rounded-xl p-4 sm:p-6">
-                       <pre class="m-0 bg-transparent"><code bind:this={codeElement} class="text-sm sm:text-base !bg-transparent !p-0 block whitespace-pre-wrap break-words">{decodedText}</code></pre>
-                   </div>
-               {:else}
-                   <div class="flex flex-col items-center gap-4 text-center">
-                       <div class="w-20 h-20 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-neutral-500">
-                           <FileIcon size={40} />
-                       </div>
-                       <div>
-                           <span class="block text-lg font-bold text-white mb-1">{content.name}</span>
-                           <span class="text-xs text-neutral-500 uppercase tracking-widest">{content.type}</span>
-                       </div>
-                   </div>
+                   <span class="text-sm text-neutral-300 font-bold tracking-wide">Show Content</span>
+               </button>
                {/if}
+
+               <div class="w-full h-full {isFullscreen || !(content.type.startsWith('image/') || isText || isMarkdown) ? 'flex' : 'hidden md:flex'} justify-center items-center overflow-hidden">
+                   {#if content.type.startsWith('image/')}
+                       <img src={content.data} alt="Shared Image" class="w-full h-full object-contain drop-shadow-md rounded-xl" />
+                   {:else if isMarkdown}
+                       <div class="w-full h-full overflow-y-auto text-left bg-transparent rounded-xl p-4 sm:p-8 prose prose-invert max-w-none">
+                           {@html htmlContent}
+                       </div>
+                   {:else if isText}
+                       <div class="w-full h-full overflow-y-auto text-left bg-transparent rounded-xl p-4 sm:p-6">
+                           <pre class="m-0 bg-transparent"><code bind:this={codeElement} class="text-sm sm:text-base !bg-transparent !p-0 block whitespace-pre-wrap break-words">{decodedText}</code></pre>
+                       </div>
+                   {:else}
+                       <div class="flex flex-col items-center justify-center gap-4 text-center w-full h-full">
+                           <div class="w-20 h-20 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-neutral-500">
+                               <FileIcon size={40} />
+                           </div>
+                           <div>
+                               <span class="block text-lg font-bold text-white mb-1">{content.name}</span>
+                               <span class="text-xs text-neutral-500 uppercase tracking-widest">{content.type}</span>
+                           </div>
+                       </div>
+                   {/if}
+               </div>
            </div>
         </div>
 
@@ -284,37 +315,53 @@
                     <img src={qrUrl} alt="QR Code" class="w-32 h-32 sm:w-40 sm:h-40 object-contain opacity-90 mix-blend-screen" />
                 </div>
                 
-                <div class="text-center space-y-1.5 w-full shrink-0">
-                    <h2 class="text-xl font-bold text-white">Quickshare</h2>
-                    <p class="text-sm font-medium text-neutral-500 bg-black/20 py-2 rounded-xl border border-white/5">{timeRemaining}</p>
+                <div class="text-center space-y-3 w-full shrink-0 flex flex-col items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Quickshare</h2>
+                        <p class="text-sm font-medium text-neutral-500 bg-black/20 py-1.5 px-3 rounded-xl border border-white/5 mt-1.5 inline-block">{timeRemaining}</p>
+                    </div>
+                    
+                    <button 
+                        onclick={copyLinkAction}
+                        disabled={linkStatus === 'success'}
+                        class="flex items-center justify-center gap-2 text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+                    >
+                        {#if linkStatus === 'success'}
+                            <Check size={14} strokeWidth={3} /> Link Copied
+                        {:else}
+                            <Link size={14} strokeWidth={2.5} /> Copy Link
+                        {/if}
+                    </button>
                 </div>
             </div>
 
             {#if !content.data.startsWith('data:')}
                 <!-- Raw text snippet -->
-                <button 
-                    onclick={copyAction}
-                    disabled={downloadStatus === 'success'}
-                    class="w-full shrink-0 bg-white text-black hover:bg-neutral-200 active:bg-neutral-300 transition-colors font-bold text-sm sm:text-base rounded-2xl sm:rounded-[1.5rem] p-3.5 sm:p-4 flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
-                >
-                    {#if downloadStatus === 'success'}
-                        <Check size={20} strokeWidth={3} /> Success
-                    {:else if downloadStatus === 'error'}
-                        <X size={20} strokeWidth={3} /> Error
-                    {:else}
-                        <Copy size={20} strokeWidth={2.5} /> Copy Content
-                    {/if}
-                </button>
+                <div class="w-full shrink-0 flex flex-col gap-3">
+                    <button 
+                        onclick={copyAction}
+                        disabled={copyStatus === 'success'}
+                        class="w-full shrink-0 bg-white text-black hover:bg-neutral-200 active:bg-neutral-300 transition-colors font-bold text-sm sm:text-base rounded-2xl sm:rounded-[1.5rem] p-3.5 sm:p-4 flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
+                    >
+                        {#if copyStatus === 'success'}
+                            <Check size={20} strokeWidth={3} /> Success
+                        {:else if copyStatus === 'error'}
+                            <X size={20} strokeWidth={3} /> Error
+                        {:else}
+                            <Copy size={20} strokeWidth={2.5} /> Copy Content
+                        {/if}
+                    </button>
+                </div>
             {:else}
                 <!-- Actual File -->
                 <div class="w-full shrink-0 flex flex-col gap-3">
                     {#if isText || content.type.startsWith('image/')}
                         <button 
                             onclick={copyAction}
-                            disabled={downloadStatus === 'success'}
+                            disabled={copyStatus === 'success'}
                             class="w-full bg-white/10 text-white hover:bg-white/20 active:bg-white/30 border border-white/10 transition-colors font-bold text-sm sm:text-base rounded-2xl sm:rounded-[1.5rem] p-3.5 sm:p-4 flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-50 shadow-xl"
                         >
-                            {#if downloadStatus === 'success'}
+                            {#if copyStatus === 'success'}
                                 <Check size={20} strokeWidth={3} /> Copied
                             {:else}
                                 <Copy size={20} strokeWidth={2.5} /> {content.type.startsWith('image/') ? 'Copy Image' : 'Copy Text'}

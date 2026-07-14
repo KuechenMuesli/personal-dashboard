@@ -6,6 +6,7 @@
   import { Plus, X, Check, Circle, Trash2, Calendar, AlertCircle, Tag, GripHorizontal, FileText, ChevronDown, ChevronUp, RefreshCw } from 'lucide-svelte';
   import WidgetCard from '$lib/components/WidgetCard.svelte';
   import SettingsDialog from '$lib/components/SettingsDialog.svelte';
+  import CustomDropdown from '$lib/components/CustomDropdown.svelte';
 
   let { id, isEditing, onDelete, onDragStart, onResizeStart, width, height, showSettings, hidden } = $props<{
     id: string,
@@ -38,6 +39,8 @@
     completedAt?: number | null;
   };
 
+  const SHORTCUT_URL_APPLE = 'https://www.icloud.com/shortcuts/bc0eed4621324ab4831f5087da5bc305';
+
   function getTodayString() {
     const today = new Date();
     const offset = today.getTimezoneOffset() * 60000;
@@ -47,16 +50,17 @@
   let todos = $state<Todo[]>([]);
   let isLoaded = $state(false);
   let saveTimeout: ReturnType<typeof setTimeout>;
-  
+
   // New Todo Form State
   let showAddForm = $state(false);
   let newTitle = $state("");
   let newDueDate = $state(getTodayString());
-  let newPriority = $state<'low' | 'medium' | 'high' | null>(null);
+  let newDueTime = $state('');
+  let newPriority = $state<'high'|'medium'|'low'|null>(null);
   let newNotes = $state("");
   let newTags = $state<string[]>([]);
   let tagInput = $state("");
-  
+
   // Expanded State
   let expandedTodos = $state<Record<string, boolean>>({});
 
@@ -75,8 +79,7 @@
           } catch(e) {}
         }
       }
-      
-      // Ensure existing completed tasks get a completion timestamp
+
       let needsSave = false;
       todos = todos.map(t => {
         if (t.completed && !t.completedAt) {
@@ -86,7 +89,7 @@
         return t;
       });
       if (needsSave) saveTodos();
-      
+
       cleanupCompletedTodos();
       isLoaded = true;
     }
@@ -97,7 +100,7 @@
     const delayMs = integrations.autoDeleteHours * 60 * 60 * 1000;
     const now = Date.now();
     let changed = false;
-    
+
     todos = todos.filter(t => {
       if (t.completed && t.completedAt && (now - t.completedAt > delayMs)) {
         changed = true;
@@ -105,7 +108,7 @@
       }
       return true;
     });
-    
+
     if (changed) saveTodos();
   }
 
@@ -114,17 +117,28 @@
     apple: boolean;
     microsoft: boolean;
     autoDeleteHours: number | null;
+    sortMethod?: 'time' | 'priority';
   };
-  let integrations = $state<Integrations>({ apple: true, microsoft: false, autoDeleteHours: 1 });
+  let integrations = $state<Integrations>({ apple: true, microsoft: false, autoDeleteHours: 1, sortMethod: 'time' });
   let showTutorialApple = $state(false);
   let copiedApple = $state(false);
   let msNeedsLogin = $state(false);
-  
+
+  let autoDeleteProxy = {
+    get value() { return integrations.autoDeleteHours === null ? 'null' : integrations.autoDeleteHours.toString(); },
+    set value(v: string) { integrations.autoDeleteHours = v === 'null' ? null : parseInt(v); }
+  };
+
+  let sortMethodProxy = {
+    get value() { return integrations.sortMethod || 'time'; },
+    set value(v: any) { integrations.sortMethod = v; }
+  };
+
   const isLoggedIn = $derived(!!($page.data.user || $page.data.session?.user));
   const userId = $derived($page.data.session?.user?.id || id);
-  
+
   let globalAppleUrlId = $state<string | null>(null);
-  
+
   const appleUrlId = $derived(globalAppleUrlId || userId);
   const endpointUrlApple = $derived(`https://dashboard.paul-simon.dev/post-reminders/${appleUrlId}`);
 
@@ -161,11 +175,11 @@
     if (secretsLoaded && !appleUrlIdLoaded && typeof localStorage !== 'undefined') {
         const secrets = getSecrets();
         let foundUrlId = secrets['apple_reminders_global']?.urlId;
-        
+
         if (!foundUrlId) {
             foundUrlId = localStorage.getItem(`apple-reminders-url-global`);
         }
-        
+
         if (foundUrlId) {
             globalAppleUrlId = foundUrlId;
             // Sync up if it's missing in secrets but we have it locally
@@ -179,16 +193,12 @@
     }
   });
 
-  const shortcutUrlApple = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
-
   function copyUrl() {
     navigator.clipboard.writeText(endpointUrlApple);
     copiedApple = true;
     setTimeout(() => copiedApple = false, 2000);
   }
 
-
-  // External Reminders Integration
   let appleReminders = $state<Todo[]>([]);
   let microsoftTodos = $state<Todo[]>([]);
   let isFetchingApple = $state(false);
@@ -196,12 +206,12 @@
   let lastFetchedApple = $state<number>(0);
   let lastFetchedMs = $state<number>(0);
   let refreshTimer: ReturnType<typeof setInterval>;
-  const COOLDOWN_MS = 10 * 60 * 1000;
+  const COOLDOWN_MS = 2 * 60 * 1000;
 
   async function fetchExternalReminders(type: 'apple' | 'microsoft', force = false) {
     const timeSinceLast = Date.now() - (type === 'apple' ? lastFetchedApple : lastFetchedMs);
     const hasData = (type === 'apple' ? appleReminders : microsoftTodos).length > 0;
-    
+
     if (!force && timeSinceLast < COOLDOWN_MS && hasData) return;
 
     if (type === 'apple') isFetchingApple = true;
@@ -228,11 +238,11 @@
         return;
       }
       if (type === 'microsoft') msNeedsLogin = false;
-      
+
       if (json && json.merge_variables) {
         const mv = json.merge_variables;
         const allItems: any[] = [...(mv.overdue || []), ...(mv.today || []), ...(mv.future || [])];
-        
+
         const mapped = allItems.map((item, index) => ({
           id: type === 'microsoft' ? item.tid : `${type}-${index}-${item.n}`,
           listId: type === 'microsoft' ? item.lid : undefined,
@@ -258,7 +268,7 @@
           const mappedIds = new Set(mapped.map(t => t.id));
           const keepCompleted = microsoftTodos.filter(t => t.completed && !mappedIds.has(t.id));
           microsoftTodos = [...keepCompleted, ...mapped];
-          
+
           localStorage.setItem(`todo-ms-cache-global`, JSON.stringify({
             timestamp: lastFetchedMs,
             data: microsoftTodos
@@ -290,11 +300,11 @@
       try {
         const parsed = JSON.parse(intCache);
         integrations = { ...integrations, ...parsed };
-        
+
 
       } catch(e) {}
     }
-    
+
 
 
     const cacheApple = localStorage.getItem(`todo-apple-cache-global`);
@@ -317,7 +327,7 @@
 
     const handleTodoUpdate = (e: CustomEvent) => {
       const { widgetId, type, todoId, completed, completedAt } = e.detail;
-      
+
       // Update Microsoft Todos across ALL widgets
       if (type === 'microsoft') {
         microsoftTodos = microsoftTodos.map(t => t.id === todoId ? { ...t, completed, completedAt } : t);
@@ -346,7 +356,7 @@
   $effect(() => {
     if (isLoaded) {
       localStorage.setItem(`todo-integrations-global`, JSON.stringify(integrations));
-      
+
       if (!integrations.apple && appleReminders.length > 0) appleReminders = [];
       if (!integrations.microsoft && microsoftTodos.length > 0) microsoftTodos = [];
     }
@@ -366,7 +376,7 @@
 
   function addTodo() {
     if (!newTitle.trim()) return;
-    
+
     // Process remaining tag
     let currentTags = [...newTags];
     if (tagInput.trim()) {
@@ -378,21 +388,22 @@
       id: crypto.randomUUID(),
       title: newTitle.trim(),
       completed: false,
-      dueDate: newDueDate || null,
+      dueDate: (newDueDate && newDueTime) ? `${newDueDate}T${newDueTime}` : (newDueDate || null),
       priority: newPriority,
       notes: newNotes.trim(),
       tags: currentTags
     }];
-    
+
     // Reset form
     newTitle = "";
     newDueDate = getTodayString();
+    newDueTime = "";
     newPriority = null;
     newNotes = "";
     newTags = [];
     tagInput = "";
     showAddForm = false;
-    
+
     saveTodos();
   }
 
@@ -420,18 +431,18 @@
       microsoftTodos = microsoftTodos.map(t => {
         if (t.id === todoId) {
           const isCompleted = !t.completed;
-          
+
           fetch('/api/ms-todo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ taskId: todoId, listId, completed: isCompleted })
           }).catch(console.error);
-          
+
           const completedAt = isCompleted ? Date.now() : null;
           window.dispatchEvent(new CustomEvent('cross-widget-todo-update', {
             detail: { type: 'microsoft', todoId, completed: isCompleted, completedAt }
           }));
-          
+
           return { ...t, completed: isCompleted, completedAt };
         }
         return t;
@@ -443,11 +454,11 @@
       if (t.id === todoId) {
         const isCompleted = !t.completed;
         const completedAt = isCompleted ? Date.now() : null;
-        
+
         window.dispatchEvent(new CustomEvent('cross-widget-todo-update', {
           detail: { type: 'local', widgetId: id, todoId, completed: isCompleted, completedAt }
         }));
-        
+
         return { ...t, completed: isCompleted, completedAt };
       }
       return t;
@@ -459,18 +470,39 @@
     todos = todos.filter(t => t.id !== todoId);
     saveTodos();
   }
-  
+
   function toggleExpand(todoId: string) {
     expandedTodos[todoId] = !expandedTodos[todoId];
   }
 
   let sortedTodos = $derived([...todos, ...appleReminders, ...microsoftTodos].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
-    if (a.priority !== b.priority) {
-      const pMap = { 'high': 3, 'medium': 2, 'low': 1, null: 0 };
-      return (pMap[b.priority] || 0) - (pMap[a.priority] || 0);
+
+    // Sort by day (ascending)
+    const aDate = a.dueDate ? new Date(a.dueDate) : new Date(8640000000000000);
+    const bDate = b.dueDate ? new Date(b.dueDate) : new Date(8640000000000000);
+
+    const aDay = new Date(aDate).setHours(0,0,0,0);
+    const bDay = new Date(bDate).setHours(0,0,0,0);
+
+    if (aDay !== bDay) {
+        return aDay - bDay;
     }
-    return 0;
+
+    // Same day: sort by user preference
+    const sortMethod = integrations.sortMethod || 'time';
+
+    const pMap = { 'high': 3, 'medium': 2, 'low': 1, null: 0 };
+    const pDiff = (pMap[b.priority] || 0) - (pMap[a.priority] || 0);
+    const tDiff = aDate.getTime() - bDate.getTime();
+
+    if (sortMethod === 'priority') {
+        if (pDiff !== 0) return pDiff;
+        return tDiff;
+    } else {
+        if (tDiff !== 0) return tDiff;
+        return pDiff;
+    }
   }));
 
   let overdueTodos = $derived(sortedTodos.filter(t => {
@@ -513,20 +545,23 @@
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] uppercase font-black tracking-widest text-neutral-500">{i18n.currentLang === 'de' ? 'Titel' : 'Title'}</label>
-            <input 
-              type="text" 
-              bind:value={newTitle} 
-              placeholder={i18n.currentLang === 'de' ? 'Was gibt es zu tun?' : 'What needs to be done?'} 
+            <input
+              type="text"
+              bind:value={newTitle}
+              placeholder={i18n.currentLang === 'de' ? 'Was gibt es zu tun?' : 'What needs to be done?'}
               class="w-full bg-black/40 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 transition-colors font-medium"
               onkeydown={(e) => e.key === 'Enter' && addTodo()}
               autocomplete="off"
             />
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
-              <label class="text-[10px] uppercase font-black tracking-widest text-neutral-500 flex items-center gap-1.5"><Calendar size={12}/> {i18n.currentLang === 'de' ? 'Datum' : 'Date'}</label>
-              <input type="date" bind:value={newDueDate} class="bg-black/40 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50" />
+              <label class="text-[10px] uppercase font-black tracking-widest text-neutral-500 flex items-center gap-1.5"><Calendar size={12}/> {i18n.currentLang === 'de' ? 'Datum & Zeit' : 'Date & Time'}</label>
+              <div class="flex gap-2">
+                <input type="date" bind:value={newDueDate} class="flex-1 min-w-0 bg-black/40 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50" />
+                <input type="time" bind:value={newDueTime} class="w-[5.5rem] bg-black/40 border border-neutral-800 rounded-xl px-2 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50" />
+              </div>
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-[10px] uppercase font-black tracking-widest text-neutral-500 flex items-center gap-1.5"><AlertCircle size={12}/> {i18n.currentLang === 'de' ? 'Prio' : 'Prio'}</label>
@@ -538,7 +573,7 @@
               </select>
             </div>
           </div>
-          
+
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] uppercase font-black tracking-widest text-neutral-500 flex items-center gap-1.5"><Tag size={12}/> {i18n.currentLang === 'de' ? 'Tags (Enter drücken)' : 'Tags (Press Enter)'}</label>
             <div class="flex flex-wrap items-center gap-2 bg-black/40 border border-neutral-800 rounded-xl px-4 py-2 min-h-[46px] focus-within:border-blue-500/50 transition-colors">
@@ -550,16 +585,16 @@
                   </button>
                 </div>
               {/each}
-              <input 
-                type="text" 
-                bind:value={tagInput} 
+              <input
+                type="text"
+                bind:value={tagInput}
                 onkeydown={handleTagInput}
                 placeholder={newTags.length === 0 ? (i18n.currentLang === 'de' ? 'Tag hinzufügen...' : 'Add tag...') : ''}
-                class="flex-1 bg-transparent min-w-[80px] text-sm text-white placeholder-neutral-500 focus:outline-none outline-none border-none focus:ring-0 ring-0 shadow-none p-0 m-0" 
+                class="flex-1 bg-transparent min-w-[80px] text-sm text-white placeholder-neutral-500 focus:outline-none outline-none border-none focus:ring-0 ring-0 shadow-none p-0 m-0"
               />
             </div>
           </div>
-          
+
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] uppercase font-black tracking-widest text-neutral-500 flex items-center gap-1.5"><FileText size={12}/> {i18n.currentLang === 'de' ? 'Notizen' : 'Notes'}</label>
             <textarea bind:value={newNotes} rows="3" class="w-full bg-black/40 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50 resize-none"></textarea>
@@ -569,7 +604,7 @@
 
       <div class="flex flex-col gap-2">
         {#snippet todoItem(todo: Todo)}
-          <div 
+          <div
             class="group flex flex-col bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl transition-all relative {todo.completed ? 'opacity-50' : ''} {todo.notes ? 'cursor-pointer' : ''}"
             onclick={() => { if (todo.notes) toggleExpand(todo.id); }}
             role="button"
@@ -584,7 +619,7 @@
                   <Circle size={18} />
                 {/if}
               </button>
-              
+
               <div class="flex-1 min-w-0 flex flex-col justify-center py-0.5">
                 <div class="flex items-start justify-between gap-2">
                   <span class="text-sm font-medium leading-tight {todo.completed ? 'line-through text-neutral-500' : 'text-slate-200'}">
@@ -594,18 +629,25 @@
                     {todo.title}
                   </span>
                 </div>
-                
+
                 {#if todo.dueDate || todo.tags.length > 0 || todo.list}
                   <div class="flex items-center gap-1.5 mt-1 text-[10px] text-neutral-500 font-medium truncate flex-wrap">
                     {#if todo.dueDate}
-                      <span class="flex items-center gap-0.5"><Calendar size={9} /> {i18n.formatDate(new Date(todo.dueDate), 'short')}</span>
+                      <span class="flex items-center gap-0.5">
+                        <Calendar size={9} />
+                        {i18n.formatDate(new Date(todo.dueDate), 'short')}
+                        {#if todo.dueDate.includes('T') && !todo.dueDate.includes('T00:00:00')}
+                          <span class="opacity-40 text-[8px] mx-0.5">&bull;</span>
+                          {i18n.formatTime(new Date(todo.dueDate))}
+                        {/if}
+                      </span>
                     {/if}
-                    
+
                     {#if todo.list}
                       {#if todo.dueDate}<span class="opacity-40 text-[8px]">&bull;</span>{/if}
                       <span>{todo.list}</span>
                     {/if}
-                    
+
                     {#if todo.tags.length > 0}
                       {#if todo.dueDate || todo.list}<span class="opacity-40 text-[8px]">&bull;</span>{/if}
                       <span class="text-neutral-400">
@@ -615,7 +657,7 @@
                   </div>
                 {/if}
               </div>
-              
+
               <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
                 {#if todo.notes}
                   <div class="text-neutral-500 { !todo.isAppleReminder ? 'group-hover:opacity-0 transition-opacity' : '' }">
@@ -629,7 +671,7 @@
                 {/if}
               </div>
             </div>
-            
+
             {#if expandedTodos[todo.id] && todo.notes}
               <div class="px-3 pb-3 pt-0 text-xs text-neutral-400 border-t border-white/5 mt-1 pt-2">
                 {todo.notes}
@@ -658,7 +700,7 @@
             {@render todoItem(todo)}
           {/each}
         {/if}
-        
+
         {#if todos.length === 0 && appleReminders.length === 0 && microsoftTodos.length === 0}
           <div class="flex flex-col items-center justify-center h-full text-center p-6 opacity-50">
             <Check size={48} class="mb-4 text-neutral-600" />
@@ -676,15 +718,26 @@
 	<div class="space-y-6">
 		<div class="flex items-center justify-between">
 			<span class="text-sm font-semibold text-white">{i18n.t.todoSettings.deleteCompleted}</span>
-			<select 
-				bind:value={integrations.autoDeleteHours}
-				class="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-blue-500/50"
-			>
-				<option value={0}>{i18n.t.todoSettings.immediately}</option>
-				<option value={1}>{i18n.t.todoSettings.after1h}</option>
-				<option value={24}>{i18n.t.todoSettings.after24h}</option>
-				<option value={null}>{i18n.t.todoSettings.never}</option>
-			</select>
+			<CustomDropdown
+				bind:value={autoDeleteProxy.value}
+				options={[
+					{ value: '0', label: i18n.t.todoSettings.immediately },
+					{ value: '1', label: i18n.t.todoSettings.after1h },
+					{ value: '24', label: i18n.t.todoSettings.after24h },
+					{ value: 'null', label: i18n.t.todoSettings.never }
+				]}
+			/>
+		</div>
+
+		<div class="flex items-center justify-between mt-3">
+			<span class="text-sm font-semibold text-white">{i18n.t.todoSettings.sortSameDay}</span>
+			<CustomDropdown
+				bind:value={sortMethodProxy.value}
+				options={[
+					{ value: 'time', label: i18n.t.todoSettings.time },
+					{ value: 'priority', label: i18n.t.todoSettings.priority }
+				]}
+			/>
 		</div>
 
 		<hr class="border-white/5" />
@@ -692,11 +745,11 @@
 		<div class="flex items-center justify-between">
 			<span class="text-sm font-semibold text-white flex items-center gap-2">Apple Reminders</span>
 			{#if isLoggedIn}
-			<button 
+			<button
 				onclick={() => {
           integrations.apple = !integrations.apple;
           if (integrations.apple) fetchExternalReminders('apple');
-        }} 
+        }}
 				class="w-10 h-5 rounded-full transition-colors relative {integrations.apple ? 'bg-blue-500' : 'bg-neutral-600'}"
 			>
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.apple ? 'translate-x-5' : ''}"></div>
@@ -736,7 +789,7 @@
 				{#if showTutorialApple}
 					<div transition:slide class="bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-neutral-300 leading-relaxed">
 						<p class="mb-3 font-semibold text-white">{i18n.t.todoSettings.tutorialIntro}</p>
-						<p class="mb-2"><strong class="text-white">1.</strong> {i18n.t.todoSettings.tutorialStep1} <a href={shortcutUrlApple} target="_blank" class="text-blue-400 hover:underline">{i18n.t.todoSettings.installShortcut}</a></p>
+						<p class="mb-2"><strong class="text-white">1.</strong> {i18n.t.todoSettings.tutorialStep1} <a href={SHORTCUT_URL_APPLE} target="_blank" class="text-blue-400 hover:underline">{i18n.t.todoSettings.installShortcut}</a></p>
 						<p class="mb-2"><strong class="text-white">2.</strong> {i18n.t.todoSettings.tutorialStep2}</p>
 						<p><strong class="text-white">3.</strong> {i18n.t.todoSettings.tutorialStep3}</p>
 					</div>
@@ -747,11 +800,11 @@
 		<div class="flex items-center justify-between">
 			<span class="text-sm font-semibold text-white flex items-center gap-2">Microsoft To-Do</span>
 			{#if isLoggedIn}
-			<button 
+			<button
 				onclick={() => {
           integrations.microsoft = !integrations.microsoft;
           if (integrations.microsoft) fetchExternalReminders('microsoft');
-        }} 
+        }}
 				class="w-10 h-5 rounded-full transition-colors relative {integrations.microsoft ? 'bg-blue-500' : 'bg-neutral-600'}"
 			>
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.microsoft ? 'translate-x-5' : ''}"></div>

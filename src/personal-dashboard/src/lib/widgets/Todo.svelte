@@ -124,11 +124,9 @@
   const userId = $derived($page.data.session?.user?.id || id);
   
   let globalAppleUrlId = $state<string | null>(null);
+  
   const appleUrlId = $derived(globalAppleUrlId || userId);
-  
   const endpointUrlApple = $derived(`https://dashboard.paul-simon.dev/post-reminders/${appleUrlId}`);
-  
-  const shortcutUrlApple = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
 
   async function saveGlobalAppleUrlId(urlId: string) {
     globalAppleUrlId = urlId;
@@ -148,19 +146,47 @@
     }
   }
 
+  function rotateUrl() {
+    saveGlobalAppleUrlId(crypto.randomUUID());
+    appleReminders = [];
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(`todo-apple-cache-global`);
+    }
+  }
+
+  let appleUrlIdLoaded = $state(false);
+
+  $effect(() => {
+    const secretsLoaded = getSecretsLoaded ? getSecretsLoaded() : true;
+    if (secretsLoaded && !appleUrlIdLoaded && typeof localStorage !== 'undefined') {
+        const secrets = getSecrets();
+        let foundUrlId = secrets['apple_reminders_global']?.urlId;
+        
+        if (!foundUrlId) {
+            foundUrlId = localStorage.getItem(`apple-reminders-url-global`);
+        }
+        
+        if (foundUrlId) {
+            globalAppleUrlId = foundUrlId;
+            // Sync up if it's missing in secrets but we have it locally
+            if (!secrets['apple_reminders_global']?.urlId && isLoggedIn) {
+                saveGlobalAppleUrlId(foundUrlId);
+            }
+        } else {
+            saveGlobalAppleUrlId(crypto.randomUUID());
+        }
+        appleUrlIdLoaded = true;
+    }
+  });
+
+  const shortcutUrlApple = 'https://www.icloud.com/shortcuts/df2447788587455fab2be8b8b4833dc6';
+
   function copyUrl() {
     navigator.clipboard.writeText(endpointUrlApple);
     copiedApple = true;
     setTimeout(() => copiedApple = false, 2000);
   }
 
-  function rotateUrl() {
-    saveGlobalAppleUrlId(crypto.randomUUID());
-    
-    // Immediately fetch with new URL (will be empty) and clear cache
-    appleReminders = [];
-    localStorage.removeItem(`todo-apple-cache-global`);
-  }
 
   // External Reminders Integration
   let appleReminders = $state<Todo[]>([]);
@@ -265,33 +291,11 @@
         const parsed = JSON.parse(intCache);
         integrations = { ...integrations, ...parsed };
         
-        // Handle migration of appleUrlId if it exists in the old integrations
-        if (parsed.appleUrlId && !localStorage.getItem(`apple-reminders-url-global`)) {
-           localStorage.setItem(`apple-reminders-url-global`, parsed.appleUrlId);
-        }
+
       } catch(e) {}
     }
     
-    // Load Global Apple URL ID
-    const loadGlobalAppleUrlId = () => {
-        const secrets = getSecrets();
-        let foundUrlId = secrets['apple_reminders_global']?.urlId;
-        
-        if (!foundUrlId) {
-            foundUrlId = localStorage.getItem(`apple-reminders-url-global`);
-        }
-        
-        if (foundUrlId) {
-            globalAppleUrlId = foundUrlId;
-            // Sync up if it's missing in secrets but we have it locally
-            if (!secrets['apple_reminders_global']?.urlId && isLoggedIn) {
-                saveGlobalAppleUrlId(foundUrlId);
-            }
-        } else {
-            saveGlobalAppleUrlId(crypto.randomUUID());
-        }
-    };
-    loadGlobalAppleUrlId();
+
 
     const cacheApple = localStorage.getItem(`todo-apple-cache-global`);
     if (cacheApple) {

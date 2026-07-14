@@ -11,7 +11,7 @@ export const GET = async ({ url, locals: { supabase } }) => {
       token_hash,
       type,
     });
-    
+
     if (!error) {
       throw redirect(303, `/${next.slice(1)}`);
     }

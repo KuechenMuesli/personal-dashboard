@@ -243,7 +243,7 @@
         {:else}
         <div class="{isFullscreen ? 'w-full h-full' : 'max-w-5xl w-full h-full max-h-[850px]'} flex flex-col md:flex-row gap-4 sm:gap-6 transition-all duration-300">
         
-        <div class="{isFullscreen ? 'flex-1 bg-neutral-900/80 rounded-none border-none' : 'flex-none h-60 md:flex-1 md:h-auto bg-neutral-900/80 border border-white/10 rounded-[2rem]'} overflow-hidden flex flex-col min-h-0 shadow-2xl transition-all duration-300">
+        <div class="{isFullscreen ? 'flex-1 bg-neutral-900/80 rounded-none border-none' : 'flex-none h-32 md:flex-1 md:h-auto bg-neutral-900/80 border border-white/10 rounded-[2rem]'} overflow-hidden flex flex-col min-h-0 shadow-2xl transition-all duration-300">
            <div class="h-14 border-b border-white/5 bg-black/20 flex items-center px-4 sm:px-6 gap-3 shrink-0">
                {#if content.type.startsWith('image/')}
                    <ImageIcon size={18} class="text-neutral-500 shrink-0" />
@@ -273,10 +273,10 @@
                {#if !isFullscreen && (content.type.startsWith('image/') || isText || isMarkdown)}
                <button 
                    onclick={() => isFullscreen = true}
-                   class="md:hidden w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-white/5 transition-all"
+                   class="md:hidden w-full h-full flex flex-row items-center justify-center gap-3 hover:bg-white/5 transition-all"
                >
-                   <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center border border-white/10 shadow-lg">
-                       <Maximize size={24} class="text-white" />
+                   <div class="w-10 h-10 shrink-0 rounded-full bg-white/10 flex items-center justify-center border border-white/10 shadow-lg">
+                       <Maximize size={18} class="text-white" />
                    </div>
                    <span class="text-sm text-neutral-300 font-bold tracking-wide">Show Content</span>
                </button>
@@ -294,13 +294,13 @@
                            <pre class="m-0 bg-transparent"><code bind:this={codeElement} class="text-sm sm:text-base !bg-transparent !p-0 block whitespace-pre-wrap break-words">{decodedText}</code></pre>
                        </div>
                    {:else}
-                       <div class="flex flex-col items-center justify-center gap-4 text-center w-full h-full">
-                           <div class="w-20 h-20 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-neutral-500">
-                               <FileIcon size={40} />
+                       <div class="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 text-left sm:text-center w-full h-full">
+                           <div class="w-10 h-10 sm:w-20 sm:h-20 shrink-0 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-neutral-500">
+                               <FileIcon class="w-5 h-5 sm:w-10 sm:h-10" />
                            </div>
-                           <div>
-                               <span class="block text-lg font-bold text-white mb-1">{content.name}</span>
-                               <span class="text-xs text-neutral-500 uppercase tracking-widest">{content.type}</span>
+                           <div class="flex flex-col">
+                               <span class="block text-sm sm:text-lg font-bold text-white mb-0.5 sm:mb-1 truncate max-w-[200px]">{content.name}</span>
+                               <span class="text-[10px] sm:text-xs text-neutral-500 uppercase tracking-widest">{content.type}</span>
                            </div>
                        </div>
                    {/if}
@@ -312,7 +312,7 @@
         <div class="w-full md:w-80 shrink-0 flex flex-col gap-4 sm:gap-6 min-h-0">
             <div class="flex-grow bg-neutral-900/80 border border-white/10 rounded-[2rem] p-6 sm:p-8 flex flex-col items-center justify-center gap-6 shadow-2xl min-h-0 overflow-y-auto">
                 <div class="p-4 sm:p-5 bg-black/40 rounded-[2rem] border border-white/5 shadow-inner shrink-0 flex items-center justify-center">
-                    <img src={qrUrl} alt="QR Code" class="w-32 h-32 sm:w-40 sm:h-40 object-contain opacity-90 mix-blend-screen" />
+                    <img src={qrUrl} alt="QR Code" class="w-24 h-24 sm:w-40 sm:h-40 object-contain opacity-90 mix-blend-screen" />
                 </div>
                 
                 <div class="text-center space-y-3 w-full shrink-0 flex flex-col items-center">

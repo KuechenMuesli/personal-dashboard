@@ -78,6 +78,15 @@
     if (historyIndex > 0) {
       historyIndex--;
       applyHistoryState();
+    } else if (historyIndex === 0) {
+      historyIndex--;
+      const activeCanvas = isFullscreen ? dialogCanvas : canvas;
+      if (activeCanvas) {
+        const ctx = activeCanvas.getContext("2d")!;
+        const dpr = window.devicePixelRatio || 1;
+        ctx.clearRect(0, 0, activeCanvas.width / dpr, activeCanvas.height / dpr);
+        lastDataURL = null;
+      }
     }
   }
 
@@ -519,7 +528,7 @@
 					</div>
 				</div>
 				<div class="flex items-center gap-1.5">
-					<button onclick={undo} disabled={historyIndex <= 0} class="p-1 text-neutral-500 hover:text-white disabled:opacity-20 transition-colors"><Undo size={14} strokeWidth={2.5} /></button>
+					<button onclick={undo} disabled={historyIndex < 0} class="p-1 text-neutral-500 hover:text-white disabled:opacity-20 transition-colors"><Undo size={14} strokeWidth={2.5} /></button>
 					<button onclick={redo} disabled={historyIndex >= history.length - 1} class="p-1 text-neutral-500 hover:text-white disabled:opacity-20 transition-colors"><Redo size={14} strokeWidth={2.5} /></button>
 					<button onclick={() => handleCopy()} class="p-1 text-neutral-500 hover:text-white transition-colors" title="Copy"><Copy size={14} strokeWidth={2.5} /></button>
 					<button onclick={openExpanded} class="p-1 text-neutral-500 hover:text-white transition-colors" title="Fullscreen"><Maximize2 size={14} strokeWidth={2.5} /></button>
@@ -571,7 +580,7 @@
 		<header class="flex items-center justify-between border-b border-black/30 p-4 bg-black/20 shrink-0">
 			<div class="flex items-center gap-4">
 				<div class="flex bg-black/30 rounded-lg p-1 border border-black/20">
-					<button class="p-1.5 rounded-md hover:bg-black/40 text-neutral-400 hover:text-white disabled:opacity-20 transition-colors" onclick={undo} disabled={historyIndex <= 0}><Undo size={16} strokeWidth={2.5}/></button>
+					<button class="p-1.5 rounded-md hover:bg-black/40 text-neutral-400 hover:text-white disabled:opacity-20 transition-colors" onclick={undo} disabled={historyIndex < 0}><Undo size={16} strokeWidth={2.5}/></button>
 					<button class="p-1.5 rounded-md hover:bg-black/40 text-neutral-400 hover:text-white disabled:opacity-20 transition-colors" onclick={redo} disabled={historyIndex >= history.length - 1}><Redo size={16} strokeWidth={2.5}/></button>
 				</div>
 				<div class="flex bg-black/30 rounded-lg p-1 border border-black/20">

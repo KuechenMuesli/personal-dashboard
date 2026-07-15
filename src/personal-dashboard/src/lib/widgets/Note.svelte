@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getContext } from 'svelte';
+  import { getContext, onMount } from 'svelte';
   import { i18n } from '$lib/i18n/i18n.svelte';
   import { marked } from 'marked';
   import { Plus, X, GripHorizontal, PenLine, Eye } from 'lucide-svelte';
@@ -27,6 +27,21 @@
   let isLoaded = $state(false);
 
   $effect(() => {
+     if (!isLoaded) return;
+     const currentContent = content;
+     const currentMode = isMarkdownMode;
+     
+     if (saveTimeout) clearTimeout(saveTimeout);
+     saveTimeout = setTimeout(() => {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(`note-settings-${id}`, currentContent);
+            localStorage.setItem(`note-mode-${id}`, currentMode ? 'true' : 'false');
+            saveToCloud();
+        }
+     }, 500);
+  });
+
+  $effect(() => {
     const secrets = getSecrets();
     const secretsLoaded = getSecretsLoaded ? getSecretsLoaded() : true;
     
@@ -44,19 +59,20 @@
         }
       }
 
+      isLoaded = true;
+    }
+  });
+
+  onMount(() => {
       const handleNoteUpdate = (e: any) => {
         if (e.detail.id === id) {
            content = e.detail.content;
         }
       };
       window.addEventListener('note-updated', handleNoteUpdate);
-      
-      isLoaded = true;
-      
       return () => {
          window.removeEventListener('note-updated', handleNoteUpdate);
       };
-    }
   });
 
   function saveToCloud() {
@@ -65,16 +81,6 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ service: id, key: { content, isMarkdownMode } })
     }).catch(console.error);
-  }
-
-  function handleInput(e: Event) {
-    const target = e.target as HTMLTextAreaElement;
-    content = target.value;
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
-      localStorage.setItem(`note-settings-${id}`, content);
-      saveToCloud();
-    }, 500);
   }
 
   function handleKeyDown(e: KeyboardEvent) {
@@ -162,7 +168,8 @@
 			</div>
 
 			<button
-					onclick={handleDelete}
+					onmousedown={(e) => { e.stopPropagation(); handleDelete(); }}
+					ontouchstart={(e) => { e.stopPropagation(); handleDelete(); }}
 					title="Delete note"
 					class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-red-500/20 hover:text-red-400 relative z-10"
 			>
@@ -177,8 +184,7 @@
 				</div>
 			{:else}
         <textarea
-          value={content}
-          oninput={handleInput}
+          bind:value={content}
           placeholder={i18n.t.w.note.placeholder}
           spellcheck="false"
           class="h-full w-full resize-none border-none bg-transparent p-3.5 font-mono text-[13px] leading-relaxed tracking-tight text-slate-200 outline-none placeholder:text-neutral-600

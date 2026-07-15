@@ -188,6 +188,37 @@ legal: {
 
   // Widget specific strings
   w: {
+    assistant: {
+      title: 'Assistant Settings',
+      authMode: 'AI Engine',
+      modeAiStudio: 'AI Studio (API Key)',
+      modeVertex: 'Google Cloud (Vertex AI)',
+      apiKeyTitle: 'Gemini API Key',
+      apiKeyPlaceholder: 'AIzaSy...',
+      apiKeyHelp: 'Get your free key from ',
+      saTitle: 'Service Account JSON',
+      saPlaceholder: 'Paste JSON here...',
+      saHelp: 'Paste your Google Cloud Service Account JSON file here. It must have Vertex AI User permissions.',
+      locationTitle: 'GCP Location',
+      locationPlaceholder: 'us-central1',
+      howToGetThis: 'How to get this?',
+      hideInstructions: 'Hide instructions',
+      instructionTitle: 'How to generate a Service Account JSON:',
+      instructionProject: 'Go to Google Cloud Console and create a project.',
+      instructionApi: 'Go to Vertex AI API and click Enable.',
+      instructionIam: 'Go to IAM & Admin > Service Accounts.',
+      instructionRole: 'Create a new service account and grant it the Vertex AI User role.',
+      instructionKey: 'Click on the new service account, go to Keys > Add Key > Create new key (JSON).',
+      instructionCopy: 'Open the downloaded file, copy all of its text, and paste it below.',
+      askPlaceholder: 'Ask about your dashboard...',
+      typing: 'Typing...',
+      helpToday: 'How can I help you today?',
+      taskCreated: 'Task Created',
+      noteCreated: 'Note Created',
+      fetchingNotes: 'Searching notes...',
+      fetchingAgenda: 'Fetching calendar & tasks...',
+      noteUpdated: 'Note Updated'
+    },
 common: {
       name: 'Name',
       cancel: 'Cancel',

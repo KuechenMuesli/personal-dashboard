@@ -190,6 +190,37 @@ legal: {
 
   // Widget specific strings
   w: {
+    assistant: {
+      title: 'Assistenten Einstellungen',
+      authMode: 'KI Engine',
+      modeAiStudio: 'AI Studio (API Key)',
+      modeVertex: 'Google Cloud (Vertex AI)',
+      apiKeyTitle: 'Gemini API Key',
+      apiKeyPlaceholder: 'AIzaSy...',
+      apiKeyHelp: 'Hol dir deinen kostenlosen Key von ',
+      saTitle: 'Service Account JSON',
+      saPlaceholder: 'JSON hier einfügen...',
+      saHelp: 'Füge deine Google Cloud Service Account JSON hier ein. Sie benötigt Vertex AI User Berechtigungen.',
+      locationTitle: 'GCP Location',
+      locationPlaceholder: 'us-central1',
+      howToGetThis: 'Wie bekomme ich das?',
+      hideInstructions: 'Anleitung ausblenden',
+      instructionTitle: 'So generierst du eine Service Account JSON:',
+      instructionProject: 'Gehe zur Google Cloud Console und erstelle ein Projekt.',
+      instructionApi: 'Gehe zur Vertex AI API und klicke auf Aktivieren.',
+      instructionIam: 'Gehe zu IAM & Verwaltung > Dienstkonten.',
+      instructionRole: 'Erstelle ein neues Dienstkonto und weise die Rolle Vertex AI-Nutzer zu.',
+      instructionKey: 'Klicke auf das Konto, gehe zu Schlüssel > Schlüssel hinzufügen > Neuen Schlüssel erstellen (JSON).',
+      instructionCopy: 'Öffne die heruntergeladene Datei, kopiere den gesamten Text und füge ihn unten ein.',
+      askPlaceholder: 'Frag etwas über dein Dashboard...',
+      typing: 'Tippt...',
+      helpToday: 'Wie kann ich dir heute helfen?',
+      taskCreated: 'Aufgabe erstellt',
+      noteCreated: 'Notiz erstellt',
+      fetchingNotes: 'Notizen werden durchsucht...',
+      fetchingAgenda: 'Kalender & Todos werden durchsucht...',
+      noteUpdated: 'Notiz aktualisiert'
+    },
 common: {
       name: 'Name',
       cancel: 'Abbrechen',

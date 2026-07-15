@@ -64,6 +64,28 @@
   // Expanded State
   let expandedTodos = $state<Record<string, boolean>>({});
 
+  function loadTodosFromStorage() {
+      const saved = localStorage.getItem(`todo-settings-global`);
+      if (saved) {
+        try {
+          todos = JSON.parse(saved).map((t: any) => ({
+            ...t,
+            tags: t.tags || [],
+            notes: t.notes || '',
+            priority: t.priority || null
+          }));
+        } catch (e) {}
+      }
+  }
+
+  onMount(() => {
+     const handleTodoUpdate = () => {
+         loadTodosFromStorage();
+     };
+     window.addEventListener('todo-updated', handleTodoUpdate);
+     return () => window.removeEventListener('todo-updated', handleTodoUpdate);
+  });
+
   $effect(() => {
     if (!isLoaded) {
       const secrets = getSecrets();

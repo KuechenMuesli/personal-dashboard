@@ -941,6 +941,7 @@
 								height={sw.height}
 								isEditing={isEditing}
 								bind:showSettings={sw.showSettings}
+								onDelete={() => deleteWidget(sw.id)}
 								onHeightChange={(newHeight) => updateWidgetHeight(sw.id, newHeight)}
 								onDragStart={(e) => startInteraction(e, sw.id, 'drag')}
 								onResizeStart={(e) => startInteraction(e, sw.id, 'resize')}

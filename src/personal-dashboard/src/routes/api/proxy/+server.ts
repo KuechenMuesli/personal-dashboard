@@ -13,12 +13,14 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
         "https://api.duckduckgo.com/",
         "https://query1.finance.yahoo.com/",
         "https://query2.finance.yahoo.com/",
+        "https://generativelanguage.googleapis.com/",
         "https://api.parcel.app/external", // For Parcel (GET & POST)
         "https://api.17track.net/", // For Parcel fallback
         "https://usetrmnl.com/", // For TRMNL
         "https://trmnl.com/", // For TRMNL alternative
         "https://de.wikipedia.org/w/api.php", // For DuckDuckGo fallback
         "https://en.wikipedia.org/w/api.php",
+        "https://translate.googleapis.com/", // For Searchbar translation
         "https://translate.googleapis.com/", // For Searchbar translation
     ];
 
@@ -28,6 +30,11 @@ async function handleProxy(request: Request, url: URL, fetch: any) {
             isAllowed = true;
             break;
         }
+    }
+    
+    // Also allow any Vertex AI endpoint
+    if (targetUrl.includes('-aiplatform.googleapis.com/')) {
+        isAllowed = true;
     }
 
     // Allow calendar feeds (typically ending in .ics or containing "calendar")

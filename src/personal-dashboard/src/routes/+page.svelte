@@ -34,6 +34,7 @@
     clipboardSync:    { name: i18n.t.widgets.clipboardSync || 'Clipboard Sync', load: () => import("$lib/widgets/ClipboardSync.svelte"), defaultSize: { width: 2, height: 3 }, hasSettings: false, minSize: { width: null, height: null }, maxSize: { width: null, height: null }, maxCount: 1 },
     workspaces:       { name: 'Workspaces', load: () => import("$lib/widgets/Workspaces.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: true, minSize: { width: 1, height: 1 }, maxSize: { width: 2, height: 2 }, maxCount: 1 },
     loginPrompt:      { name: 'Login', load: () => import("$lib/widgets/LoginPrompt.svelte"), defaultSize: { width: 2, height: 1 }, hasSettings: false, systemOnly: true, unremovable: true, fixedSize: true, maxCount: 1 },
+    assistant:        { name: 'AI Assistant', load: () => import("$lib/widgets/Assistant.svelte"), defaultSize: { width: 3, height: 5 }, hasSettings: true, minSize: { width: 2, height: 3 }, maxSize: { width: null, height: null } },
   });
 
   const STORAGE_KEY = "dashboard-layout";
@@ -217,6 +218,27 @@
     requestAnimationFrame(() => {
       isMounted = true;
     });
+
+    window.addEventListener('dashboard-add-widget', ((e: CustomEvent) => {
+      const { id, type, content } = e.detail;
+      const config = widgets[type as keyof typeof widgets];
+      const { width, height } = config.defaultSize;
+      const { x, y } = findFirstAvailableSpace(width, height);
+      
+      if (type === 'note' && content) {
+          localStorage.setItem(`note-settings-${id}`, content);
+      }
+      
+      const newWidget = {
+        id: id as any,
+        type, x, y, width, height,
+        showSettings: false
+      };
+  
+      dashboardLayout.push(newWidget);
+      save();
+    }) as EventListener);
+
 
     const hasLocal = !!localStorage.getItem(STORAGE_KEY);
     const isDefault = localStorage.getItem('dashboard-is-default') === 'true';

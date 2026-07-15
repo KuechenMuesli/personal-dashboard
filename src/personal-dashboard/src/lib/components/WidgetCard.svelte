@@ -26,7 +26,7 @@
   {transparent ? 'overflow-visible' : 'overflow-hidden rounded-xl border border-black/40 bg-neutral-800 shadow-xl'}
   {padding ? 'p-3 sm:p-4' : ''}">
 
-	{#if !isConfigured}
+	{#if !isConfigured && !showSettings}
 		<button
 				onclick={() => showSettings = true}
 				class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors"

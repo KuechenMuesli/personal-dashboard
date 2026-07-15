@@ -75,8 +75,13 @@
         const saved = localStorage.getItem(`todo-settings-global`) || localStorage.getItem(`todo-settings-${id}`);
         if (saved) {
           try {
-            todos = JSON.parse(saved);
-          } catch(e) {}
+            todos = JSON.parse(saved).map((t: any) => ({
+              ...t,
+              tags: t.tags || [],
+              notes: t.notes || '',
+              priority: t.priority || null
+            }));
+          } catch (e) {}
         }
       }
 

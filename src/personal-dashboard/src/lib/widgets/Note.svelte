@@ -43,7 +43,19 @@
           isMarkdownMode = savedMode === 'true';
         }
       }
+
+      const handleNoteUpdate = (e: any) => {
+        if (e.detail.id === id) {
+           content = e.detail.content;
+        }
+      };
+      window.addEventListener('note-updated', handleNoteUpdate);
+      
       isLoaded = true;
+      
+      return () => {
+         window.removeEventListener('note-updated', handleNoteUpdate);
+      };
     }
   });
 

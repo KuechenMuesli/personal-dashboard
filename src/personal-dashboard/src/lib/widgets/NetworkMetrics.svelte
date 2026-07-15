@@ -24,11 +24,11 @@
   });
 
   let is1x1 = $derived(width === 1 && height === 1);
-  let isWide = $derived(width > 1 && height === 1);
+  let isWide = $derived(width > 1 && height <= 2);
 </script>
 
 <WidgetCard bind:showSettings={showSettings} isConfigured={true} padding={false}>
-	<div class="flex h-full w-full flex-col justify-center p-2 sm:p-3">
+	<div class="flex h-full w-full flex-col justify-center p-1 sm:p-2">
 
 		{#if is1x1}
 			<div class="flex w-full items-center justify-center">
@@ -42,7 +42,7 @@
 
 		{:else if isWide}
 			<div class="flex h-full w-full flex-row items-center justify-around px-1">
-				<div class="flex flex-col items-center gap-1">
+				<div class="flex flex-col items-center gap-0">
 					<div class="flex items-center gap-1 text-neutral-500">
 						<Activity size={10} strokeWidth={2.5} />
 						<span class="text-[9px] font-black uppercase tracking-widest">{i18n.t.w.network.load}</span>
@@ -52,7 +52,7 @@
       </span>
 				</div>
 
-				<div class="flex flex-col items-center gap-1">
+				<div class="flex flex-col items-center gap-0">
 					<div class="flex items-center gap-1 text-neutral-500">
 						<AppWindow size={10} strokeWidth={2.5} />
 						<span class="text-[9px] font-black uppercase tracking-widest">{i18n.t.w.network.dom}</span>
@@ -62,7 +62,7 @@
       </span>
 				</div>
 
-				<div class="flex flex-col items-center gap-1">
+				<div class="flex flex-col items-center gap-0">
 					<div class="flex items-center gap-1 text-neutral-500">
 						<Server size={10} strokeWidth={2.5} />
 						<span class="text-[9px] font-black uppercase tracking-widest">{i18n.t.w.network.ttfb}</span>
@@ -74,9 +74,9 @@
 			</div>
 
 		{:else}
-			<div class="flex flex-col gap-0 divide-y divide-black/20 overflow-hidden rounded-lg bg-black/20 border border-black/10">
+			<div class="flex w-full h-full flex-col divide-y divide-black/20 overflow-hidden rounded-lg bg-black/20 border border-black/10">
 
-				<div class="flex items-center justify-between px-3 py-2 sm:py-2.5">
+				<div class="flex flex-1 items-center justify-between px-2 sm:px-3 py-1">
 					<div class="flex items-center gap-1.5 text-neutral-500">
 						<Activity size={12} strokeWidth={2.5} />
 						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">{i18n.t.w.network.totalLoad}</span>
@@ -86,7 +86,7 @@
       </span>
 				</div>
 
-				<div class="flex items-center justify-between px-3 py-2 sm:py-2.5">
+				<div class="flex flex-1 items-center justify-between px-2 sm:px-3 py-1">
 					<div class="flex items-center gap-1.5 text-neutral-500">
 						<AppWindow size={12} strokeWidth={2.5} />
 						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">{i18n.t.w.network.domReady}</span>
@@ -96,7 +96,7 @@
       </span>
 				</div>
 
-				<div class="flex items-center justify-between px-3 py-2 sm:py-2.5">
+				<div class="flex flex-1 items-center justify-between px-2 sm:px-3 py-1">
 					<div class="flex items-center gap-1.5 text-neutral-500">
 						<Server size={12} strokeWidth={2.5} />
 						<span class="text-[9px] font-black uppercase tracking-widest mt-0.5">{i18n.t.w.network.ttfb}</span>

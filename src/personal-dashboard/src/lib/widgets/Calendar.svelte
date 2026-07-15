@@ -84,6 +84,10 @@
 
   const upcomingEvents = $derived(() => {
     const now = new Date();
+    const dayOfWeek = now.getDay();
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+    const endOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 23, 59, 59, 999);
+    
     let all: CalendarEvent[] = [];
     calendarsData.forEach(cal => {
       cal.events.forEach(ev => {
@@ -91,9 +95,8 @@
       });
     });
     return all
-      .filter(e => e.end > now)
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 5);
+      .filter(e => e.end > now && e.start <= endOfWeek)
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
   });
 
   const todayEvents = $derived(() => {

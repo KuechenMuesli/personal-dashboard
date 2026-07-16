@@ -416,17 +416,17 @@ The current date and time is: ${new Date().toISOString()}.
 </script>
 
 <WidgetCard bind:showSettings={showSettings} isConfigured={!!apiKey || !!serviceAccountJson}>
-  <div class="flex flex-col h-full rounded-lg overflow-hidden" style="background-color: var(--theme-card-bg, rgba(0,0,0,0.1)); border: 1px solid var(--theme-card-border, rgba(255,255,255,0.05));">
+  <div class="flex flex-col h-full rounded-lg overflow-hidden bg-black/10 border border-white/5">
     <div bind:this={chatContainer} class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
       {#if messages.filter(m => m.role !== 'system').length === 0}
-         <div class="m-auto text-center flex flex-col items-center gap-2" style="color: var(--theme-text-secondary, #a3a3a3);">
+         <div class="m-auto text-center flex flex-col items-center gap-2 text-neutral-400">
            <Bot size={32} opacity={0.5} />
            <p class="text-sm">{i18n.t.w.assistant.helpToday}</p>
          </div>
       {/if}
       {#each messages.filter(m => m.role !== 'system' && m.parts && !m.parts.some(p => p.functionResponse)) as msg}
         <div class="flex gap-2 {msg.role === 'user' ? 'flex-row-reverse' : ''}">
-          <div class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style="background-color: var(--theme-card-bg, rgba(0,0,0,0.3)); color: var(--theme-text-primary, #fff);">
+          <div class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-black/30 text-white">
             {#if msg.role === 'user'} <User size={12} /> {:else} <Bot size={12} /> {/if}
           </div>
           <div class="max-w-[85%] flex flex-col gap-2">
@@ -435,7 +435,7 @@ The current date and time is: ${new Date().toISOString()}.
                   {#if part.text}
                      <div 
                         use:attachCopyButtons={part.text}
-                        class="rounded-lg p-2.5 text-sm {msg.role === 'user' ? 'whitespace-pre-wrap' : 'prose prose-invert prose-sm prose-p:my-1 prose-pre:my-1 prose-headings:my-2 max-w-none break-words'}" style="{msg.role === 'user' ? 'background-color: var(--theme-card-bg, rgba(255,255,255,0.1)); border: 1px solid var(--theme-card-border, rgba(255,255,255,0.05)); color: var(--theme-text-primary, #fff);' : 'background-color: var(--theme-card-bg, rgba(0,0,0,0.3)); color: var(--theme-text-primary, #fff);'}">
+                        class="rounded-lg p-2.5 text-sm assistant-prose {msg.role === 'user' ? 'whitespace-pre-wrap bg-white/10 border border-white/5 text-white' : 'prose prose-invert prose-sm prose-p:my-1 prose-pre:my-1 prose-headings:my-2 max-w-none break-words bg-black/30 text-white'}">
                         {#if msg.role === 'user'}
                            {part.text}
                         {:else}
@@ -444,32 +444,32 @@ The current date and time is: ${new Date().toISOString()}.
                      </div>
                   {/if}
                   {#if part.functionCall}
-                     <div class="rounded-lg border p-3 text-sm flex flex-col gap-1.5 shadow-sm" style="background-color: var(--theme-card-bg, rgba(0,0,0,0.2)); border-color: var(--theme-card-border, rgba(255,255,255,0.05)); color: var(--theme-text-primary, #fff);">
+                     <div class="rounded-lg border border-white/5 bg-black/20 p-3 text-sm flex flex-col gap-1.5 shadow-sm text-white">
                        {#if part.functionCall.name === 'add_todo'}
-                          <div class="flex items-center gap-2 font-medium text-xs uppercase tracking-wider" style="color: var(--theme-text-secondary, #a3a3a3);">
+                          <div class="flex items-center gap-2 font-medium text-xs uppercase tracking-wider text-neutral-500">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
                             {i18n.t.w.assistant.taskCreated}
                           </div>
                           <div class="flex items-start gap-2 mt-1">
-                            <div class="w-4 h-4 rounded-full border shrink-0 mt-0.5" style="border-color: var(--theme-text-secondary, #a3a3a3);"></div>
-                            <div>
-                               <span style="color: var(--theme-text-primary, #fff);">{part.functionCall.args.title}</span>
-                               {#if part.functionCall.args.dueDate}
-                                  <div class="text-xs mt-0.5 opacity-80" style="color: var(--theme-accent, #3b82f6);">{part.functionCall.args.dueDate.replace('T', ' ')}</div>
+                             <div class="w-4 h-4 rounded-full border border-neutral-400 shrink-0 mt-0.5"></div>
+                             <div>
+                                <span class="text-white">{part.functionCall.args.title}</span>
+                                {#if part.functionCall.args.dueDate}
+                                   <div class="text-xs mt-0.5 opacity-80 text-blue-500">{part.functionCall.args.dueDate.replace('T', ' ')}</div>
                                {/if}
                             </div>
                           </div>
                        {:else if part.functionCall.name === 'create_note' || part.functionCall.name === 'update_note'}
-                          <div class="flex items-center gap-2 font-medium text-xs uppercase tracking-wider" style="color: var(--theme-text-secondary, #a3a3a3);">
+                          <div class="flex items-center gap-2 font-medium text-xs uppercase tracking-wider text-neutral-500">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                             {part.functionCall.name === 'create_note' ? i18n.t.w.assistant.noteCreated : i18n.t.w.assistant.noteUpdated}
                           </div>
-                          <div class="rounded p-2 text-xs mt-1 max-h-24 overflow-hidden relative" style="background-color: var(--theme-card-bg, rgba(0,0,0,0.2)); color: var(--theme-text-secondary, #a3a3a3);">
+                          <div class="rounded p-2 text-xs mt-1 max-h-24 overflow-hidden relative bg-black/20 text-neutral-400">
                              {part.functionCall.args.content}
-                             <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t to-transparent" style="--tw-gradient-from: var(--theme-card-bg, rgba(0,0,0,0.2));"></div>
+                             <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent"></div>
                           </div>
                        {:else if part.functionCall.name === 'get_agenda' || part.functionCall.name === 'get_notes'}
-                          <div class="flex items-center gap-2 font-medium text-xs uppercase tracking-wider" style="color: var(--theme-text-secondary, #a3a3a3);">
+                          <div class="flex items-center gap-2 font-medium text-xs uppercase tracking-wider text-neutral-400">
                             {#if part.functionCall.name === 'get_agenda'}
                               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                               {i18n.t.w.assistant.fetchingAgenda}
@@ -488,14 +488,14 @@ The current date and time is: ${new Date().toISOString()}.
       {/each}
       {#if isLoading}
         <div class="flex gap-2">
-          <div class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style="background-color: var(--theme-card-bg, rgba(0,0,0,0.3));"><Bot size={12} color="var(--theme-text-primary, #fff)" /></div>
-          <div class="rounded-lg p-2.5 text-sm" style="background-color: var(--theme-card-bg, rgba(0,0,0,0.3)); color: var(--theme-text-secondary, #a3a3a3);">{i18n.t.w.assistant.typing}</div>
+          <div class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-black/30"><Bot size={12} class="text-white" /></div>
+          <div class="rounded-lg p-2.5 text-sm bg-black/30 text-neutral-400">{i18n.t.w.assistant.typing}</div>
         </div>
       {/if}
     </div>
-    <div class="p-2 border-t shrink-0" style="border-color: var(--theme-card-border, rgba(255,255,255,0.05));">
+    <div class="p-2 border-t border-white/5 shrink-0">
       <form onsubmit={(e) => { e.preventDefault(); sendMessage(); }} class="flex gap-2 relative">
-        <input type="text" bind:value={input} placeholder={i18n.t.w.assistant.askPlaceholder} class="w-full rounded-full pl-4 pr-10 py-2 text-sm focus:outline-none" style="background-color: var(--theme-card-bg, rgba(0,0,0,0.2)); border: 1px solid var(--theme-card-border, rgba(255,255,255,0.05)); color: var(--theme-text-primary, #fff);" />
+        <input type="text" bind:value={input} placeholder={i18n.t.w.assistant.askPlaceholder} class="w-full rounded-full pl-4 pr-10 py-2 text-sm focus:outline-none bg-black/20 border border-white/5 text-white" />
         <button type="submit" disabled={isLoading || !input.trim()} class="absolute right-1 top-1 bottom-1 w-8 flex items-center justify-center rounded-full bg-neutral-800 text-neutral-400 hover:bg-black/40 hover:text-white active:bg-black/60 transition-colors disabled:opacity-50 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-400">
           <Send size={14} />
         </button>
@@ -503,6 +503,24 @@ The current date and time is: ${new Date().toISOString()}.
     </div>
   </div>
 </WidgetCard>
+
+<style>
+  :global(.assistant-prose) { color: inherit !important; }
+  :global(.assistant-prose h1, .assistant-prose h2, .assistant-prose h3, .assistant-prose h4, .assistant-prose h5, .assistant-prose h6) { 
+    color: inherit !important; 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+  }
+  :global(.assistant-prose p, .assistant-prose ul, .assistant-prose ol, .assistant-prose li, .assistant-prose blockquote, .assistant-prose strong, .assistant-prose em, .assistant-prose a, .assistant-prose code, .assistant-prose pre) { 
+    color: inherit !important; 
+  }
+  :global(.assistant-prose a) { text-decoration: underline; opacity: 0.9; }
+  :global(.assistant-prose blockquote) { 
+    border-left-color: currentColor !important; 
+    opacity: 0.8; 
+  }
+  :global(.assistant-prose p) { margin-bottom: 0.75rem; }
+</style>
 
 <SettingsDialog title={i18n.t.w.assistant.title} bind:show={showSettings}>
   <div class="space-y-4">

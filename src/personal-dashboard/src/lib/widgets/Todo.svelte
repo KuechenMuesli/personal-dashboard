@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getContext, onMount, onDestroy } from 'svelte';
+  import { getContext, onMount, onDestroy, untrack } from 'svelte';
   import { slide } from 'svelte/transition';
   import { page } from '$app/stores';
   import { i18n } from '$lib/i18n/i18n.svelte';
@@ -168,7 +168,7 @@
 
   let globalAppleUrlId = $state<string | null>(null);
 
-  const appleUrlId = $derived(globalAppleUrlId || userId);
+  const appleUrlId = $derived(globalAppleUrlId || 'pending');
   const endpointUrlApple = $derived(`https://dashboard.paul-simon.dev/post-reminders/${appleUrlId}`);
 
   async function saveGlobalAppleUrlId(urlId: string) {
@@ -246,16 +246,19 @@
     else isFetchingMs = true;
 
     try {
-      if (type === 'apple') lastFetchedApple = Date.now();
-      else lastFetchedMs = Date.now();
-
       let url = '';
       if (type === 'apple') {
-        if (appleUrlId === 'pending') return;
-        url = `/post-reminders/${appleUrlId}`;
+        if (appleUrlId === 'pending') {
+          isFetchingApple = false;
+          return;
+        }
+        url = `/post-reminders/${appleUrlId}?t=${Date.now()}`;
       } else {
-        url = `/api/ms-todo`;
+        url = `/api/ms-todo?t=${Date.now()}`;
       }
+
+      if (type === 'apple') lastFetchedApple = Date.now();
+      else lastFetchedMs = Date.now();
 
       const res = await fetch(url, { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' });
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
@@ -359,17 +362,36 @@
     };
     window.addEventListener('cross-widget-todo-update', handleTodoUpdate as EventListener);
 
-    if (integrations.apple && appleUrlId !== 'pending') fetchExternalReminders('apple');
-    if (integrations.microsoft) fetchExternalReminders('microsoft');
+    return () => {
+      window.removeEventListener('cross-widget-todo-update', handleTodoUpdate as EventListener);
+    };
+  });
 
+  $effect(() => {
+    // Only track appleUrlId and integrations declaratively
+    if (integrations.apple && appleUrlId !== 'pending') {
+      untrack(() => {
+        const timeSinceLast = Date.now() - lastFetchedApple;
+        if (timeSinceLast > COOLDOWN_MS) fetchExternalReminders('apple');
+      });
+    }
+    if (integrations.microsoft) {
+      untrack(() => {
+        const timeSinceLast = Date.now() - lastFetchedMs;
+        if (timeSinceLast > COOLDOWN_MS) fetchExternalReminders('microsoft');
+      });
+    }
+  });
+
+  // Keep interval in onMount to prevent recreation
+  onMount(() => {
     refreshTimer = setInterval(() => {
       if (integrations.apple) fetchExternalReminders('apple');
       if (integrations.microsoft) fetchExternalReminders('microsoft');
-    }, COOLDOWN_MS);
+    }, 60 * 1000);
 
     return () => {
       if (refreshTimer) clearInterval(refreshTimer);
-      window.removeEventListener('cross-widget-todo-update', handleTodoUpdate as EventListener);
     };
   });
 

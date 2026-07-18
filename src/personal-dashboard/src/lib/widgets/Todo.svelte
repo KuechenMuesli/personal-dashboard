@@ -51,7 +51,6 @@
   let isLoaded = $state(false);
   let saveTimeout: ReturnType<typeof setTimeout>;
 
-  // New Todo Form State
   let showAddForm = $state(false);
   let newTitle = $state("");
   let newDueDate = $state(getTodayString());
@@ -61,7 +60,6 @@
   let newTags = $state<string[]>([]);
   let tagInput = $state("");
 
-  // Expanded State
   let expandedTodos = $state<Record<string, boolean>>({});
 
   function loadTodosFromStorage() {
@@ -79,11 +77,16 @@
   }
 
   onMount(() => {
-     const handleTodoUpdate = () => {
+     const handleTodoUpdate = (e?: Event) => {
+         if (e && (e as CustomEvent).detail?.source === id) return;
          loadTodosFromStorage();
      };
      window.addEventListener('todo-updated', handleTodoUpdate);
-     return () => window.removeEventListener('todo-updated', handleTodoUpdate);
+     window.addEventListener('todo-updated-internal', handleTodoUpdate);
+     return () => {
+         window.removeEventListener('todo-updated', handleTodoUpdate);
+         window.removeEventListener('todo-updated-internal', handleTodoUpdate);
+     };
   });
 
   $effect(() => {
@@ -91,7 +94,7 @@
       const secrets = getSecrets();
       if (secrets[GLOBAL_SERVICE_ID] && secrets[GLOBAL_SERVICE_ID].todos) {
         todos = secrets[GLOBAL_SERVICE_ID].todos;
-      } else if (secrets[id] && secrets[id].todos) { // Fallback
+      } else if (secrets[id] && secrets[id].todos) {
         todos = secrets[id].todos;
       } else {
         const saved = localStorage.getItem(`todo-settings-global`) || localStorage.getItem(`todo-settings-${id}`);
@@ -139,7 +142,6 @@
     if (changed) saveTodos();
   }
 
-  // Integrations State
   type Integrations = {
     apple: boolean;
     microsoft: boolean;
@@ -209,7 +211,6 @@
 
         if (foundUrlId) {
             globalAppleUrlId = foundUrlId;
-            // Sync up if it's missing in secrets but we have it locally
             if (!secrets['apple_reminders_global']?.urlId && isLoggedIn) {
                 saveGlobalAppleUrlId(foundUrlId);
             }
@@ -291,7 +292,6 @@
             data: appleReminders
           }));
         } else {
-          // Keep locally completed MS tasks that haven't been cleaned up yet
           const mappedIds = new Set(mapped.map(t => t.id));
           const keepCompleted = microsoftTodos.filter(t => t.completed && !mappedIds.has(t.id));
           microsoftTodos = [...keepCompleted, ...mapped];
@@ -313,12 +313,10 @@
 
 
   onMount(() => {
-    // Debug MS OAuth errors
     const params = new URLSearchParams(window.location.search);
     const msError = params.get('msAuthError');
     if (msError) {
       alert("Microsoft Login Error: " + msError);
-      // clean up url
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -355,13 +353,8 @@
     const handleTodoUpdate = (e: CustomEvent) => {
       const { widgetId, type, todoId, completed, completedAt } = e.detail;
 
-      // Update Microsoft Todos across ALL widgets
       if (type === 'microsoft') {
         microsoftTodos = microsoftTodos.map(t => t.id === todoId ? { ...t, completed, completedAt } : t);
-      }
-      // Update Local Todos only for the specific widget instance, unless it's a global sync
-      else if (type === 'local' && widgetId === id) {
-        todos = todos.map(t => t.id === todoId ? { ...t, completed, completedAt } : t);
       }
     };
     window.addEventListener('cross-widget-todo-update', handleTodoUpdate as EventListener);
@@ -391,6 +384,7 @@
 
   function saveTodos() {
     localStorage.setItem(`todo-settings-global`, JSON.stringify(todos));
+    window.dispatchEvent(new CustomEvent('todo-updated-internal', { detail: { source: id } }));
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
       fetch('/api/secrets', {
@@ -404,7 +398,6 @@
   function addTodo() {
     if (!newTitle.trim()) return;
 
-    // Process remaining tag
     let currentTags = [...newTags];
     if (tagInput.trim()) {
         const val = tagInput.trim().replace(/^#/, '');
@@ -421,7 +414,6 @@
       tags: currentTags
     }];
 
-    // Reset form
     newTitle = "";
     newDueDate = getTodayString();
     newDueTime = "";
@@ -482,10 +474,6 @@
         const isCompleted = !t.completed;
         const completedAt = isCompleted ? Date.now() : null;
 
-        window.dispatchEvent(new CustomEvent('cross-widget-todo-update', {
-          detail: { type: 'local', widgetId: id, todoId, completed: isCompleted, completedAt }
-        }));
-
         return { ...t, completed: isCompleted, completedAt };
       }
       return t;
@@ -505,7 +493,6 @@
   let sortedTodos = $derived([...todos, ...appleReminders, ...microsoftTodos].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
 
-    // Sort by day (ascending)
     const aDate = a.dueDate ? new Date(a.dueDate) : new Date(8640000000000000);
     const bDate = b.dueDate ? new Date(b.dueDate) : new Date(8640000000000000);
 
@@ -516,7 +503,6 @@
         return aDay - bDay;
     }
 
-    // Same day: sort by user preference
     const sortMethod = integrations.sortMethod || 'time';
 
     const pMap = { 'high': 3, 'medium': 2, 'low': 1, null: 0 };

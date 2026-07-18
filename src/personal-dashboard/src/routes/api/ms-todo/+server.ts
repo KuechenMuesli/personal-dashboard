@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 
-async function refreshMsToken(refreshToken: string, supabase: any, userId: string, currentSecrets: any) {
+async function refreshMsToken(refreshToken: string, supabase: any, userId: string) {
     const clientId = env.MS_CLIENT_ID;
     const clientSecret = env.MS_CLIENT_SECRET;
 
@@ -30,8 +30,13 @@ async function refreshMsToken(refreshToken: string, supabase: any, userId: strin
         expires_at: Date.now() + (data.expires_in * 1000)
     };
 
-    currentSecrets['microsoft_todo'] = msData;
-    await supabase.from('user_secrets').upsert({ user_id: userId, secrets: currentSecrets });
+    const secretsToUpsert = Object.entries(msData).map(([k, v]) => ({
+        user_id: userId,
+        service: 'microsoft_todo',
+        secret_key: k,
+        secret_value: v.toString()
+    }));
+    await supabase.from('user_secrets').upsert(secretsToUpsert, { onConflict: 'user_id, service, secret_key' });
 
     return msData.access_token;
 }
@@ -59,12 +64,15 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
 
         const { data: dbData } = await supabase
         .from('user_secrets')
-        .select('secrets')
+        .select('secret_key, secret_value')
         .eq('user_id', session.user.id)
-        .maybeSingle();
+        .eq('service', 'microsoft_todo');
 
-    const currentSecrets = dbData?.secrets || {};
-    const msTokenData = currentSecrets['microsoft_todo'];
+    const msTokenData: any = {};
+    if (dbData) {
+        for (const row of dbData) msTokenData[row.secret_key] = row.secret_value;
+    }
+    if (msTokenData.expires_at) msTokenData.expires_at = Number(msTokenData.expires_at);
 
     if (!msTokenData || !msTokenData.refresh_token) {
         return json({ not_authenticated: true }, { headers: corsHeaders });
@@ -75,7 +83,7 @@ export const GET: RequestHandler = async ({ locals: { supabase, safeGetSession }
     // Refresh if within 5 minutes of expiring
     if (Date.now() > msTokenData.expires_at - 300000) {
         try {
-            accessToken = await refreshMsToken(msTokenData.refresh_token, supabase, session.user.id, currentSecrets);
+            accessToken = await refreshMsToken(msTokenData.refresh_token, supabase, session.user.id);
         } catch (e) {
             console.error('Failed to refresh MS token', e);
             return json({ not_authenticated: true }, { headers: corsHeaders });
@@ -183,17 +191,20 @@ export const POST: RequestHandler = async ({ request, locals: { supabase, safeGe
 
         const { data: dbData } = await supabase
             .from('user_secrets')
-            .select('secrets')
+            .select('secret_key, secret_value')
             .eq('user_id', session.user.id)
-            .maybeSingle();
+            .eq('service', 'microsoft_todo');
 
-        const currentSecrets = dbData?.secrets || {};
-        const msTokenData = currentSecrets['microsoft_todo'];
+        const msTokenData: any = {};
+        if (dbData) {
+            for (const row of dbData) msTokenData[row.secret_key] = row.secret_value;
+        }
+        if (msTokenData.expires_at) msTokenData.expires_at = Number(msTokenData.expires_at);
         if (!msTokenData || !msTokenData.refresh_token) return json({ error: 'Not linked' }, { status: 401, headers: corsHeaders });
 
         let accessToken = msTokenData.access_token;
         if (Date.now() > msTokenData.expires_at - 300000) {
-            accessToken = await refreshMsToken(msTokenData.refresh_token, supabase, session.user.id, currentSecrets);
+            accessToken = await refreshMsToken(msTokenData.refresh_token, supabase, session.user.id);
         }
 
         const res = await fetch(`https://graph.microsoft.com/v1.0/me/todo/lists/${listId}/tasks/${taskId}`, {
@@ -220,21 +231,11 @@ export const DELETE: RequestHandler = async ({ locals: { supabase, safeGetSessio
         const { session } = await safeGetSession();
         if (!session) return json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
 
-        const { data: dbData } = await supabase
-            .from('user_secrets')
-            .select('secrets')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-        const currentSecrets = dbData?.secrets || {};
-        delete currentSecrets['microsoft_todo'];
-
         await supabase
             .from('user_secrets')
-            .upsert({
-                user_id: session.user.id,
-                secrets: currentSecrets
-            });
+            .delete()
+            .eq('user_id', session.user.id)
+            .eq('service', 'microsoft_todo');
 
         return json({ success: true }, { headers: corsHeaders });
     } catch (e) {

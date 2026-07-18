@@ -35,27 +35,15 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
     const tokenData = await res.json();
     
     if (tokenData.refresh_token) {
-        // Fetch existing secrets
-        const { data: dbData } = await supabase
-            .from('user_secrets')
-            .select('secrets')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-        const currentSecrets = dbData?.secrets || {};
-        
-        currentSecrets['microsoft_todo'] = {
-            refresh_token: tokenData.refresh_token,
-            access_token: tokenData.access_token,
-            expires_at: Date.now() + (tokenData.expires_in * 1000)
-        };
+        const secretsToUpsert = [
+            { user_id: session.user.id, service: 'microsoft_todo', secret_key: 'refresh_token', secret_value: tokenData.refresh_token },
+            { user_id: session.user.id, service: 'microsoft_todo', secret_key: 'access_token', secret_value: tokenData.access_token },
+            { user_id: session.user.id, service: 'microsoft_todo', secret_key: 'expires_at', secret_value: (Date.now() + (tokenData.expires_in * 1000)).toString() }
+        ];
 
         const { error: dbError } = await supabase
             .from('user_secrets')
-            .upsert({
-                user_id: session.user.id,
-                secrets: currentSecrets
-            });
+            .upsert(secretsToUpsert, { onConflict: 'user_id, service, secret_key' });
             
         if (dbError) {
             throw redirect(302, '/?msAuthError=' + encodeURIComponent('DB Error: ' + dbError.message));

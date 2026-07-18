@@ -8,12 +8,15 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
   if (session) {
     const { data } = await supabase
       .from('user_secrets')
-      .select('secrets')
+      .select('secret_key, secret_value')
       .eq('user_id', session.user.id)
-      .maybeSingle();
+      .eq('service', 'microsoft_todo');
       
-    const msData = data?.secrets?.microsoft_todo;
-    if (msData && msData.refresh_token) msConnected = true;
+    if (data && data.length > 0) {
+        const msData: any = {};
+        for (const row of data) msData[row.secret_key] = row.secret_value;
+        if (msData.refresh_token) msConnected = true;
+    }
   }
 
   // Return the user if logged in, otherwise null. Local users can access settings too.

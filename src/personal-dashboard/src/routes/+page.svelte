@@ -156,7 +156,7 @@
         .from('layouts')
         .select(`
           id, theme, updated_at,
-          widgets ( id, type, x, y, w, h, custom_data )
+          widgets ( id, type, x, y, w, h, widget_settings ( setting_key, setting_value ) )
         `)
         .eq('id', newLayoutId)
         .single();
@@ -175,19 +175,11 @@
         // 5. Update the widgets
         if (newLayoutData.widgets) {
           const layout = newLayoutData.widgets.map((w: any) => {
-            const c = w.custom_data || {};
-            if (c.calendarViewmode) localStorage.setItem(`calendar-viewmode-${w.id}`, c.calendarViewmode);
-            if (c.generalSettings) localStorage.setItem(`general-settings-${w.id}`, c.generalSettings);
-            if (c.colorpicker) localStorage.setItem(`colorpicker-${w.id}`, c.colorpicker);
-            if (c.webviewSettings) localStorage.setItem(`webview-settings-${w.id}`, c.webviewSettings);
-            if (c.favoritesSettings) localStorage.setItem(`favorites-settings-${w.id}`, c.favoritesSettings);
-            if (c.noteSettings) localStorage.setItem(`note-settings-${w.id}`, c.noteSettings);
-            if (c.noteMode) localStorage.setItem(`note-mode-${w.id}`, c.noteMode);
-            if (c.parcelSettings) localStorage.setItem(`parcel-settings-${w.id}`, c.parcelSettings);
-            if (c.searchHistory) localStorage.setItem(`search-history-${w.id}`, c.searchHistory);
-            if (c.searchSettings) localStorage.setItem(`search-settings-${w.id}`, c.searchSettings);
-            if (c.stockSettings) localStorage.setItem(`stock-settings-${w.id}`, c.stockSettings);
-            if (c.timerSettings) localStorage.setItem(`timer-settings-${w.id}`, c.timerSettings);
+            if (w.widget_settings) {
+                for (const s of w.widget_settings) {
+                    localStorage.setItem(s.setting_key, s.setting_value);
+                }
+            }
 
             return { id: w.id, type: w.type, x: w.x, y: w.y, width: w.w, height: w.h, showSettings: false };
           });
@@ -250,7 +242,7 @@
           .from('layouts')
           .select(`
             id, theme, updated_at,
-            widgets ( id, type, x, y, w, h )
+            widgets ( id, type, x, y, w, h, widget_settings ( setting_key, setting_value ) )
           `)
           .eq('user_id', session.user.id)
           .order('is_active', { ascending: false })
@@ -258,17 +250,28 @@
           .maybeSingle(),
         supabase
           .from('user_secrets')
-          .select('secrets')
+          .select('service, secret_key, secret_value')
           .eq('user_id', session.user.id)
-          .maybeSingle()
       ]);
 
-      const dbData = layoutsRes.data;
-      if (secretsRes.data?.secrets) {
-         globalSecrets = secretsRes.data.secrets;
+      if (secretsRes.error) {
+        console.error("Error loading secrets:", secretsRes.error);
+      }
+
+      if (secretsRes.data) {
+         const globalObj: any = {};
+         for (const row of secretsRes.data) {
+             let val = row.secret_value;
+             try { val = JSON.parse(val); } catch(e) {}
+             
+             if (!globalObj[row.service]) globalObj[row.service] = {};
+             globalObj[row.service][row.secret_key] = val;
+         }
+         globalSecrets = globalObj;
       }
       secretsLoaded = true;
 
+      const dbData = layoutsRes.data;
       if (dbData) {
         currentLayoutId = dbData.id;
         const remoteThemeObj = dbData.theme as any || {};
@@ -281,19 +284,11 @@
         if (remoteTimestamp > localTimestamp || !hasLocal || isDefault || isNewLogin) {
           if (dbData.widgets) {
             const layout = dbData.widgets.map((w: any) => {
-              const c = w.custom_data || {};
-              if (c.calendarViewmode) localStorage.setItem(`calendar-viewmode-${w.id}`, c.calendarViewmode);
-              if (c.generalSettings) localStorage.setItem(`general-settings-${w.id}`, c.generalSettings);
-              if (c.colorpicker) localStorage.setItem(`colorpicker-${w.id}`, c.colorpicker);
-              if (c.webviewSettings) localStorage.setItem(`webview-settings-${w.id}`, c.webviewSettings);
-              if (c.favoritesSettings) localStorage.setItem(`favorites-settings-${w.id}`, c.favoritesSettings);
-              if (c.noteSettings) localStorage.setItem(`note-settings-${w.id}`, c.noteSettings);
-              if (c.noteMode) localStorage.setItem(`note-mode-${w.id}`, c.noteMode);
-              if (c.parcelSettings) localStorage.setItem(`parcel-settings-${w.id}`, c.parcelSettings);
-              if (c.searchHistory) localStorage.setItem(`search-history-${w.id}`, c.searchHistory);
-              if (c.searchSettings) localStorage.setItem(`search-settings-${w.id}`, c.searchSettings);
-              if (c.stockSettings) localStorage.setItem(`stock-settings-${w.id}`, c.stockSettings);
-              if (c.timerSettings) localStorage.setItem(`timer-settings-${w.id}`, c.timerSettings);
+              if (w.widget_settings) {
+                  for (const s of w.widget_settings) {
+                      localStorage.setItem(s.setting_key, s.setting_value);
+                  }
+              }
 
               return { id: w.id, type: w.type, x: w.x, y: w.y, width: w.w, height: w.h, showSettings: false };
             });
@@ -400,41 +395,13 @@
       const widgetsToUpsert = dashboardLayout.map(w => {
         const custom_data: any = {};
 
-        const calendarViewmode = localStorage.getItem(`calendar-viewmode-${w.id}`);
-        if (calendarViewmode) custom_data.calendarViewmode = calendarViewmode;
-
-        const generalSettings = localStorage.getItem(`general-settings-${w.id}`);
-        if (generalSettings) custom_data.generalSettings = generalSettings;
-
-        const colorpicker = localStorage.getItem(`colorpicker-${w.id}`);
-        if (colorpicker) custom_data.colorpicker = colorpicker;
-
-        const webviewSettings = localStorage.getItem(`webview-settings-${w.id}`);
-        if (webviewSettings) custom_data.webviewSettings = webviewSettings;
-
-        const favoritesSettings = localStorage.getItem(`favorites-settings-${w.id}`);
-        if (favoritesSettings) custom_data.favoritesSettings = favoritesSettings;
-
-        const noteSettings = localStorage.getItem(`note-settings-${w.id}`);
-        if (noteSettings) custom_data.noteSettings = noteSettings;
-
-        const noteMode = localStorage.getItem(`note-mode-${w.id}`);
-        if (noteMode) custom_data.noteMode = noteMode;
-
-        const parcelSettings = localStorage.getItem(`parcel-settings-${w.id}`);
-        if (parcelSettings) custom_data.parcelSettings = parcelSettings;
-
-        const searchHistory = localStorage.getItem(`search-history-${w.id}`);
-        if (searchHistory) custom_data.searchHistory = searchHistory;
-
-        const searchSettings = localStorage.getItem(`search-settings-${w.id}`);
-        if (searchSettings) custom_data.searchSettings = searchSettings;
-
-        const stockSettings = localStorage.getItem(`stock-settings-${w.id}`);
-        if (stockSettings) custom_data.stockSettings = stockSettings;
-
-        const timerSettings = localStorage.getItem(`timer-settings-${w.id}`);
-        if (timerSettings) custom_data.timerSettings = timerSettings;
+        for (let i = 0; i < localStorage.length; i++) {
+           const k = localStorage.key(i);
+           if (k && k.endsWith(`-${w.id}`)) {
+              if (k.includes('api-key') || k.includes('auth-mode') || k.includes('assistant-sa') || k.includes('assistant-loc')) continue;
+              custom_data[k] = localStorage.getItem(k);
+           }
+        }
 
         return {
           id: w.id,
@@ -450,10 +417,28 @@
 
       // Upsert widgets
       if (widgetsToUpsert.length > 0) {
-        const { error: upsertError } = await supabase.from('widgets').upsert(widgetsToUpsert);
+        const cleanWidgets = widgetsToUpsert.map((w: any) => ({
+            id: w.id, layout_id: w.layout_id, type: w.type, x: w.x, y: w.y, w: w.w, h: w.h
+        }));
+        
+        const { error: upsertError } = await supabase.from('widgets').upsert(cleanWidgets);
         if (upsertError) {
           console.error("Failed to upsert widgets:", upsertError);
           alert("Cloud Sync Fehler (Widgets): " + upsertError.message);
+        }
+
+        // Upsert settings
+        const settingsToUpsert: any[] = [];
+        for (const w of widgetsToUpsert) {
+           for (const [k, v] of Object.entries(w.custom_data)) {
+               settingsToUpsert.push({ widget_id: w.id, setting_key: k, setting_value: v });
+           }
+        }
+        if (settingsToUpsert.length > 0) {
+             const { error: settingsError } = await supabase.from('widget_settings').upsert(settingsToUpsert, { onConflict: 'widget_id, setting_key' });
+             if (settingsError) {
+                 console.error("Failed to upsert widget settings:", settingsError);
+             }
         }
       }
 

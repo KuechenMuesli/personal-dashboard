@@ -77,8 +77,13 @@
 
   $effect(() => {
     const secrets = getSecrets();
-    if (secrets[id] && Array.isArray(secrets[id])) {
-      storedConfigs = secrets[id];
+    if (secrets[id]) {
+      if (Array.isArray(secrets[id].configs)) {
+        storedConfigs = secrets[id].configs;
+      } else if (Array.isArray(secrets[id])) {
+        // Fallback for legacy format
+        storedConfigs = secrets[id];
+      }
     }
   });
 
@@ -150,7 +155,7 @@
             await fetch('/api/secrets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ service: id, key: storedConfigs })
+                body: JSON.stringify({ service: id, key: { configs: storedConfigs } })
             });
             localStorage.removeItem(`stored-calendars-${id}`); // cleanup just in case
         } catch (e) { console.error("Failed to save calendar configs", e); }

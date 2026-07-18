@@ -10,29 +10,34 @@ export const POST: RequestHandler = async ({ request, locals: { supabase, safeGe
     const { service, key } = await request.json();
     if (!service) throw error(400, 'Service name required');
 
-    // Fetch existing secrets
-    const { data: dbData } = await supabase
-        .from('user_secrets')
-        .select('secrets')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-    const currentSecrets = dbData?.secrets || {};
-    
-    if (key) {
-        currentSecrets[service] = key;
-    } else {
-        delete currentSecrets[service];
-    }
-
+    // Delete old secrets for this service
     const { error: dbError } = await supabase
         .from('user_secrets')
-        .upsert({
-            user_id: session.user.id,
-            secrets: currentSecrets
-        });
-
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('service', service);
+    
     if (dbError) throw error(500, dbError.message);
+
+    // If there are new secrets, insert them row by row
+    if (key !== undefined && key !== null) {
+        if (typeof key === 'object') {
+            const secretsToUpsert = Object.entries(key).map(([k, v]) => ({
+                user_id: session.user.id,
+                service: service,
+                secret_key: k,
+                secret_value: typeof v === 'object' ? JSON.stringify(v) : String(v)
+            }));
+
+            if (secretsToUpsert.length > 0) {
+                const { error: insertError } = await supabase
+                    .from('user_secrets')
+                    .upsert(secretsToUpsert, { onConflict: 'user_id, service, secret_key' });
+                
+                if (insertError) throw error(500, insertError.message);
+            }
+        }
+    }
 
     // Invalidate old Quickshare links for this specific widget/service
     const { error: deleteError } = await supabase

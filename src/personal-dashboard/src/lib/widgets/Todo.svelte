@@ -242,8 +242,10 @@
 
     if (!force && timeSinceLast < COOLDOWN_MS && hasData) return;
 
-    if (type === 'apple') isFetchingApple = true;
-    else isFetchingMs = true;
+    if (!hasData || force) {
+      if (type === 'apple') isFetchingApple = true;
+      else isFetchingMs = true;
+    }
 
     try {
       let url = '';
@@ -368,7 +370,6 @@
   });
 
   $effect(() => {
-    // Only track appleUrlId and integrations declaratively
     if (integrations.apple && appleUrlId !== 'pending') {
       untrack(() => {
         const timeSinceLast = Date.now() - lastFetchedApple;
@@ -383,7 +384,6 @@
     }
   });
 
-  // Keep interval in onMount to prevent recreation
   onMount(() => {
     refreshTimer = setInterval(() => {
       if (integrations.apple) fetchExternalReminders('apple');

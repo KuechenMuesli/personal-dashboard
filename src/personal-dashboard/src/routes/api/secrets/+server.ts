@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request, locals: { supabase, safeGe
 
     // If there are new secrets, insert them row by row
     if (key !== undefined && key !== null) {
-        if (typeof key === 'object') {
+        if (typeof key === 'object' && !Array.isArray(key)) {
             const secretsToUpsert = Object.entries(key).map(([k, v]) => ({
                 user_id: session.user.id,
                 service: service,

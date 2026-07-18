@@ -21,6 +21,7 @@
   }>();
 
   const getSecrets = getContext<() => Record<string, any>>('secrets');
+  const getSecretsLoaded = getContext<() => boolean>('secretsLoaded');
 
   const PROXY_URL = "/api/proxy";
   const TARGET_API_BASE = "https://api.parcel.app/external";
@@ -54,6 +55,7 @@
   let filterMode = $state<"active" | "recent">("active");
   let deliveries = $state<Delivery[]>([]);
   let isLoading = $state(false);
+  let isLoaded = $state(false);
   let lastFetched = $state<number>(0);
 
   let showAddForm = $state(false);
@@ -70,8 +72,13 @@
 
   $effect(() => {
     const secrets = getSecrets();
-    if (secrets[id] && typeof secrets[id] === 'string') {
-        apiKey = secrets[id];
+    const secretsLoaded = getSecretsLoaded ? getSecretsLoaded() : true;
+
+    if (secretsLoaded && !isLoaded) {
+      if (secrets[id]) {
+        apiKey = secrets[id].api_key || secrets[id];
+      }
+      isLoaded = true;
     }
   });
 
@@ -161,6 +168,8 @@
     } catch (e) {
       console.error("Fetch failed", e);
     } finally {
+      lastFetched = Date.now();
+      localStorage.setItem(`parcel-cache-${id}`, JSON.stringify({ deliveries, timestamp: lastFetched }));
       isLoading = false;
     }
   }
@@ -194,7 +203,7 @@
             await fetch('/api/secrets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ service: id, key: apiKey })
+                body: JSON.stringify({ service: id, key: { api_key: apiKey } })
             });
         } catch (e) { console.error("Failed to save secret", e); }
     }

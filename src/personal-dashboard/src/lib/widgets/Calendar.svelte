@@ -81,7 +81,6 @@
       if (Array.isArray(secrets[id].configs)) {
         storedConfigs = secrets[id].configs;
       } else if (Array.isArray(secrets[id])) {
-        // Fallback for legacy format
         storedConfigs = secrets[id];
       }
     }
@@ -92,7 +91,7 @@
     const dayOfWeek = now.getDay();
     const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
     const endOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 23, 59, 59, 999);
-    
+
     let all: CalendarEvent[] = [];
     calendarsData.forEach(cal => {
       cal.events.forEach(ev => {
@@ -157,7 +156,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ service: id, key: { configs: storedConfigs } })
             });
-            localStorage.removeItem(`stored-calendars-${id}`); // cleanup just in case
+            localStorage.removeItem(`stored-calendars-${id}`);
         } catch (e) { console.error("Failed to save calendar configs", e); }
     }
   }
@@ -166,13 +165,12 @@
     isLoading = true;
     const loadedCalendars: Calendar[] = [];
 
-    // 1. Fetch webcals
     for (const config of storedConfigs) {
       if (config.hidden || config.type === 'microsoft') continue;
-      
+
       try {
         const url = `${PROXY_URL}?target=${encodeURIComponent(config.url || '')}${force ? '&force=true' : ''}`;
-        const response = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
+        const response = await fetch(url, { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' });
 
         if (!response.ok) continue;
 
@@ -190,10 +188,9 @@
       }
     }
 
-    // 2. Fetch MS Calendars
     if (integrations.microsoft) {
         try {
-            const res = await fetch('/api/ms-calendar', force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
+            const res = await fetch('/api/ms-calendar', { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' });
             if (res.ok) {
                 const json = await res.json();
                 if (json.not_authenticated) {
@@ -201,7 +198,7 @@
                 } else if (json.calendars) {
                     msNeedsLogin = false;
                     let configsChanged = false;
-                    
+
                     for (const cal of json.calendars) {
                         let existing = storedConfigs.find(c => c.id === cal.id);
                         if (!existing) {
@@ -237,10 +234,9 @@
         }
     }
 
-    // Sort based on storedConfigs order
     loadedCalendars.sort((a, b) => {
-        const idxA = storedConfigs.findIndex(c => c.id === a.id || c.id === a.name /* fallback */);
-        const idxB = storedConfigs.findIndex(c => c.id === b.id || c.id === b.name /* fallback */);
+        const idxA = storedConfigs.findIndex(c => c.id === a.id || c.id === a.name);
+        const idxB = storedConfigs.findIndex(c => c.id === b.id || c.id === b.name);
         return idxA - idxB;
     });
 
@@ -327,7 +323,6 @@
       const vevents = comp.getAllSubcomponents('vevent');
 
       const now = new Date();
-      // Expand events up to 1 year into the future and 1 month in the past
       const maxDate = new Date();
       maxDate.setFullYear(now.getFullYear() + 1);
 
@@ -515,8 +510,8 @@
 			<div class="space-y-5 pb-2">
 				{#each calendarsData as calendar}
 					<section>
-						<button 
-							class="w-full flex items-center justify-between text-xs font-bold mb-2 uppercase tracking-wide cursor-pointer hover:opacity-80 transition-opacity" 
+						<button
+							class="w-full flex items-center justify-between text-xs font-bold mb-2 uppercase tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
 							style="color: {calendar.color}"
 							onclick={() => toggleCalendarCollapse(calendar.name)}
 						>
@@ -526,7 +521,7 @@
 							</div>
 							<ChevronDown size={14} class="shrink-0 transition-transform {collapsedCalendars.includes(calendar.name) ? '-rotate-90' : ''}" />
 						</button>
-						
+
 						{#if !collapsedCalendars.includes(calendar.name)}
 							<div transition:slide={{ duration: 200 }}>
 								{#if calendar.events.filter(e => e.end > new Date()).length === 0}
@@ -640,11 +635,11 @@
 			<div class="flex items-center justify-between">
 				<span class="text-sm font-semibold text-white flex items-center gap-2">{i18n.t.integrations.microsoftServices}</span>
 				{#if isLoggedIn}
-				<button 
+				<button
 					onclick={() => {
 						integrations.microsoft = !integrations.microsoft;
 						if (integrations.microsoft) fetchAllCalendars(true);
-					}} 
+					}}
 					class="w-10 h-5 rounded-full transition-colors relative {integrations.microsoft ? 'bg-blue-500' : 'bg-neutral-600'}"
 				>
 					<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform {integrations.microsoft ? 'translate-x-5' : ''}"></div>

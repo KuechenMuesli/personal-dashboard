@@ -257,7 +257,7 @@
         url = `/api/ms-todo`;
       }
 
-      const res = await fetch(url, force ? { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' } : undefined);
+      const res = await fetch(url, { headers: { 'Cache-Control': 'no-cache' }, cache: 'no-cache' });
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const json = await res.json();
 

@@ -443,30 +443,6 @@
        onpaste={handlePaste}
        role="application"
   >
-    {#if isEditing}
-    <div class="flex h-8 shrink-0 items-center justify-between border-b border-black/20 bg-black/10 px-2">
-      <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500 flex items-center gap-1.5 px-1">
-        <Clipboard size={12} /> {i18n.t.widgets?.clipboardSync || 'Cloud Clipboard'}
-      </span>
-
-      <div
-          onmousedown={onDragStart}
-          ontouchstart={onDragStart}
-          role="presentation"
-          class="flex h-full flex-grow cursor-grab touch-none items-center justify-center text-neutral-600 transition-colors hover:text-neutral-400 active:cursor-grabbing"
-      >
-        <GripHorizontal size={14} strokeWidth={2.5} />
-      </div>
-
-      <button
-          onclick={onDelete}
-          class="flex h-5 w-5 shrink-0 items-center justify-center rounded text-neutral-500 transition-colors hover:bg-red-500/20 hover:text-red-400"
-      >
-        <X size={14} strokeWidth={2.5} />
-      </button>
-    </div>
-    {/if}
-
     <div class="flex flex-col flex-grow w-full relative overflow-hidden">
         <div class="w-full flex-grow flex {width === 1 && height > 1 ? 'flex-col' : 'flex-row'} min-h-0">
             <!-- Hidden file input for manual file selection -->
@@ -477,12 +453,12 @@
             }} />
 
             <!-- LEFT HALF: UPLOAD -->
-            <div class="flex-1 relative group {width === 1 && height > 1 ? 'border-b' : 'border-r'} border-white/5 min-h-0 min-w-0">
+            <div class="flex-1 flex flex-row {width === 1 && height > 1 ? 'border-b' : 'border-r'} border-white/5 min-h-0 min-w-0">
                 <!-- Main Upload Button -->
                 <button 
                     onclick={uploadFromClipboard}
                     disabled={isUploading}
-                    class="w-full h-full flex flex-col items-center justify-center transition-all disabled:opacity-50 {isDragging ? 'pointer-events-none' : ''} 
+                    class="flex-1 h-full flex flex-col items-center justify-center transition-all disabled:opacity-50 {isDragging ? 'pointer-events-none' : ''} 
                            {uploadStatus === 'success' ? 'bg-green-500/20 text-green-300' : 
                             uploadStatus === 'error' ? 'bg-red-500/20 text-red-300' : 
                             'bg-transparent hover:bg-white/5 text-neutral-300'} overflow-hidden"
@@ -507,10 +483,10 @@
                     </div>
                 </button>
 
-                <!-- File picker button overlay -->
+                <!-- Sub Action: File Import -->
                 <button 
                     onclick={(e) => { e.stopPropagation(); fileInput.click(); }}
-                    class="absolute {height === 1 ? 'top-1/2 -translate-y-1/2 left-1.5' : (width === 1 && height > 1 ? 'top-1 right-1 sm:top-2 sm:right-2' : 'top-1 left-1 sm:top-2 sm:left-2')} p-1.5 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors opacity-0 group-hover:opacity-100 z-10 shadow-lg"
+                    class="w-7 sm:w-9 shrink-0 h-full bg-black/10 hover:bg-black/20 flex flex-col items-center justify-center text-neutral-400 hover:text-white transition-colors {width === 1 && height === 1 ? 'order-first border-r border-white/5' : 'border-l border-white/5'}"
                     title={i18n.currentLang === 'de' ? 'Datei auswählen' : 'Select file'}
                 >
                     <FilePlus size={14} />
@@ -518,12 +494,12 @@
             </div>
 
             <!-- RIGHT HALF: DOWNLOAD -->
-            <div class="flex-1 relative group min-h-0 min-w-0">
+            <div class="flex-1 flex flex-row min-h-0 min-w-0">
                 <!-- Main Download Button -->
                 <button 
                     onclick={downloadToClipboard}
                     disabled={!cloudContent || isUploading}
-                    class="w-full h-full flex flex-col items-center justify-center transition-all disabled:opacity-50 {isDragging ? 'pointer-events-none' : ''}
+                    class="flex-1 h-full flex flex-col items-center justify-center transition-all disabled:opacity-50 {isDragging ? 'pointer-events-none' : ''}
                            {downloadStatus === 'success' ? 'bg-green-500/20 text-green-300' : 
                             downloadStatus === 'error' ? 'bg-red-500/20 text-red-300' : 
                             'bg-transparent hover:bg-white/5 text-neutral-300'} overflow-hidden"
@@ -561,20 +537,19 @@
                     </div>
                 </button>
 
-                <!-- Share picker button overlay -->
-                {#if cloudContent}
-                   <button 
-                       onclick={generateShareLink}
-                       class="absolute {height === 1 ? 'top-1/2 -translate-y-1/2 right-1.5' : 'top-1 right-1 sm:top-2 sm:right-2'} p-1.5 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors opacity-0 group-hover:opacity-100 z-10 shadow-lg"
-                       title={i18n.t.w.clipboardSync?.share || 'Create Quickshare'}
-                   >
-                       {#if isSharing}
-                           <div class="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                       {:else}
-                           <Share2 size={14} />
-                       {/if}
-                   </button>
-                {/if}
+                <!-- Sub Action: QuickShare -->
+                <button 
+                    onclick={generateShareLink}
+                    disabled={!cloudContent}
+                    class="w-7 sm:w-9 shrink-0 h-full border-l border-white/5 bg-black/10 hover:bg-black/20 flex flex-col items-center justify-center text-neutral-400 hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-black/10 disabled:hover:text-neutral-400"
+                    title={i18n.t.w.clipboardSync?.share || 'Create Quickshare'}
+                >
+                    {#if isSharing}
+                        <div class="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    {:else}
+                        <Share2 size={14} />
+                    {/if}
+                </button>
             </div>
         </div>
 

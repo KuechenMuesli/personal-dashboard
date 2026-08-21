@@ -54,6 +54,13 @@ sw.addEventListener('install', (event) => {
 sw.addEventListener('activate', (event) => {
 	event.waitUntil(
 		(async () => {
+			// Navigation Preload startet die Netzwerkanfrage fuer einen Seitenaufruf
+			// parallel zum Hochfahren des Service Workers statt danach. Bei
+			// Network-First ist genau dieser Startup sonst reine Wartezeit.
+			if (sw.registration.navigationPreload) {
+				await sw.registration.navigationPreload.enable();
+			}
+
 			for (const key of await caches.keys()) {
 				if (key !== CACHE) await caches.delete(key);
 			}
@@ -62,7 +69,11 @@ sw.addEventListener('activate', (event) => {
 	);
 });
 
-async function handleFetch(request: Request, url: URL): Promise<Response> {
+async function handleFetch(
+	request: Request,
+	url: URL,
+	preloadResponse: Promise<Response | undefined>
+): Promise<Response> {
 	const cache = await caches.open(CACHE);
 
 	// 1. Gehashte Build-Assets und statische Dateien: immer zuerst aus dem Cache,
@@ -85,7 +96,8 @@ async function handleFetch(request: Request, url: URL): Promise<Response> {
 	//    ankommt. Der Cache ist hier nur Offline-Fallback.
 	if (request.mode === 'navigate') {
 		try {
-			const response = await fetch(request);
+			// Die vorab gestartete Anfrage nutzen, falls der Browser sie liefert.
+			const response = (await preloadResponse) ?? (await fetch(request));
 			if (response.ok) cache.put(request, response.clone());
 			return response;
 		} catch (error) {
@@ -112,5 +124,5 @@ sw.addEventListener('fetch', (event) => {
 	// Antworten in unserem Cache.
 	if (url.origin !== sw.location.origin) return;
 
-	event.respondWith(handleFetch(request, url));
+	event.respondWith(handleFetch(request, url, event.preloadResponse));
 });

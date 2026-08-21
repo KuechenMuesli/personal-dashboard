@@ -22,8 +22,15 @@ const SHELL = [...files, ...prerendered];
 /** Content-Hash im Dateinamen: darf unbegrenzt aus dem Cache kommen. */
 const IMMUTABLE_PREFIX = '/_app/immutable/';
 
-const BUILD_ASSETS = new Set(build);
-const SHELL_ASSETS = new Set(SHELL);
+/**
+ * Nur Dateien mit unveraenderlichem Namen duerfen ohne Rueckfrage aus dem Cache
+ * kommen. Vorgerenderte Seiten (`prerendered`) gehoeren ausdruecklich NICHT dazu:
+ * ihr Pfad bleibt gleich, ihr Inhalt aendert sich mit jedem Deployment. Wuerden
+ * wir sie cache-first ausliefern, zeigte die Seite nach einem Release weiterhin
+ * die alten Chunk-Namen — und deren Nachladen scheitert mit
+ * "Importing a module script failed", weil es die Dateien nicht mehr gibt.
+ */
+const IMMUTABLE_ASSETS = new Set([...build, ...files]);
 
 sw.addEventListener('install', (event) => {
 	event.waitUntil(
@@ -31,7 +38,14 @@ sw.addEventListener('install', (event) => {
 			const cache = await caches.open(CACHE);
 			// Einzeln statt `addAll`: eine fehlende Datei soll nicht die
 			// komplette Installation scheitern lassen.
-			await Promise.allSettled(SHELL.map((asset) => cache.add(asset)));
+			//
+			// `cache: 'reload'` ist hier entscheidend: ohne das bedient sich
+			// `cache.add` am HTTP-Cache des Browsers und legt womoeglich ein
+			// veraltetes Dokument ab — das dann auf Chunk-Namen zeigt, die es
+			// nach dem Deployment nicht mehr gibt.
+			await Promise.allSettled(
+				SHELL.map((asset) => cache.add(new Request(asset, { cache: 'reload' })))
+			);
 			await sw.skipWaiting();
 		})()
 	);
@@ -53,12 +67,11 @@ async function handleFetch(request: Request, url: URL): Promise<Response> {
 
 	// 1. Gehashte Build-Assets und statische Dateien: immer zuerst aus dem Cache,
 	//    bei Bedarf einmalig nachladen und dann behalten.
-	const isAppAsset =
-		url.pathname.startsWith(IMMUTABLE_PREFIX) ||
-		BUILD_ASSETS.has(url.pathname) ||
-		SHELL_ASSETS.has(url.pathname);
+	const isImmutable =
+		request.mode !== 'navigate' &&
+		(url.pathname.startsWith(IMMUTABLE_PREFIX) || IMMUTABLE_ASSETS.has(url.pathname));
 
-	if (isAppAsset) {
+	if (isImmutable) {
 		const cached = await cache.match(request);
 		if (cached) return cached;
 
@@ -67,7 +80,9 @@ async function handleFetch(request: Request, url: URL): Promise<Response> {
 		return response;
 	}
 
-	// 2. Seitenaufrufe: Netzwerk zuerst, Cache als Offline-Fallback.
+	// 2. Seitenaufrufe — auch die vorgerenderten: Netzwerk zuerst, damit nach
+	//    einem Deployment sofort das neue Dokument mit den neuen Chunk-Namen
+	//    ankommt. Der Cache ist hier nur Offline-Fallback.
 	if (request.mode === 'navigate') {
 		try {
 			const response = await fetch(request);

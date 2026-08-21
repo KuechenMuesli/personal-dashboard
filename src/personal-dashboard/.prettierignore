@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Generierte Icon-Daten (npm run icons:generate)
+src/lib/icons/iconData.ts

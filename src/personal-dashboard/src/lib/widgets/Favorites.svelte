@@ -1,7 +1,9 @@
 <script lang="ts">
   import { getContext } from "svelte";
-  import { ChevronUp, ChevronDown, Plus, X, GripVertical, Search, Pencil } from "lucide-svelte";
-  import * as icons from "lucide-svelte";
+  import { Plus, X, GripVertical, Search, Pencil } from "lucide-svelte";
+  import LucideIcon from "$lib/icons/LucideIcon.svelte";
+  import { findIconNode, loadIconSet } from "$lib/icons/iconSet";
+  import type { IconNode } from "$lib/icons/types";
   import { i18n } from "$lib/i18n/i18n.svelte";
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import WidgetTabs from "$lib/components/WidgetTabs.svelte";
@@ -21,12 +23,18 @@
     url: string;
     color: string;
     lucideIcon?: string;
+    /**
+     * Die SVG-Pfaddaten des gewaehlten Icons (~180 Bytes), direkt am Favoriten.
+     * Dadurch braucht das Rendern des Dashboards keinerlei Nachladen — die Icons
+     * kommen synchron aus dem localStorage, genau wie Name, URL und Farbe.
+     */
+    iconNode?: IconNode;
   }
 
   const DEFAULT_FAVORITES: Favorite[] = [
     { name: "Reddit", url: "https://reddit.com", color: "#232323" },
-    { name: "GitHub", url: "https://github.com", color: "#232323", lucideIcon: "Github" },
-    { name: "YouTube", url: "https://youtube.com", color: "#232323", lucideIcon: "Youtube" }
+    { name: "GitHub", url: "https://github.com", color: "#232323" },
+    { name: "YouTube", url: "https://youtube.com", color: "#232323" }
   ];
 
   let favorites = $state<Favorite[]>([]);
@@ -47,7 +55,60 @@
     }
   });
 
-  const availableIcons = Object.keys(icons).filter(k => k !== 'createLucideIcon' && k !== 'default' && k !== 'Icon');
+  // Die vollstaendige Sammlung (~76 KB gzip) wird ausschliesslich vom Icon-Browser
+  // und von der einmaligen Migration alter Favoriten gebraucht — nie beim Rendern.
+  let iconSet = $state<Record<string, IconNode> | null>(null);
+  let availableIcons = $state<readonly string[]>([]);
+  let iconSetRequested = false;
+
+  function applyIconSet(set: Record<string, IconNode>) {
+    iconSet = set;
+    availableIcons = Object.keys(set);
+    return set;
+  }
+
+  function ensureIconSet() {
+    iconSetRequested = true;
+    return loadIconSet().then(applyIconSet);
+  }
+
+  $effect(() => {
+    if (!showIconBrowser || iconSetRequested) return;
+    ensureIconSet();
+  });
+
+  /**
+   * Favoriten aus aelteren Versionen kennen nur den Icon-Namen. Einmalig die
+   * Sammlung laden, die Pfaddaten eintragen und lokal sichern — danach laeuft
+   * das Rendern wieder ohne jeden Ladevorgang.
+   */
+  $effect(() => {
+    if (!favorites.some((f) => f.lucideIcon && !f.iconNode)) return;
+
+    let cancelled = false;
+    ensureIconSet().then((set) => {
+      if (cancelled) return;
+
+      let changed = false;
+      for (const fav of favorites) {
+        if (!fav.lucideIcon || fav.iconNode) continue;
+        const node = findIconNode(set, fav.lucideIcon);
+        if (node) {
+          fav.iconNode = node;
+        } else {
+          // Name existiert in dieser lucide-Version nicht mehr -> Favicon nutzen.
+          fav.lucideIcon = '';
+        }
+        changed = true;
+      }
+      if (changed) persistFavorites();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  });
+
   const filteredIcons = $derived(
      availableIcons
         .filter(k => !iconBrowserSearch || k.toLowerCase().includes(iconBrowserSearch.toLowerCase()))
@@ -78,8 +139,12 @@
     }
   });
 
-  async function saveSettings() {
+  function persistFavorites() {
     localStorage.setItem(`favorites-settings-${id}`, JSON.stringify({ favorites, displayMode }));
+  }
+
+  async function saveSettings() {
+    persistFavorites();
     showSettings = false;
     
     // Save to cloud
@@ -108,6 +173,14 @@
   // move is replaced by drag and drop
 </script>
 
+{#snippet faviconFallback(fav: Favorite, letterClass: string, imgClass: string)}
+	{#if failedImages.has(fav.url) || !fav.url}
+		<span class="font-bold uppercase {letterClass}">{fav.name.charAt(0)}</span>
+	{:else}
+		<img src={getIcon(fav.url)} alt="" class={imgClass} onerror={() => handleImageError(fav.url)} />
+	{/if}
+{/snippet}
+
 <WidgetCard bind:showSettings={showSettings} isConfigured={true} padding={false} transparent={true}>
 	<div class="h-full w-full box-border overflow-y-auto overflow-x-hidden p-2 sm:p-2 scrollbar-hide">
 		<div
@@ -132,20 +205,19 @@
            height: {effectiveMode === 'list' ? '24px' : '44px'};
          "
 					>
-						{#if fav.lucideIcon && (icons as any)[fav.lucideIcon]}
-							<svelte:component this={(icons as any)[fav.lucideIcon]} size={effectiveMode === 'list' ? 14 : 24} strokeWidth={2} />
-						{:else if failedImages.has(fav.url) || !fav.url}
-                           <span class="{effectiveMode === 'list' ? 'text-[10px]' : 'text-lg'} font-bold uppercase">
-                             {fav.name.charAt(0)}
-                           </span>
-						{:else}
-							<img
-									src={getIcon(fav.url)}
-									alt=""
-									class="h-full w-full object-contain p-1.5"
-									onerror={() => handleImageError(fav.url)}
-							/>
-						{/if}
+						<LucideIcon
+								node={fav.iconNode}
+								size={effectiveMode === 'list' ? 14 : 24}
+								strokeWidth={2}
+						>
+							{#snippet fallback()}
+								{@render faviconFallback(
+									fav,
+									effectiveMode === 'list' ? 'text-[10px]' : 'text-lg',
+									'h-full w-full object-contain p-1.5'
+								)}
+							{/snippet}
+						</LucideIcon>
 					</div>
 
 					<span class="truncate text-slate-400 group-hover:text-slate-200 transition-colors
@@ -159,7 +231,7 @@
 </WidgetCard>
 
 <SettingsDialog 
-	title="{i18n.t.w.favorites.edit}" 
+	title={i18n.t.w.favorites.edit}
 	bind:show={showSettings} 
 	data={[favorites, displayMode]} 
 	onRevert={(r: any) => { favorites = r[0]; displayMode = r[1]; }} 
@@ -225,13 +297,11 @@
 						class="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-black/40 bg-neutral-900 flex items-center justify-center group text-widget-text"
 						onclick={() => { editingFavIndex = i; iconBrowserSearch = ''; showIconBrowser = true; }}
 					>
-						{#if fav.lucideIcon && (icons as any)[fav.lucideIcon]}
-							<svelte:component this={(icons as any)[fav.lucideIcon]} size={16} strokeWidth={2} />
-						{:else if failedImages.has(fav.url) || !fav.url}
-							<span class="text-[10px] font-bold uppercase">{fav.name.charAt(0)}</span>
-						{:else}
-							<img src={getIcon(fav.url)} alt="" class="h-5 w-5 object-contain" onerror={() => handleImageError(fav.url)} />
-						{/if}
+						<LucideIcon node={fav.iconNode} size={16} strokeWidth={2}>
+							{#snippet fallback()}
+								{@render faviconFallback(fav, 'text-[10px]', 'h-5 w-5 object-contain')}
+							{/snippet}
+						</LucideIcon>
 
 						<div class="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
 							<Pencil size={12} strokeWidth={2.5} class="text-white" />
@@ -268,6 +338,7 @@
 		 onclick={() => { 
 			if (editingFavIndex !== null) {
 			   favorites[editingFavIndex].lucideIcon = '';
+			   favorites[editingFavIndex].iconNode = undefined;
 			}
 			showIconBrowser = false; 
 		 }}
@@ -278,18 +349,21 @@
 		   {#each filteredIcons as iconName}
 			 <button class="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-lg hover:bg-white/10 transition-colors group border border-transparent hover:border-white/10"
 				onclick={() => {
-				   if (editingFavIndex !== null) {
+				   if (editingFavIndex !== null && iconSet) {
 					   favorites[editingFavIndex].lucideIcon = iconName;
+					   favorites[editingFavIndex].iconNode = iconSet[iconName];
 				   }
 				   showIconBrowser = false;
 				}}
 				title={iconName}
 			 >
-				<svelte:component this={(icons as any)[iconName]} size={20} class="text-neutral-400 group-hover:text-white transition-colors" />
+				<LucideIcon node={iconSet?.[iconName]} size={20} class="text-neutral-400 group-hover:text-white transition-colors" />
 			 </button>
 		   {/each}
 	   </div>
-	   {#if filteredIcons.length === 0}
+	   {#if !iconSet}
+		 <div class="w-full py-10 text-center text-sm font-medium text-neutral-500">{i18n.t.w.common.loading}</div>
+	   {:else if filteredIcons.length === 0}
 		 <div class="w-full py-10 text-center text-sm font-medium text-neutral-500">{i18n.t.w.favorites.noIcons}</div>
 	   {/if}
 	</div>

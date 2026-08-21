@@ -1,64 +1,101 @@
 /// <reference types="@sveltejs/kit" />
-import { build, files, version } from '$service-worker';
+/// <reference lib="webworker" />
+import { build, files, prerendered, version } from '$service-worker';
+
+const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const CACHE = `cache-${version}`;
 
-const ASSETS = [
-	...build, // Alle generierten JS/CSS Dateien (inkl. lazy-loaded Widgets)
-	...files  // Alles aus dem static Ordner
-];
+/**
+ * Nur die App-Shell wird vorab geladen: der statische Ordner und die
+ * vorgerenderten Seiten. Zusammen sind das wenige Kilobyte.
+ *
+ * Bewusst NICHT vorab geladen wird `build` — das sind alle generierten
+ * JS/CSS-Chunks inklusive jedes Lazy-Widgets (~1,8 MB). Ein `addAll` darueber
+ * konkurriert beim ersten Besuch direkt mit dem Seitenaufbau um die
+ * Verbindungen. Weil alle Dateien unter `/_app/immutable/` einen Hash im Namen
+ * tragen, koennen wir sie stattdessen gefahrlos beim ersten echten Zugriff
+ * cachen (siehe `handleFetch`).
+ */
+const SHELL = [...files, ...prerendered];
 
-self.addEventListener('install', (event: any) => {
-	async function addFilesToCache() {
-		const cache = await caches.open(CACHE);
-		await cache.addAll(ASSETS);
-	}
-	event.waitUntil(addFilesToCache());
+/** Content-Hash im Dateinamen: darf unbegrenzt aus dem Cache kommen. */
+const IMMUTABLE_PREFIX = '/_app/immutable/';
+
+const BUILD_ASSETS = new Set(build);
+const SHELL_ASSETS = new Set(SHELL);
+
+sw.addEventListener('install', (event) => {
+	event.waitUntil(
+		(async () => {
+			const cache = await caches.open(CACHE);
+			// Einzeln statt `addAll`: eine fehlende Datei soll nicht die
+			// komplette Installation scheitern lassen.
+			await Promise.allSettled(SHELL.map((asset) => cache.add(asset)));
+			await sw.skipWaiting();
+		})()
+	);
 });
 
-self.addEventListener('activate', (event: any) => {
-	async function deleteOldCaches() {
-		for (const key of await caches.keys()) {
-			if (key !== CACHE) await caches.delete(key);
-		}
-	}
-	event.waitUntil(deleteOldCaches());
-});
-
-self.addEventListener('fetch', (event: any) => {
-	if (event.request.method !== 'GET') return;
-
-	async function respond() {
-		const url = new URL(event.request.url);
-		const cache = await caches.open(CACHE);
-
-		// Statische Assets & JS-Chunks für Widgets: IMMER sofort aus dem Cache laden (0ms)
-		if (ASSETS.includes(url.pathname)) {
-			const response = await cache.match(url.pathname);
-			if (response) {
-				return response;
+sw.addEventListener('activate', (event) => {
+	event.waitUntil(
+		(async () => {
+			for (const key of await caches.keys()) {
+				if (key !== CACHE) await caches.delete(key);
 			}
-		}
+			await sw.clients.claim();
+		})()
+	);
+});
 
-		// Dynamische Daten (API, Supabase, etc.): IMMER aus dem Netzwerk holen
+async function handleFetch(request: Request, url: URL): Promise<Response> {
+	const cache = await caches.open(CACHE);
+
+	// 1. Gehashte Build-Assets und statische Dateien: immer zuerst aus dem Cache,
+	//    bei Bedarf einmalig nachladen und dann behalten.
+	const isAppAsset =
+		url.pathname.startsWith(IMMUTABLE_PREFIX) ||
+		BUILD_ASSETS.has(url.pathname) ||
+		SHELL_ASSETS.has(url.pathname);
+
+	if (isAppAsset) {
+		const cached = await cache.match(request);
+		if (cached) return cached;
+
+		const response = await fetch(request);
+		if (response.ok) cache.put(request, response.clone());
+		return response;
+	}
+
+	// 2. Seitenaufrufe: Netzwerk zuerst, Cache als Offline-Fallback.
+	if (request.mode === 'navigate') {
 		try {
-			const response = await fetch(event.request);
-
-			// Nur Seitenaufrufe (nicht APIs) als Offline-Fallback zwischenspeichern
-			if (response.status === 200 && !url.pathname.includes('/api/')) {
-				cache.put(event.request, response.clone());
-			}
-
+			const response = await fetch(request);
+			if (response.ok) cache.put(request, response.clone());
 			return response;
-		} catch (err) {
-			// Fallback: Wenn wir offline sind, versuchen wir es aus dem Cache
-			const response = await cache.match(event.request);
-			if (response) {
-				return response;
-			}
-			throw err;
+		} catch (error) {
+			const cached = (await cache.match(request)) ?? (await cache.match('/'));
+			if (cached) return cached;
+			throw error;
 		}
 	}
 
-	event.respondWith(respond());
+	// 3. Alles andere (eigene API-Routen, Quickshare-Daten): nie cachen.
+	//    Diese Antworten sind nutzerbezogen und haben in einem geteilten
+	//    Cache nichts verloren.
+	return fetch(request);
+}
+
+sw.addEventListener('fetch', (event) => {
+	const request = event.request;
+	if (request.method !== 'GET') return;
+
+	const url = new URL(request.url);
+
+	// Fremde Origins (Supabase, open-meteo, Favicon-Dienste) laufen unveraendert
+	// am Service Worker vorbei — sonst landen fremde, teils authentifizierte
+	// Antworten in unserem Cache.
+	if (url.origin !== sw.location.origin) return;
+
+	event.respondWith(handleFetch(request, url));
 });

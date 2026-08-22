@@ -19,7 +19,8 @@
 
 {#each options as option}
   <button
-    class="rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wider transition-colors {fullWidth ? 'flex-1 text-center' : ''} {selected === option.value ? 'bg-white/10 text-slate-200 shadow-sm' : 'text-neutral-500 hover:text-white'}"
+    class="ds-segment-item {fullWidth ? 'flex-1 text-center' : ''}"
+    aria-pressed={selected === option.value}
     onclick={() => selectOption(option.value)}
   >
     {option.label}

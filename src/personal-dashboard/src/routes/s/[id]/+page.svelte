@@ -211,15 +211,15 @@
     }
 </script>
 
-<div class="h-[100dvh] w-full bg-[#0a0a0a] text-neutral-300 font-sans flex flex-col overflow-hidden">
+<div class="flex h-[100dvh] w-full flex-col overflow-hidden bg-app text-secondary">
     
-    <header class="shrink-0 border-b border-white/10 bg-neutral-900/50 backdrop-blur-xl flex items-center justify-between px-4 sm:px-8 py-4 z-10 shadow-lg">
+    <header class="z-10 flex shrink-0 items-center justify-between border-b border-line bg-surface/50 px-4 py-4 backdrop-blur-xl sm:px-8">
         <div class="flex items-center gap-3">
-            <span class="font-black text-white text-lg tracking-tight">Personal Dashboard</span>
-            <span class="hidden sm:inline-block px-2.5 py-1 bg-white/10 text-neutral-300 text-[10px] font-bold rounded-full uppercase tracking-widest border border-white/5">Quickshare</span>
+            <span class="text-lg font-semibold tracking-tight text-primary">Personal Dashboard</span>
+            <span class="ds-label hidden rounded-full border border-line bg-fill px-2.5 py-1 sm:inline-block">Quickshare</span>
         </div>
         {#if !expired}
-        <a href="/" class="px-4 sm:px-5 py-2 bg-white text-black text-sm font-bold rounded-xl hover:bg-neutral-200 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] flex items-center gap-2">
+        <a href="/" class="ds-btn ds-btn-primary px-4 sm:px-5">
             Create your own <span class="hidden sm:inline">&rarr;</span>
         </a>
         {/if}
@@ -227,37 +227,37 @@
 
     <div class="flex-grow {isFullscreen ? 'p-0' : 'p-4 sm:p-8'} flex items-center justify-center overflow-hidden min-h-0 relative z-0 transition-all duration-300">
         {#if expired}
-        <div class="max-w-md w-full bg-neutral-900/80 border border-white/10 rounded-[2rem] p-8 flex flex-col items-center text-center shadow-2xl">
-            <div class="w-20 h-20 bg-neutral-800 rounded-3xl flex items-center justify-center mb-6 border border-white/5 shadow-inner">
-                <X size={40} class="text-neutral-500" strokeWidth={2} />
+        <div class="ds-panel flex w-full max-w-md flex-col items-center p-8 text-center">
+            <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-line bg-fill">
+                <X size={40} class="text-muted" strokeWidth={2} />
             </div>
-            <h1 class="text-2xl font-bold text-white mb-3">Snippet Expired</h1>
-            <p class="text-neutral-400 mb-8 leading-relaxed text-sm">
+            <h1 class="mb-3 text-2xl font-semibold text-primary">Snippet Expired</h1>
+            <p class="mb-8 text-sm leading-relaxed text-secondary">
                 This content is no longer available. It may have expired or the host has updated their clipboard.
             </p>
             
-            <a href="/" class="w-full bg-white text-black font-bold text-lg rounded-2xl py-4 hover:bg-neutral-200 transition-colors shadow-xl">
+            <a href="/" class="ds-btn ds-btn-primary w-full rounded-2xl py-4 text-lg">
                 Create your own Dashboard &rarr;
             </a>
         </div>
         {:else}
         <div class="{isFullscreen ? 'w-full h-full' : 'max-w-5xl w-full h-full max-h-[850px]'} flex flex-col md:flex-row gap-4 sm:gap-6 transition-all duration-300">
         
-        <div class="{isFullscreen ? 'flex-1 bg-neutral-900/80 rounded-none border-none' : 'flex-none h-32 md:flex-1 md:h-auto bg-neutral-900/80 border border-white/10 rounded-[2rem]'} overflow-hidden flex flex-col min-h-0 shadow-2xl transition-all duration-300">
-           <div class="h-14 border-b border-white/5 bg-black/20 flex items-center px-4 sm:px-6 gap-3 shrink-0">
+        <div class="{isFullscreen ? 'flex-1 rounded-none border-none bg-surface' : 'ds-card h-32 flex-none md:h-auto md:flex-1'} overflow-hidden flex flex-col min-h-0 shadow-2xl transition-all duration-300">
+           <div class="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-fill px-4 sm:px-6">
                {#if content.type.startsWith('image/')}
-                   <ImageIcon size={18} class="text-neutral-500 shrink-0" />
+                   <ImageIcon size={18} class="shrink-0 text-muted" />
                {:else if isText}
-                   <FileText size={18} class="text-neutral-500 shrink-0" />
+                   <FileText size={18} class="shrink-0 text-muted" />
                {:else}
-                   <FileIcon size={18} class="text-neutral-500 shrink-0" />
+                   <FileIcon size={18} class="shrink-0 text-muted" />
                {/if}
-               <span class="flex-grow text-sm font-medium text-neutral-300 truncate">{content.name || 'Shared Snippet'}</span>
+               <span class="flex-grow truncate text-sm font-medium text-secondary">{content.name || 'Shared Snippet'}</span>
                
                {#if content.type.startsWith('image/') || isText || isMarkdown}
                <button 
                    onclick={() => isFullscreen = !isFullscreen}
-                   class="p-2 -mr-2 hover:bg-white/10 rounded-lg text-neutral-400 hover:text-white transition-colors shrink-0 {isFullscreen ? 'flex' : 'hidden md:flex'} items-center justify-center"
+                   class="ds-icon-btn -mr-2 p-2 {isFullscreen ? 'flex' : 'hidden md:flex'}"
                    title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
                >
                    {#if isFullscreen}
@@ -273,12 +273,12 @@
                {#if !isFullscreen && (content.type.startsWith('image/') || isText || isMarkdown)}
                <button 
                    onclick={() => isFullscreen = true}
-                   class="md:hidden w-full h-full flex flex-row items-center justify-center gap-3 hover:bg-white/5 transition-all"
+                   class="flex h-full w-full flex-row items-center justify-center gap-3 transition-all hover:bg-fill md:hidden"
                >
-                   <div class="w-10 h-10 shrink-0 rounded-full bg-white/10 flex items-center justify-center border border-white/10 shadow-lg">
-                       <Maximize size={18} class="text-white" />
+                   <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-fill-strong">
+                       <Maximize size={18} class="text-primary" />
                    </div>
-                   <span class="text-sm text-neutral-300 font-bold tracking-wide">Show Content</span>
+                   <span class="text-sm font-semibold tracking-wide text-secondary">Show Content</span>
                </button>
                {/if}
 
@@ -295,12 +295,12 @@
                        </div>
                    {:else}
                        <div class="flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-4 text-left sm:text-center w-full h-full">
-                           <div class="w-10 h-10 sm:w-20 sm:h-20 shrink-0 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-neutral-500">
+                           <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-fill text-muted sm:h-20 sm:w-20 sm:rounded-2xl">
                                <FileIcon class="w-5 h-5 sm:w-10 sm:h-10" />
                            </div>
                            <div class="flex flex-col">
-                               <span class="block text-sm sm:text-lg font-bold text-white mb-0.5 sm:mb-1 truncate max-w-[200px]">{content.name}</span>
-                               <span class="text-[10px] sm:text-xs text-neutral-500 uppercase tracking-widest">{content.type}</span>
+                               <span class="mb-0.5 block max-w-[200px] truncate text-sm font-semibold text-primary sm:mb-1 sm:text-lg">{content.name}</span>
+                               <span class="ds-label text-muted">{content.type}</span>
                            </div>
                        </div>
                    {/if}
@@ -310,21 +310,21 @@
 
         {#if !isFullscreen}
         <div class="w-full md:w-80 shrink-0 flex flex-col gap-3 sm:gap-6 min-h-0">
-            <div class="flex-grow bg-neutral-900/80 border border-white/10 rounded-[2rem] p-4 sm:p-8 flex flex-col items-center justify-center gap-3 sm:gap-6 shadow-2xl min-h-0 overflow-y-auto">
-                <div class="p-3 sm:p-5 bg-black/40 rounded-3xl sm:rounded-[2rem] border border-white/5 shadow-inner shrink-0 flex items-center justify-center">
+            <div class="ds-card ds-scroll flex min-h-0 flex-grow flex-col items-center justify-center gap-3 overflow-y-auto p-4 sm:gap-6 sm:p-8">
+                <div class="flex shrink-0 items-center justify-center rounded-3xl border border-line bg-fill p-3 sm:rounded-[2rem] sm:p-5">
                     <img src={qrUrl} alt="QR Code" class="w-24 h-24 sm:w-40 sm:h-40 object-contain opacity-90 mix-blend-screen" />
                 </div>
                 
                 <div class="text-center gap-2 sm:gap-3 w-full shrink-0 flex flex-col items-center">
                     <div class="flex flex-col items-center">
-                        <h2 class="hidden sm:block text-xl font-bold text-white">Quickshare</h2>
-                        <p class="text-xs sm:text-sm font-medium text-neutral-500 bg-black/20 py-1 sm:py-1.5 px-3 rounded-xl border border-white/5 sm:mt-1.5 inline-block">{timeRemaining}</p>
+                        <h2 class="hidden text-xl font-semibold text-primary sm:block">Quickshare</h2>
+                        <p class="ds-well inline-block px-3 py-1 text-xs font-medium text-muted sm:mt-1.5 sm:py-1.5 sm:text-sm">{timeRemaining}</p>
                     </div>
                     
                     <button 
                         onclick={copyLinkAction}
                         disabled={linkStatus === 'success'}
-                        class="flex items-center justify-center gap-2 text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+                        class="ds-btn ds-btn-secondary text-xs"
                     >
                         {#if linkStatus === 'success'}
                             <Check size={14} strokeWidth={3} /> Link Copied
@@ -341,7 +341,7 @@
                     <button 
                         onclick={copyAction}
                         disabled={copyStatus === 'success'}
-                        class="w-full shrink-0 bg-white text-black hover:bg-neutral-200 active:bg-neutral-300 transition-colors font-bold text-sm sm:text-base rounded-2xl sm:rounded-[1.5rem] p-3.5 sm:p-4 flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
+                        class="ds-btn ds-btn-primary w-full shrink-0 rounded-2xl p-3.5 sm:rounded-[1.5rem] sm:p-4 sm:text-base"
                     >
                         {#if copyStatus === 'success'}
                             <Check size={20} strokeWidth={3} /> Success
@@ -359,7 +359,7 @@
                         <button 
                             onclick={copyAction}
                             disabled={copyStatus === 'success'}
-                            class="w-full bg-white/10 text-white hover:bg-white/20 active:bg-white/30 border border-white/10 transition-colors font-bold text-sm sm:text-base rounded-2xl sm:rounded-[1.5rem] p-3.5 sm:p-4 flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-50 shadow-xl"
+                            class="ds-btn ds-btn-secondary w-full rounded-2xl p-3.5 sm:rounded-[1.5rem] sm:p-4 sm:text-base"
                         >
                             {#if copyStatus === 'success'}
                                 <Check size={20} strokeWidth={3} /> Copied
@@ -371,7 +371,7 @@
                     <button 
                         onclick={downloadAction}
                         disabled={downloadStatus === 'success'}
-                        class="w-full bg-white text-black hover:bg-neutral-200 active:bg-neutral-300 transition-colors font-bold text-sm sm:text-base rounded-2xl sm:rounded-[1.5rem] p-3.5 sm:p-4 flex items-center justify-center gap-2 sm:gap-3 disabled:opacity-50 shadow-xl"
+                        class="ds-btn ds-btn-primary w-full rounded-2xl p-3.5 sm:rounded-[1.5rem] sm:p-4 sm:text-base"
                     >
                         {#if downloadStatus === 'success'}
                             <Check size={20} strokeWidth={3} /> Downloaded
@@ -387,7 +387,7 @@
         {/if}
     </div>
 
-    <div class="shrink-0 flex items-center justify-center py-4 px-6 border-t border-white/5 bg-black/40">
+    <div class="flex shrink-0 items-center justify-center border-t border-line bg-fill px-6 py-4">
         <LegalFooter />
     </div>
 </div>

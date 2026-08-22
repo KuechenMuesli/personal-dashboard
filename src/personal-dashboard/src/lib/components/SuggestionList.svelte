@@ -42,25 +42,25 @@
 <div
   use:portal
   style={dropdownStyle}
-  class="overflow-hidden rounded-xl border border-black/40 bg-neutral-900 shadow-2xl font-sans z-[99999]"
+  class="ds-popover z-[99999] overflow-hidden"
 >
   {#each suggestions as item, i}
     <button
       onmousedown={(e) => e.preventDefault()}
-      class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors group {i === selectedIndex ? 'bg-black/40' : 'hover:bg-black/20'}"
+      class="group flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors {i === selectedIndex ? 'bg-fill-strong' : 'hover:bg-fill'}"
       onclick={() => item.action()}
     >
       <div class="flex min-w-0 flex-col pr-2">
-        <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-white' : 'text-slate-300'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
+        <span class="whitespace-pre-wrap break-words text-[12px] {item.badge === 'FACT' ? 'font-normal' : 'font-semibold'} leading-snug mb-0.5 {i === selectedIndex ? 'text-primary' : 'text-secondary'} {item.expandable && expandedItemId !== item.id ? (item.badge === 'FACT' ? 'line-clamp-3' : 'line-clamp-1') : ''}">
           {#if item.icon}<svelte:component this={item.icon} size={14} class="inline-block mr-1.5 shrink-0 translate-y-[1px]" />{/if}
           <span>{item.title}</span>
         </span>
         {#if item.description && expandedItemId === item.id}
-          <div class="text-[12px] font-normal mt-1.5 text-neutral-400 leading-relaxed whitespace-pre-wrap">
+          <div class="mt-1.5 text-[12px] leading-relaxed font-normal whitespace-pre-wrap text-secondary">
              {item.description}
           </div>
         {/if}
-        <span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-blue-400' : getBadgeColor(item.badge)}">
+        <span class="flex items-center gap-1 truncate text-[10px] {i === selectedIndex ? 'text-accent' : getBadgeColor(item.badge)}">
           {#if copiedId === item.id}
             <Check size={10} strokeWidth={3} /> {i18n.t.w.common.copied}
           {:else}
@@ -77,7 +77,7 @@
                <a href={item.url} target="_blank" rel="noopener noreferrer"
                   onmousedown={(e) => e.stopPropagation()}
                   onclick={(e) => e.stopPropagation()}
-                  class="hover:underline hover:text-blue-300 transition-colors z-10 relative">
+                  class="relative z-10 transition-colors hover:text-accent hover:underline">
                  {item.subtitle} ↗
                </a>
             {:else}
@@ -91,7 +91,7 @@
         </span>
       </div>
       <div class="flex items-center shrink-0 relative justify-end">
-        <div class="shrink-0 rounded-md bg-black/30 border border-black/20 px-1.5 py-0.5 text-[8px] font-bold tracking-wider {getBadgeColor(item.badge)} transition-opacity duration-200 {item.onCopy || item.onDelete ? 'group-hover:opacity-0' : ''}">
+        <div class="shrink-0 rounded-md border border-line bg-fill px-1.5 py-0.5 text-[8px] font-bold tracking-wider {getBadgeColor(item.badge)} transition-opacity duration-200 {item.onCopy || item.onDelete ? 'group-hover:opacity-0' : ''}">
           {(i18n.t.w.search.badges as Record<string, string>)[item.badge] || item.badge}
         </div>
         {#if item.onCopy || item.onDelete}
@@ -101,7 +101,7 @@
                 role="button" tabindex="0" onkeydown={(e) => { if(e.key==='Enter'){ e.stopPropagation(); item.onCopy!(); } }}
                 onmousedown={(e) => e.preventDefault()}
                 onclick={(e) => { e.stopPropagation(); item.onCopy!(); }}
-                class="text-neutral-500 hover:text-white p-1 transition-colors cursor-pointer"
+                class="ds-icon-btn cursor-pointer p-1"
                 title="Copy details"
               >
                 <Copy size={12} strokeWidth={2.5} />
@@ -112,7 +112,7 @@
                 role="button" tabindex="0" onkeydown={(e) => { if(e.key==='Enter'){ e.stopPropagation(); item.onDelete!(); } }}
                 onmousedown={(e) => e.preventDefault()}
                 onclick={(e) => { e.stopPropagation(); item.onDelete!(); }}
-                class="text-neutral-500 hover:text-red-400 p-1 transition-colors cursor-pointer"
+                class="ds-icon-btn cursor-pointer p-1 hover:text-danger"
                 title="Delete from history"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>

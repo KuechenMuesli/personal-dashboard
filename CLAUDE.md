@@ -160,6 +160,37 @@ Die Icon-Daten wurden gegen alle 1.686 Originale in `node_modules/lucide-svelte`
 
 Der Service-Worker-Fehler ist entstanden, weil dieser Schritt einmal ausgelassen wurde.
 
+### Pruefskripte fuer das Design-System
+
+Drei Skripte in `node_modules/.cache/`. Die ersten beiden sind in Sekunden durch und
+pruefen Dinge, die ein Build gar nicht prueft:
+
+    node node_modules/.cache/ds-verify.mjs           171 Zusicherungen auf dem kompilierten CSS
+    node node_modules/.cache/ds-compile.mjs $(pwd)   alle .svelte durch den Svelte-Compiler
+    node node_modules/.cache/ds-bundle.mjs <alt> <neu>   zwei echte Builds vergleichen
+
+`ds-verify.mjs` kompiliert `layout.css` ueber `@tailwindcss/node`, loest die Kaskade
+`:root -> body.theme-X` von Hand auf und prueft fuer alle acht Themes, dass jedes
+`--ds-*` zu einer konkreten Farbe wird. Der wichtigste Fall darin: ein Theme, das
+**nur** die alten Palette-Namen setzt — genau so liegen die Nutzer-Themes in der
+Datenbank — muss die `--ds-*`-Tokens trotzdem korrekt steuern.
+
+Falle beim Anfassen von `ds-verify.mjs`: ein flacher Regex ueber die Regeln reicht
+nicht. Tailwind verschachtelt `@supports`-Bloecke in die `body`-Regel, `[^{}]*`
+verschluckt dann alles dahinter. Das Skript zaehlt Klammern.
+
+Gemessen an zwei echten Builds (HEAD `4df57da` gegen den Stand nach der Umstellung),
+Client-Bundle `_app/immutable`:
+
+    CSS gzip     16.8 KB  ->  17.6 KB   (+0.78 KB, die Primitives)
+    JS  gzip    356.6 KB  -> 354.1 KB   (-2.50 KB, kuerzere class-Strings)
+    Summe       373.4 KB  -> 371.7 KB   (-1.72 KB)
+
+Die Rechnung geht auf, weil die class-Attribute der Shell von 34.4 KB auf 20.0 KB
+Quelltext geschrumpft sind — im Schnitt von 85 auf 49 Bytes je Attribut. Wer Primitives
+ergaenzt, ohne dass sie mehrfach benutzt werden, dreht das ins Negative.
+
+
 ## Commits
 
 Englisch, einzeilig, kein Konventions-Präfix, ein Thema pro Commit. Ursachen hängt Paul mit

@@ -75,11 +75,11 @@
   <button
     bind:this={dropdownRef}
     type="button"
-    class="w-full flex items-center justify-between rounded-lg border border-black/40 bg-neutral-900 p-2.5 text-sm text-white hover:bg-black/20 transition-colors focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+    class="ds-field flex items-center justify-between text-left"
     onclick={(e) => { e.stopPropagation(); isOpen = !isOpen; }}
   >
     <span class="truncate pr-4">{selectedLabel}</span>
-    <ChevronDown size={14} class="shrink-0 text-neutral-400 transition-transform {isOpen ? 'rotate-180' : ''}" />
+    <ChevronDown size={14} class="shrink-0 text-muted transition-transform {isOpen ? 'rotate-180' : ''}" />
   </button>
 
   {#if isOpen}
@@ -87,18 +87,18 @@
       bind:this={dropdownMenuRef}
       use:portal
       style={dropdownStyle}
-      class="bg-neutral-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl font-sans"
+      class="ds-popover ds-scroll overflow-hidden"
     >
       <div class="flex flex-col py-1">
         {#each options as option}
           <button
             type="button"
-            class="w-full text-left px-4 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition-colors flex items-center justify-between"
+            class="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-medium text-primary transition-colors hover:bg-fill"
             onclick={(e) => { e.stopPropagation(); value = option.value; isOpen = false; }}
           >
             <span class="truncate">{option.label}</span>
             {#if value === option.value}
-              <Check size={14} class="text-blue-500 shrink-0" />
+              <Check size={14} class="shrink-0 text-accent" />
             {/if}
           </button>
         {/each}

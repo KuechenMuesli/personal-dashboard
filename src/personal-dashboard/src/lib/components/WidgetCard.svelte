@@ -22,35 +22,35 @@
   } = $props();
 </script>
 
-<div class="flex h-full w-full flex-col font-sans text-slate-200 transition-all
-  {transparent ? 'overflow-visible' : 'overflow-hidden rounded-xl border border-black/40 bg-neutral-800 shadow-xl'}
+<div class="flex h-full w-full flex-col text-primary
+  {transparent ? 'overflow-visible' : 'ds-card overflow-hidden'}
   {padding ? 'p-3 sm:p-4' : ''}">
 
 	{#if !isConfigured && !showSettings}
 		<button
 				onclick={() => showSettings = true}
-				class="flex h-full w-full items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 transition-colors"
+				class="ds-focus flex h-full w-full items-center justify-center gap-2 rounded-lg text-muted transition-colors hover:text-accent"
 		>
 			<Settings size={14} />
-			{i18n.t.w.common.configureWidget.replace('{widget}', title || 'Widget')}
+			<span class="ds-label text-inherit">{i18n.t.w.common.configureWidget.replace('{widget}', title || 'Widget')}</span>
 		</button>
 	{:else}
 
 		{#if title}
-			<div class="flex shrink-0 items-center justify-between mb-3 border-b border-black/20 pb-2">
-				<h2 class="text-[10px] font-black uppercase tracking-widest text-neutral-500 flex items-center gap-2">
+			<div class="mb-3 flex shrink-0 items-center justify-between border-b border-line pb-2">
+				<h2 class="ds-label flex items-center gap-2 truncate">
 					{title}
 				</h2>
 
 				{#if headerActions}
-					<div class="flex items-center gap-1 bg-black/20 rounded p-0.5 border border-black/40">
+					<div class="ds-segment shrink-0">
 						{@render headerActions()}
 					</div>
 				{/if}
 			</div>
 		{/if}
 
-		<div class="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+		<div class="ds-scroll flex-grow overflow-y-auto">
 			{@render children()}
 		</div>
 

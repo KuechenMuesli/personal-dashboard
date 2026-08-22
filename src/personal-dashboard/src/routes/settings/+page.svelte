@@ -356,15 +356,24 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {#each ALL_THEMES as theme}
-                    <button
-                        class="ds-tile relative flex min-h-[90px] flex-col justify-between gap-2 p-4 text-left"
-                        aria-pressed={globalTheme === theme.id}
-                        onclick={() => handleThemeChange(theme.id)}
-                    >
+                    <div class="relative">
+                        <button
+                            class="ds-tile flex h-full min-h-[90px] w-full flex-col justify-between gap-2 p-4 text-left"
+                            aria-pressed={globalTheme === theme.id}
+                            onclick={() => handleThemeChange(theme.id)}
+                        >
+                            <div class="pr-6 text-sm leading-tight font-semibold break-words text-primary">{theme.name}</div>
+                            <div class="ds-well mt-2 flex w-fit gap-1.5 p-2">
+                                {#each theme.colors as c}
+                                    <div class="h-4 w-4 rounded-full border border-line-strong" style="background-color: {c}"></div>
+                                {/each}
+                            </div>
+                        </button>
+
                         {#if theme.isCustom}
                           <button 
                             class="ds-icon-btn absolute top-3 right-3 bg-fill-strong p-1.5"
-                            onclick={(e) => { e.stopPropagation(); editingTheme = theme.raw; showThemeEditor = true; }}
+                            onclick={() => { editingTheme = theme.raw; showThemeEditor = true; }}
                             title="Edit Custom Theme"
                           >
                             <Palette size={14} />
@@ -372,19 +381,13 @@
                           
                           <button 
                             class="ds-icon-btn absolute top-3 right-11 bg-fill-strong p-1.5 hover:bg-danger hover:text-on-accent"
-                            onclick={(e) => { e.stopPropagation(); handleDeleteTheme(theme.id.replace('custom_', '')); }}
+                            onclick={() => { handleDeleteTheme(theme.id.replace('custom_', '')); }}
                             title="Delete Custom Theme"
                           >
                             <Trash2 size={14} />
                           </button>
                         {/if}
-                        <div class="pr-6 text-sm leading-tight font-semibold break-words text-primary">{theme.name}</div>
-                        <div class="ds-well mt-2 flex w-fit gap-1.5 p-2">
-                            {#each theme.colors as c}
-                                <div class="h-4 w-4 rounded-full border border-line-strong" style="background-color: {c}"></div>
-                            {/each}
-                        </div>
-                    </button>
+                    </div>
                 {/each}
             </div>
           </div>

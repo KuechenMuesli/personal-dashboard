@@ -1,0 +1,401 @@
+/* Wiederverwendbare Bausteine. Ziel ist, dass eine Design-Aenderung hier
+   passiert und nicht in 30 Komponenten. Alles referenziert nur --ds-*-Tokens,
+   nie feste Farben -- sonst bricht es in den hellen Themes. */
+
+@layer components {
+  /* Fokus. Ein einziger Ort, damit Tastaturbedienung ueberall gleich aussieht.
+     :focus-visible statt :focus, sonst blitzt der Ring bei jedem Mausklick auf. */
+  .ds-focus:focus-visible,
+  .ds-btn:focus-visible,
+  .ds-icon-btn:focus-visible,
+  .ds-input:focus-visible,
+  .ds-field:focus-visible {
+    outline: 2px solid var(--ds-accent);
+    outline-offset: 2px;
+  }
+
+  /* Flaechen */
+  .ds-card {
+    background-color: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--ds-shadow-card);
+  }
+
+  .ds-panel {
+    background-color: var(--ds-surface-raised);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--ds-shadow-overlay);
+  }
+
+  .ds-popover {
+    background-color: var(--ds-surface-raised);
+    border: 1px solid var(--ds-border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--ds-shadow-raised);
+  }
+
+  .ds-well {
+    background-color: var(--ds-surface-sunken);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--radius-md);
+  }
+
+  .ds-divider {
+    border-color: var(--ds-border);
+  }
+
+  /* Typografie */
+  .ds-label {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ds-text-secondary);
+  }
+
+  .ds-caption {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    color: var(--ds-text-muted);
+  }
+
+  /* Ziffern in Uhr, Timer und Kursen springen sonst bei jedem Tick in der
+     Breite, weil die System-Fonts proportionale Ziffern haben. */
+  .ds-numeric {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Eingaben */
+  .ds-input,
+  .ds-field {
+    width: 100%;
+    background-color: var(--ds-surface-sunken);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--radius-md);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--ds-text);
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .ds-input::placeholder,
+  .ds-field::placeholder {
+    color: var(--ds-text-muted);
+  }
+
+  .ds-input:hover:not(:disabled),
+  .ds-field:hover:not(:disabled) {
+    border-color: var(--ds-border-strong);
+  }
+
+  .ds-input:disabled,
+  .ds-field:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Buttons */
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .ds-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .ds-btn-primary {
+    background-color: var(--ds-accent);
+    color: var(--ds-on-accent);
+  }
+
+  .ds-btn-primary:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--ds-accent) 88%, white);
+  }
+
+  .ds-btn-secondary {
+    background-color: var(--ds-fill);
+    border-color: var(--ds-border);
+    color: var(--ds-text);
+  }
+
+  .ds-btn-secondary:hover:not(:disabled) {
+    background-color: var(--ds-fill-strong);
+    border-color: var(--ds-border-strong);
+  }
+
+  .ds-btn-ghost {
+    background-color: transparent;
+    color: var(--ds-text-secondary);
+  }
+
+  .ds-btn-ghost:hover:not(:disabled) {
+    background-color: var(--ds-fill);
+    color: var(--ds-text);
+  }
+
+  .ds-btn-danger {
+    background-color: var(--ds-danger-soft);
+    border-color: color-mix(in srgb, var(--ds-danger) 35%, transparent);
+    color: var(--ds-danger);
+  }
+
+  .ds-btn-danger:hover:not(:disabled) {
+    background-color: var(--ds-danger);
+    color: var(--ds-on-accent);
+  }
+
+  .ds-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    color: var(--ds-text-secondary);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .ds-icon-btn:hover:not(:disabled) {
+    background-color: var(--ds-fill);
+    color: var(--ds-text);
+  }
+
+  .ds-icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Segmentierte Umschalter (Widget-Tabs, Zeitraumwahl) */
+  .ds-segment {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.125rem;
+    background-color: var(--ds-fill);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .ds-segment-item {
+    border-radius: calc(var(--radius-sm) - 0.125rem);
+    padding: 0.25rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--ds-text-muted);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .ds-segment-item:hover {
+    color: var(--ds-text);
+  }
+
+  .ds-segment-item[aria-pressed='true'] {
+    background-color: var(--ds-surface-raised);
+    color: var(--ds-text);
+    box-shadow: var(--ds-shadow-card);
+  }
+}
+
+/* Scrollbars. Die 17 `scrollbar-thin`/`scrollbar-thumb-*`-Klassen im Bestand
+   waren wirkungslos -- das Plugin, das sie definiert, ist nicht installiert.
+   Global ueber die Standard-Properties, damit es ueberall greift statt nur dort,
+   wo jemand daran gedacht hat. */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ds-border-strong) transparent;
+  }
+}
+
+@layer components {
+  .ds-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .ds-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .ds-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--ds-border-strong);
+    border-radius: 999px;
+  }
+
+  .ds-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ds-text-muted);
+  }
+}
+
+@layer components {
+  /* Overlays. Der Scrim bleibt in allen Themes dunkel -- auch helle Oberflaechen
+     verlangen einen dunklen Schleier, sonst verliert der Dialog seine Kante.
+     Bewusst feste Werte statt Token: ::backdrop erbt Custom Properties erst in
+     sehr neuen Browsern zuverlaessig. */
+  .ds-dialog::backdrop {
+    background-color: rgb(0 0 0 / 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .ds-scrim {
+    background-color: rgb(0 0 0 / 0.6);
+    backdrop-filter: blur(4px);
+  }
+}
+
+@layer components {
+  /* Schwebende Aktionsknoepfe (Dashboard-Ecke unten rechts) */
+  .ds-fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: var(--ds-surface-raised);
+    border: 1px solid var(--ds-border);
+    color: var(--ds-text);
+    box-shadow: var(--ds-shadow-raised);
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .ds-fab:hover:not(:disabled) {
+    background-color: var(--ds-fill-strong);
+    border-color: var(--ds-border-strong);
+    transform: scale(1.04);
+  }
+
+  .ds-fab:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  /* Auswaehlbare Kachel -- Widget-Picker und Theme-Picker teilen sich das Muster.
+     Auswahlzustand haengt an aria-pressed, damit Optik und Semantik nicht
+     auseinanderlaufen koennen. */
+  .ds-tile {
+    background-color: var(--ds-fill);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .ds-tile:hover:not(:disabled) {
+    background-color: var(--ds-fill-strong);
+    border-color: var(--ds-border-strong);
+  }
+
+  .ds-tile[aria-pressed='true'] {
+    border-color: var(--ds-accent);
+    background-color: var(--ds-accent-soft);
+    box-shadow: inset 0 0 0 1px var(--ds-accent);
+  }
+
+  .ds-tile:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /* Abschnittskarte auf der Einstellungsseite */
+  .ds-section {
+    background-color: var(--ds-fill);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+  }
+
+  /* Vertikale Navigation (Einstellungen). Auswahl ueber aria-pressed wie bei
+     .ds-tile und .ds-segment-item -- ein Zustandsmechanismus im ganzen System.
+     aria-selected waere hier ungueltig: das setzt role="tab" voraus. */
+  .ds-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ds-text-secondary);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .ds-nav-item:hover {
+    background-color: var(--ds-fill);
+    color: var(--ds-text);
+  }
+
+  .ds-nav-item[aria-pressed='true'] {
+    background-color: var(--ds-accent-soft);
+    border-color: color-mix(in srgb, var(--ds-accent) 45%, transparent);
+    color: var(--ds-text);
+  }
+
+  /* Inline-Meldungen */
+  .ds-alert {
+    border-radius: var(--radius-md);
+    border: 1px solid;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .ds-alert-error {
+    background-color: var(--ds-danger-soft);
+    border-color: color-mix(in srgb, var(--ds-danger) 30%, transparent);
+    color: var(--ds-danger);
+  }
+
+  .ds-alert-success {
+    background-color: color-mix(in srgb, var(--ds-success) 12%, transparent);
+    border-color: color-mix(in srgb, var(--ds-success) 30%, transparent);
+    color: var(--ds-success);
+  }
+
+  /* Gefahrenzone (Konto loeschen) */
+  .ds-section-danger {
+    background-color: var(--ds-danger-soft);
+    border: 1px solid color-mix(in srgb, var(--ds-danger) 25%, transparent);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+  }
+}

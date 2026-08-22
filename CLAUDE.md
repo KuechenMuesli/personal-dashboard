@@ -32,6 +32,55 @@ Auswählen im Favoriten zu speichern, sodass beim Rendern gar nichts nachgeladen
 Faustregel: übertragene Bytes zu Nutzdaten jenseits von etwa 3:1 heißt, die Aufteilung
 setzt am falschen Punkt an.
 
+## Design-System
+
+Alles Optische kommt aus `src/lib/styles/`. Wer eine Farbe, einen Radius oder einen
+Schatten direkt in eine Komponente schreibt, hat den falschen Ort erwischt.
+
+    theme.css       Tokens und die acht Themes
+    primitives.css  wiederverwendbare Bausteine (.ds-*)
+    compat.css      Uebergangsschicht, faellt weg wenn die Widgets migriert sind
+
+**Drei Schichten, und die Reihenfolge ist nicht beliebig.** Gespeicherte Custom-Themes
+liegen in Supabase als roher CSS-Text und referenzieren die alten Variablennamen.
+Diese Namen sind damit ein oeffentlicher Vertrag:
+
+1. Palette-Slots (`--color-neutral-800` = Karte, `--color-neutral-900` = Eingabe,
+   `--color-blue-500` = Akzent, `--theme-body-bg`, `--color-widget-text`). Das ist,
+   was ein Theme setzt. Umbenennen bricht jedes gespeicherte Nutzer-Theme.
+2. Semantische Tokens (`--ds-surface`, `--ds-fill`, `--ds-border`, `--ds-text`, ...),
+   auf `body` aus Schicht 1 abgeleitet. Muss auf `body` stehen: die Theme-Klasse haengt
+   dort, und `var()` sieht nur Werte desselben Elements.
+3. Utilities via `@theme inline`: `bg-surface`, `bg-fill`, `border-line`,
+   `text-primary/secondary/muted`, `text-accent`, `shadow-card`.
+
+**Falle: `@theme inline` ist Pflicht, nicht Geschmack.** Ohne `inline` emittiert Tailwind
+`:root { --color-surface: var(--ds-surface) }`. Custom Properties werden am deklarierenden
+Element aufgeloest — auf `:root` ist `--ds-surface` unbekannt, der Wert bleibt dauerhaft
+ungueltig, `bg-surface` faerbt nichts. Mit `inline` landet `var(--ds-surface)` direkt in
+der Utility und wird erst dort aufgeloest, wo sie benutzt wird.
+
+**Helle Themes brauchen keine Sonderbehandlung mehr.** Frueher hat ein `!important`-Block
+jede `bg-black/XX`-Utility einzeln nachjustiert. Jetzt kippen `--ds-fill` und `--ds-border`
+einmal zentral von Weiss- auf Schwarztoene. Der Block in `compat.css` existiert nur noch
+fuer nicht migrierte Widgets — wer eins migriert, ersetzt `bg-black/XX` durch
+`bg-fill`/`bg-fill-strong` und streicht die Zeile dort.
+
+**Zustaende immer ueber `aria-pressed`.** `.ds-tile`, `.ds-segment-item` und `.ds-nav-item`
+haengen ihre Auswahl-Optik an `[aria-pressed='true']`, damit Optik und Semantik nicht
+auseinanderlaufen koennen. `aria-selected` ist auf `<button>` ungueltig — das setzt
+`role="tab"` voraus.
+
+Skala: Radius sm 8 / md 12 / lg 16 / xl 20. Labels sind 11px/600, nicht mehr
+10px/900/uppercase. Der Akzent traegt Fokus, Auswahl und die eine primaere Aktion —
+keine grossen Flaechen.
+
+**Stand:** System, Primitives und die gesamte Shell sind migriert (Dashboard, Settings,
+Login, Reset, Impressum, Privacy, Share, Fehlerseite, alle `lib/components/`).
+Die 18 Widgets in `src/lib/widgets/` sind es **nicht** — sie laufen weiter ueber
+`compat.css`. Sichtbar wird das an Widget-internen Ueberschriften, die noch
+10px/900/uppercase sind, waehrend der Karten-Titel daneben schon 11px/600 ist.
+
 ## Fallen, die schon zugeschnappt sind
 
 **Service Worker (`src/service-worker.ts`).** Cache-first darf ausschließlich für Dateien

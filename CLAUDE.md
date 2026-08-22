@@ -130,26 +130,42 @@ Dadurch entstehen bei jedem Sprachwechsel neue `load`-Closures, das `{#await}` s
 alle Widgets verlieren ihren Zustand. Beim Anfassen mitkorrigieren: Registry als `const`
 außerhalb der Reaktivität, Anzeigenamen erst im Picker auflösen.
 
-## Was in dieser Umgebung nicht geht
+## Was in der Umgebung geht — und was nicht
 
-`npm run build` ist aus einer Claude-Session heraus **nicht** ausführbar. `svelte.config.js`
-importiert `adapter-cloudflare` → wrangler → workerd, und `node_modules` enthält das
-macOS-Binary. Der Build muss auf Pauls Rechner laufen. Entsprechend gilt: Bundle-Größen
-lassen sich nur aus einem vorhandenen Build unter `.svelte-kit/output/client/.vite/manifest.json`
-lesen, nicht neu messen.
+**Nachgeprüft am 22.08.2026.** Die früheren Einträge hier („Build nicht ausführbar",
+„nichts löschbar") stammten aus einer Claude-Cowork-Sitzung und beschrieben deren
+Sandbox, nicht das Projekt. In Claude Code auf Pauls Rechner gilt das nicht. Wer hier
+etwas als „geht nicht" notiert: erst testen, und dazuschreiben, in welcher Umgebung.
 
-`npx svelte-check` läuft (etwa 40 Sekunden, im Hintergrund starten), meldet aber aus demselben
-Grund pro `.svelte`-Datei einen zusätzlichen Fehler „Error in svelte.config.js / workerd".
-Das ist Rauschen. Echte Fehlerzahl mit einem Regex auf `^<pfad>:<zeile>:<spalte>\nError: …`
-filtern und die `Error in svelte.config.js`-Einträge abziehen. Stand August 2026: **40 echte
-Fehler** — das ist die Baseline, an der neue Arbeit gemessen wird. Die Guidelines fordern 0.
+`npm run build` **läuft** (etwa 10 Sekunden, im Hintergrund starten). `adapter-cloudflare`
+wird sauber ausgeführt, workerd ist kein Hindernis. Damit lassen sich Bundle-Größen auch
+tatsächlich messen statt nur aus einem alten Build unter
+`.svelte-kit/output/client/.vite/manifest.json` abzulesen.
 
-Einzelne Komponenten lassen sich trotzdem prüfen: ein Skript nach `node_modules/.cache/` legen
-(dort findet node das `svelte`-Paket) und `compile(source, { runes: true })` aufrufen. Den
-Rohtext übergeben — der Svelte-5-Compiler versteht `lang="ts"` selbst.
+Für ein echtes Vorher/Nachher: `git worktree add --detach <pfad> HEAD`, dann
+`node_modules` aus dem Hauptverzeichnis hineinsymlinken und dort bauen. Das lässt den
+Arbeitsbaum unangetastet. `node node_modules/.cache/ds-bundle.mjs <alt> <neu>` vergleicht
+zwei `_app/immutable`-Verzeichnisse nach JS/CSS und gzip.
 
-`device_bash` kann nichts löschen (EPERM auf `rm`, `rmdir`, `unlink`). Generatoren deshalb ohne
-`rmSync` bauen. Sollen Dateien weg: in einen `_to_delete/`-Ordner verschieben und Paul sagen.
+`npx vite dev` läuft (etwa 5 Sekunden bis „ready", im Hintergrund starten). Für alles
+Optische ist das der Weg — ansehen statt raten. Im Dev-Modus scheitert die
+Service-Worker-Registrierung und Supabase antwortet ohne Session mit 401; beides ist
+normal und kein Symptom.
+
+`npx svelte-check` läuft (etwa 40 Sekunden, im Hintergrund starten). Stand 22.08.2026:
+**40 Fehler, 54 Warnungen in 23 Dateien** — das ist die Baseline, an der neue Arbeit
+gemessen wird. Die Guidelines fordern 0. Das früher hier dokumentierte
+„Error in svelte.config.js / workerd"-Rauschen trat nicht mehr auf.
+
+Löschen funktioniert: `rm`, `rmdir`, `rm -rf`, `fs.unlinkSync` und `fs.rmSync` wurden im
+Projektverzeichnis geprüft. Generatoren dürfen also aufräumen. Der `_to_delete/`-Ordner
+bleibt trotzdem sinnvoll, wenn unklar ist, ob etwas wirklich weg soll — dann Paul fragen.
+
+Einzelne Komponenten lassen sich auch ohne vollen Build prüfen: ein Skript nach
+`node_modules/.cache/` legen (dort findet node das `svelte`-Paket) und
+`compile(source, { runes: true })` aufrufen. Den Rohtext übergeben — der Svelte-5-Compiler
+versteht `lang="ts"` selbst. Das ist deutlich schneller als ein Build, wenn nur die Frage
+ist, ob etwas überhaupt kompiliert.
 
 ## Verifikation
 

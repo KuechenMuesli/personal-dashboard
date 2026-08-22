@@ -152,16 +152,16 @@
 
   function getIcon(url: string) {
     try {
-      const domain = new URL(url).hostname;
-      return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-    } catch { return ""; }
+      const raw = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+      return `/api/favicon?url=${encodeURIComponent(raw)}`;
+    } catch {
+      return '';
+    }
   }
 
   function handleImageError(url: string) {
     failedImages.add(url);
   }
-
-  // move is replaced by drag and drop
 </script>
 
 {#snippet faviconFallback(fav: Favorite, letterClass: string, imgClass: string)}

@@ -32,6 +32,55 @@ Auswählen im Favoriten zu speichern, sodass beim Rendern gar nichts nachgeladen
 Faustregel: übertragene Bytes zu Nutzdaten jenseits von etwa 3:1 heißt, die Aufteilung
 setzt am falschen Punkt an.
 
+## Design-System
+
+Alles Optische kommt aus `src/lib/styles/`. Wer eine Farbe, einen Radius oder einen
+Schatten direkt in eine Komponente schreibt, hat den falschen Ort erwischt.
+
+    theme.css       Tokens und die acht Themes
+    primitives.css  wiederverwendbare Bausteine (.ds-*)
+    compat.css      Uebergangsschicht, faellt weg wenn die Widgets migriert sind
+
+**Drei Schichten, und die Reihenfolge ist nicht beliebig.** Gespeicherte Custom-Themes
+liegen in Supabase als roher CSS-Text und referenzieren die alten Variablennamen.
+Diese Namen sind damit ein oeffentlicher Vertrag:
+
+1. Palette-Slots (`--color-neutral-800` = Karte, `--color-neutral-900` = Eingabe,
+   `--color-blue-500` = Akzent, `--theme-body-bg`, `--color-widget-text`). Das ist,
+   was ein Theme setzt. Umbenennen bricht jedes gespeicherte Nutzer-Theme.
+2. Semantische Tokens (`--ds-surface`, `--ds-fill`, `--ds-border`, `--ds-text`, ...),
+   auf `body` aus Schicht 1 abgeleitet. Muss auf `body` stehen: die Theme-Klasse haengt
+   dort, und `var()` sieht nur Werte desselben Elements.
+3. Utilities via `@theme inline`: `bg-surface`, `bg-fill`, `border-line`,
+   `text-primary/secondary/muted`, `text-accent`, `shadow-card`.
+
+**Falle: `@theme inline` ist Pflicht, nicht Geschmack.** Ohne `inline` emittiert Tailwind
+`:root { --color-surface: var(--ds-surface) }`. Custom Properties werden am deklarierenden
+Element aufgeloest — auf `:root` ist `--ds-surface` unbekannt, der Wert bleibt dauerhaft
+ungueltig, `bg-surface` faerbt nichts. Mit `inline` landet `var(--ds-surface)` direkt in
+der Utility und wird erst dort aufgeloest, wo sie benutzt wird.
+
+**Helle Themes brauchen keine Sonderbehandlung mehr.** Frueher hat ein `!important`-Block
+jede `bg-black/XX`-Utility einzeln nachjustiert. Jetzt kippen `--ds-fill` und `--ds-border`
+einmal zentral von Weiss- auf Schwarztoene. Der Block in `compat.css` existiert nur noch
+fuer nicht migrierte Widgets — wer eins migriert, ersetzt `bg-black/XX` durch
+`bg-fill`/`bg-fill-strong` und streicht die Zeile dort.
+
+**Zustaende immer ueber `aria-pressed`.** `.ds-tile`, `.ds-segment-item` und `.ds-nav-item`
+haengen ihre Auswahl-Optik an `[aria-pressed='true']`, damit Optik und Semantik nicht
+auseinanderlaufen koennen. `aria-selected` ist auf `<button>` ungueltig — das setzt
+`role="tab"` voraus.
+
+Skala: Radius sm 8 / md 12 / lg 16 / xl 20. Labels sind 11px/600, nicht mehr
+10px/900/uppercase. Der Akzent traegt Fokus, Auswahl und die eine primaere Aktion —
+keine grossen Flaechen.
+
+**Stand:** System, Primitives und die gesamte Shell sind migriert (Dashboard, Settings,
+Login, Reset, Impressum, Privacy, Share, Fehlerseite, alle `lib/components/`).
+Die 18 Widgets in `src/lib/widgets/` sind es **nicht** — sie laufen weiter ueber
+`compat.css`. Sichtbar wird das an Widget-internen Ueberschriften, die noch
+10px/900/uppercase sind, waehrend der Karten-Titel daneben schon 11px/600 ist.
+
 ## Fallen, die schon zugeschnappt sind
 
 **Service Worker (`src/service-worker.ts`).** Cache-first darf ausschließlich für Dateien
@@ -81,26 +130,42 @@ Dadurch entstehen bei jedem Sprachwechsel neue `load`-Closures, das `{#await}` s
 alle Widgets verlieren ihren Zustand. Beim Anfassen mitkorrigieren: Registry als `const`
 außerhalb der Reaktivität, Anzeigenamen erst im Picker auflösen.
 
-## Was in dieser Umgebung nicht geht
+## Was in der Umgebung geht — und was nicht
 
-`npm run build` ist aus einer Claude-Session heraus **nicht** ausführbar. `svelte.config.js`
-importiert `adapter-cloudflare` → wrangler → workerd, und `node_modules` enthält das
-macOS-Binary. Der Build muss auf Pauls Rechner laufen. Entsprechend gilt: Bundle-Größen
-lassen sich nur aus einem vorhandenen Build unter `.svelte-kit/output/client/.vite/manifest.json`
-lesen, nicht neu messen.
+**Nachgeprüft am 22.08.2026.** Die früheren Einträge hier („Build nicht ausführbar",
+„nichts löschbar") stammten aus einer Claude-Cowork-Sitzung und beschrieben deren
+Sandbox, nicht das Projekt. In Claude Code auf Pauls Rechner gilt das nicht. Wer hier
+etwas als „geht nicht" notiert: erst testen, und dazuschreiben, in welcher Umgebung.
 
-`npx svelte-check` läuft (etwa 40 Sekunden, im Hintergrund starten), meldet aber aus demselben
-Grund pro `.svelte`-Datei einen zusätzlichen Fehler „Error in svelte.config.js / workerd".
-Das ist Rauschen. Echte Fehlerzahl mit einem Regex auf `^<pfad>:<zeile>:<spalte>\nError: …`
-filtern und die `Error in svelte.config.js`-Einträge abziehen. Stand August 2026: **40 echte
-Fehler** — das ist die Baseline, an der neue Arbeit gemessen wird. Die Guidelines fordern 0.
+`npm run build` **läuft** (etwa 10 Sekunden, im Hintergrund starten). `adapter-cloudflare`
+wird sauber ausgeführt, workerd ist kein Hindernis. Damit lassen sich Bundle-Größen auch
+tatsächlich messen statt nur aus einem alten Build unter
+`.svelte-kit/output/client/.vite/manifest.json` abzulesen.
 
-Einzelne Komponenten lassen sich trotzdem prüfen: ein Skript nach `node_modules/.cache/` legen
-(dort findet node das `svelte`-Paket) und `compile(source, { runes: true })` aufrufen. Den
-Rohtext übergeben — der Svelte-5-Compiler versteht `lang="ts"` selbst.
+Für ein echtes Vorher/Nachher: `git worktree add --detach <pfad> HEAD`, dann
+`node_modules` aus dem Hauptverzeichnis hineinsymlinken und dort bauen. Das lässt den
+Arbeitsbaum unangetastet. `node node_modules/.cache/ds-bundle.mjs <alt> <neu>` vergleicht
+zwei `_app/immutable`-Verzeichnisse nach JS/CSS und gzip.
 
-`device_bash` kann nichts löschen (EPERM auf `rm`, `rmdir`, `unlink`). Generatoren deshalb ohne
-`rmSync` bauen. Sollen Dateien weg: in einen `_to_delete/`-Ordner verschieben und Paul sagen.
+`npx vite dev` läuft (etwa 5 Sekunden bis „ready", im Hintergrund starten). Für alles
+Optische ist das der Weg — ansehen statt raten. Im Dev-Modus scheitert die
+Service-Worker-Registrierung und Supabase antwortet ohne Session mit 401; beides ist
+normal und kein Symptom.
+
+`npx svelte-check` läuft (etwa 40 Sekunden, im Hintergrund starten). Stand 22.08.2026:
+**40 Fehler, 54 Warnungen in 23 Dateien** — das ist die Baseline, an der neue Arbeit
+gemessen wird. Die Guidelines fordern 0. Das früher hier dokumentierte
+„Error in svelte.config.js / workerd"-Rauschen trat nicht mehr auf.
+
+Löschen funktioniert: `rm`, `rmdir`, `rm -rf`, `fs.unlinkSync` und `fs.rmSync` wurden im
+Projektverzeichnis geprüft. Generatoren dürfen also aufräumen. Der `_to_delete/`-Ordner
+bleibt trotzdem sinnvoll, wenn unklar ist, ob etwas wirklich weg soll — dann Paul fragen.
+
+Einzelne Komponenten lassen sich auch ohne vollen Build prüfen: ein Skript nach
+`node_modules/.cache/` legen (dort findet node das `svelte`-Paket) und
+`compile(source, { runes: true })` aufrufen. Den Rohtext übergeben — der Svelte-5-Compiler
+versteht `lang="ts"` selbst. Das ist deutlich schneller als ein Build, wenn nur die Frage
+ist, ob etwas überhaupt kompiliert.
 
 ## Verifikation
 
@@ -110,6 +175,37 @@ einem Node-Skript gegen konkrete Fälle prüfen — inklusive der Fälle, die vo
 Die Icon-Daten wurden gegen alle 1.686 Originale in `node_modules/lucide-svelte` abgeglichen.
 
 Der Service-Worker-Fehler ist entstanden, weil dieser Schritt einmal ausgelassen wurde.
+
+### Pruefskripte fuer das Design-System
+
+Drei Skripte in `node_modules/.cache/`. Die ersten beiden sind in Sekunden durch und
+pruefen Dinge, die ein Build gar nicht prueft:
+
+    node node_modules/.cache/ds-verify.mjs           171 Zusicherungen auf dem kompilierten CSS
+    node node_modules/.cache/ds-compile.mjs $(pwd)   alle .svelte durch den Svelte-Compiler
+    node node_modules/.cache/ds-bundle.mjs <alt> <neu>   zwei echte Builds vergleichen
+
+`ds-verify.mjs` kompiliert `layout.css` ueber `@tailwindcss/node`, loest die Kaskade
+`:root -> body.theme-X` von Hand auf und prueft fuer alle acht Themes, dass jedes
+`--ds-*` zu einer konkreten Farbe wird. Der wichtigste Fall darin: ein Theme, das
+**nur** die alten Palette-Namen setzt — genau so liegen die Nutzer-Themes in der
+Datenbank — muss die `--ds-*`-Tokens trotzdem korrekt steuern.
+
+Falle beim Anfassen von `ds-verify.mjs`: ein flacher Regex ueber die Regeln reicht
+nicht. Tailwind verschachtelt `@supports`-Bloecke in die `body`-Regel, `[^{}]*`
+verschluckt dann alles dahinter. Das Skript zaehlt Klammern.
+
+Gemessen an zwei echten Builds (HEAD `4df57da` gegen den Stand nach der Umstellung),
+Client-Bundle `_app/immutable`:
+
+    CSS gzip     16.8 KB  ->  17.6 KB   (+0.78 KB, die Primitives)
+    JS  gzip    356.6 KB  -> 354.1 KB   (-2.50 KB, kuerzere class-Strings)
+    Summe       373.4 KB  -> 371.7 KB   (-1.72 KB)
+
+Die Rechnung geht auf, weil die class-Attribute der Shell von 34.4 KB auf 20.0 KB
+Quelltext geschrumpft sind — im Schnitt von 85 auf 49 Bytes je Attribut. Wer Primitives
+ergaenzt, ohne dass sie mehrfach benutzt werden, dreht das ins Negative.
+
 
 ## Commits
 

@@ -1,0 +1,35 @@
+/* Uebergangsschicht -- faellt weg, sobald die Widgets migriert sind.
+ *
+ * Noch nicht migrierte Komponenten setzen Fuellungen und Raender als
+ * bg-black/XX bzw. border-black/XX. In hellen Themes ergibt das schmutzige
+ * graue Flaechen, deshalb wird der Bereich hier heruntergezogen.
+ *
+ * Absichtlich nur auf helle Themes beschraenkt: dieselben Utilities dienen an
+ * anderen Stellen als Modal-Scrim (OnboardingTour, ThemeEditor). Ein
+ * themeuebergreifendes Remapping wuerde die Scrims in dunklen Themes
+ * durchsichtig machen. Wer ein Widget migriert, ersetzt bg-black/XX durch
+ * bg-fill / bg-fill-strong und streicht die Zeile hier.
+ */
+
+@layer utilities {
+  :is(.theme-light, .theme-paper, .theme-princess) {
+    .bg-black\/10 { background-color: rgb(0 0 0 / 0.03) !important; }
+    .bg-black\/20 { background-color: rgb(0 0 0 / 0.05) !important; }
+    .bg-black\/30 { background-color: rgb(0 0 0 / 0.07) !important; }
+    .bg-black\/40 { background-color: rgb(0 0 0 / 0.1) !important; }
+    .bg-black\/50 { background-color: rgb(0 0 0 / 0.12) !important; }
+    .bg-black\/60 { background-color: rgb(0 0 0 / 0.15) !important; }
+
+    .hover\:bg-black\/20:hover { background-color: rgb(0 0 0 / 0.05) !important; }
+    .hover\:bg-black\/40:hover { background-color: rgb(0 0 0 / 0.1) !important; }
+    .hover\:bg-black\/60:hover { background-color: rgb(0 0 0 / 0.15) !important; }
+
+    .border-black\/10 { border-color: rgb(0 0 0 / 0.05) !important; }
+    .border-black\/20 { border-color: rgb(0 0 0 / 0.08) !important; }
+    .border-black\/30 { border-color: rgb(0 0 0 / 0.1) !important; }
+    .border-black\/40 { border-color: rgb(0 0 0 / 0.12) !important; }
+    .border-black\/50 { border-color: rgb(0 0 0 / 0.15) !important; }
+
+    .hover\:border-black\/40:hover { border-color: rgb(0 0 0 / 0.12) !important; }
+  }
+}

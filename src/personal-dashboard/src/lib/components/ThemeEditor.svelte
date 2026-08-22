@@ -29,6 +29,21 @@
     muted: extractColor('--color-neutral-400', '#a1a1aa')
   });
 
+  // Helligkeit der Hintergrundfarbe entscheidet ueber color-scheme. Vorher war
+  // hier `light` fest verdrahtet -- dunkle Custom-Themes bekamen dadurch helle
+  // Scrollbars und Formular-Steuerelemente vom Browser.
+  function isLight(hex: string): boolean {
+    const m = /^#?([\da-f]{6})$/i.exec(hex.trim());
+    if (!m) return false;
+    const n = parseInt(m[1], 16);
+    const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55;
+  }
+
+  let light = $derived(isLight(colors.bg));
+
+  // Beide Schichten schreiben: die Palette-Slots fuer noch nicht migrierte
+  // Widgets, die --ds-*-Tokens fuer alles Migrierte.
   let generatedCss = $derived(`
   --theme-body-bg: ${colors.bg};
   --color-neutral-600: ${colors.inner};
@@ -45,8 +60,14 @@
   --color-slate-400: ${colors.muted};
   --color-neutral-400: ${colors.muted};
   --color-neutral-500: ${colors.muted};
-  --tw-shadow-color: rgba(0,0,0,0.4);
-  color-scheme: light;
+  --ds-surface-raised: ${colors.card};
+  --ds-text-secondary: ${colors.muted};
+  --ds-text-muted: ${colors.muted};
+  --ds-fill: rgb(${light ? '0 0 0' : '255 255 255'} / 0.05);
+  --ds-fill-strong: rgb(${light ? '0 0 0' : '255 255 255'} / 0.09);
+  --ds-border: rgb(${light ? '0 0 0' : '255 255 255'} / ${light ? '0.09' : '0.07'});
+  --ds-border-strong: rgb(${light ? '0 0 0' : '255 255 255'} / ${light ? '0.14' : '0.12'});
+  color-scheme: ${light ? 'light' : 'dark'};
   `);
 
   $effect(() => {
@@ -74,134 +95,134 @@
   }
 </script>
 
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-  <div class="flex max-h-full w-full max-w-3xl flex-col rounded-[24px] border border-neutral-700 bg-neutral-900 shadow-2xl overflow-hidden">
-    <div class="flex items-center justify-between border-b border-neutral-800 p-6 bg-black/20">
-      <h2 class="text-xl font-bold text-white flex items-center gap-3">
-        <Palette class="text-blue-500" />
+<div class="ds-scrim fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="ds-panel flex max-h-full w-full max-w-3xl flex-col overflow-hidden">
+    <div class="flex items-center justify-between border-b border-line bg-fill p-6">
+      <h2 class="flex items-center gap-3 text-xl font-semibold tracking-tight text-primary">
+        <Palette class="text-accent" />
         {theme?.id ? 'Edit Theme' : 'Create Custom Theme'}
       </h2>
-      <button onclick={onCancel} class="rounded-full p-2 text-neutral-400 hover:bg-white/10 hover:text-white transition-colors">
+      <button onclick={onCancel} class="ds-icon-btn rounded-full p-2">
         <X size={20} />
       </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-6 space-y-8 bg-neutral-900">
+    <div class="ds-scroll flex-1 space-y-8 overflow-y-auto p-6">
       <div>
-        <label class="block text-sm font-bold text-neutral-400 mb-2">Theme Name</label>
+        <label class="ds-label mb-2 block">Theme Name</label>
         <input 
           type="text" 
           bind:value={name} 
-          class="w-full rounded-xl border border-neutral-700 bg-black/40 p-4 text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          class="ds-input p-4"
           placeholder="e.g. Neon Cyberpunk"
         />
       </div>
 
       <div>
-        <label class="block text-sm font-bold text-neutral-400 mb-4">Color Palette</label>
-        <p class="text-xs text-neutral-500 mb-6">Select your colors below. The dashboard behind this window will update in real-time to show you a preview.</p>
+        <label class="ds-label mb-4 block">Color Palette</label>
+        <p class="ds-caption mb-6">Select your colors below. The dashboard behind this window will update in real-time to show you a preview.</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           
           <!-- Background -->
-          <div class="flex items-center justify-between p-4 rounded-xl border border-neutral-800 bg-black/20">
+          <div class="ds-well flex items-center justify-between p-4">
             <div class="flex items-center gap-4">
-              <div class="relative w-12 h-12 rounded-lg border border-neutral-700 shadow-inner flex items-center justify-center overflow-hidden" style="background-color: {colors.bg}">
-                <Layout size={16} class="text-black/20 mix-blend-overlay" />
+              <div class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-line-strong" style="background-color: {colors.bg}">
+                <Layout size={16} class="opacity-30 mix-blend-overlay" />
                 <input type="color" bind:value={colors.bg} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
               <div>
-                <div class="font-bold text-white text-sm">Background</div>
-                <div class="text-xs text-neutral-500">App wallpaper</div>
+                <div class="text-sm font-semibold text-primary">Background</div>
+                <div class="ds-caption">App wallpaper</div>
               </div>
             </div>
-            <div class="text-xs font-mono text-neutral-500">{colors.bg}</div>
+            <div class="ds-caption font-mono">{colors.bg}</div>
           </div>
 
           <!-- Cards -->
-          <div class="flex items-center justify-between p-4 rounded-xl border border-neutral-800 bg-black/20">
+          <div class="ds-well flex items-center justify-between p-4">
             <div class="flex items-center gap-4">
-              <div class="relative w-12 h-12 rounded-lg border border-neutral-700 shadow-lg flex items-center justify-center overflow-hidden" style="background-color: {colors.card}">
-                <div class="w-6 h-6 rounded bg-black/10"></div>
+              <div class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-line-strong" style="background-color: {colors.card}">
+                <div class="h-6 w-6 rounded bg-fill"></div>
                 <input type="color" bind:value={colors.card} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
               <div>
-                <div class="font-bold text-white text-sm">Cards</div>
-                <div class="text-xs text-neutral-500">Widget surfaces</div>
+                <div class="text-sm font-semibold text-primary">Cards</div>
+                <div class="ds-caption">Widget surfaces</div>
               </div>
             </div>
-            <div class="text-xs font-mono text-neutral-500">{colors.card}</div>
+            <div class="ds-caption font-mono">{colors.card}</div>
           </div>
 
           <!-- Inner -->
-          <div class="flex items-center justify-between p-4 rounded-xl border border-neutral-800 bg-black/20">
+          <div class="ds-well flex items-center justify-between p-4">
             <div class="flex items-center gap-4">
-              <div class="relative w-12 h-12 rounded-lg border border-neutral-700 flex items-center justify-center overflow-hidden" style="background-color: {colors.card}">
-                <div class="w-8 h-4 rounded-sm border border-black/20" style="background-color: {colors.inner}"></div>
+              <div class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-line-strong" style="background-color: {colors.card}">
+                <div class="h-4 w-8 rounded-sm border border-line" style="background-color: {colors.inner}"></div>
                 <input type="color" bind:value={colors.inner} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
               <div>
-                <div class="font-bold text-white text-sm">Inputs & Inner</div>
-                <div class="text-xs text-neutral-500">Searchbar, inputs</div>
+                <div class="text-sm font-semibold text-primary">Inputs & Inner</div>
+                <div class="ds-caption">Searchbar, inputs</div>
               </div>
             </div>
-            <div class="text-xs font-mono text-neutral-500">{colors.inner}</div>
+            <div class="ds-caption font-mono">{colors.inner}</div>
           </div>
 
           <!-- Accent -->
-          <div class="flex items-center justify-between p-4 rounded-xl border border-neutral-800 bg-black/20">
+          <div class="ds-well flex items-center justify-between p-4">
             <div class="flex items-center gap-4">
-              <div class="relative w-12 h-12 rounded-lg border border-neutral-700 flex items-center justify-center overflow-hidden" style="background-color: {colors.card}">
-                <div class="px-2 py-1 rounded text-[8px] font-bold text-white shadow-md" style="background-color: {colors.accent}">Btn</div>
+              <div class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-line-strong" style="background-color: {colors.card}">
+                <div class="rounded px-2 py-1 text-[8px] font-bold text-on-accent" style="background-color: {colors.accent}">Btn</div>
                 <input type="color" bind:value={colors.accent} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
               <div>
-                <div class="font-bold text-white text-sm">Accent Color</div>
-                <div class="text-xs text-neutral-500">Buttons, highlights</div>
+                <div class="text-sm font-semibold text-primary">Accent Color</div>
+                <div class="ds-caption">Buttons, highlights</div>
               </div>
             </div>
-            <div class="text-xs font-mono text-neutral-500">{colors.accent}</div>
+            <div class="ds-caption font-mono">{colors.accent}</div>
           </div>
 
           <!-- Text Primary -->
-          <div class="flex items-center justify-between p-4 rounded-xl border border-neutral-800 bg-black/20">
+          <div class="ds-well flex items-center justify-between p-4">
             <div class="flex items-center gap-4">
-              <div class="relative w-12 h-12 rounded-lg border border-neutral-700 flex items-center justify-center overflow-hidden" style="background-color: {colors.card}">
+              <div class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-line-strong" style="background-color: {colors.card}">
                 <Type size={20} style="color: {colors.text}" />
                 <input type="color" bind:value={colors.text} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
               <div>
-                <div class="font-bold text-white text-sm">Primary Text</div>
-                <div class="text-xs text-neutral-500">Headings, icons</div>
+                <div class="text-sm font-semibold text-primary">Primary Text</div>
+                <div class="ds-caption">Headings, icons</div>
               </div>
             </div>
-            <div class="text-xs font-mono text-neutral-500">{colors.text}</div>
+            <div class="ds-caption font-mono">{colors.text}</div>
           </div>
 
           <!-- Text Muted -->
-          <div class="flex items-center justify-between p-4 rounded-xl border border-neutral-800 bg-black/20">
+          <div class="ds-well flex items-center justify-between p-4">
             <div class="flex items-center gap-4">
-              <div class="relative w-12 h-12 rounded-lg border border-neutral-700 flex items-center justify-center overflow-hidden" style="background-color: {colors.card}">
+              <div class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-line-strong" style="background-color: {colors.card}">
                 <Type size={14} style="color: {colors.muted}" />
                 <input type="color" bind:value={colors.muted} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
               <div>
-                <div class="font-bold text-white text-sm">Muted Text</div>
-                <div class="text-xs text-neutral-500">Descriptions, borders</div>
+                <div class="text-sm font-semibold text-primary">Muted Text</div>
+                <div class="ds-caption">Descriptions, borders</div>
               </div>
             </div>
-            <div class="text-xs font-mono text-neutral-500">{colors.muted}</div>
+            <div class="ds-caption font-mono">{colors.muted}</div>
           </div>
 
         </div>
       </div>
     </div>
 
-    <div class="flex items-center justify-between border-t border-neutral-800 p-6 bg-black/40">
+    <div class="flex items-center justify-between border-t border-line bg-fill p-6">
       {#if theme?.id && onDelete}
         <button 
           onclick={() => onDelete(theme.id!)}
-          class="flex items-center gap-2 rounded-xl border border-red-500/50 bg-red-500/10 px-6 py-3 font-bold text-red-500 transition-colors hover:bg-red-500/20"
+          class="ds-btn ds-btn-danger px-6 py-3"
         >
           <Trash2 size={18} /> Delete
         </button>
@@ -212,13 +233,13 @@
       <div class="flex gap-3">
         <button 
           onclick={onCancel}
-          class="rounded-xl px-6 py-3 font-bold text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
+          class="ds-btn ds-btn-ghost px-6 py-3"
         >
           Cancel
         </button>
         <button 
           onclick={handleSave}
-          class="flex items-center gap-2 rounded-xl bg-blue-500 px-6 py-3 font-bold text-white shadow-lg shadow-blue-500/25 transition-transform hover:scale-105 hover:bg-blue-400 active:scale-95"
+          class="ds-btn ds-btn-primary px-6 py-3 active:scale-95"
         >
           <Save size={18} /> Save Theme
         </button>

@@ -34,14 +34,14 @@
   let editingTheme = $state<any>(null);
 
   let ALL_THEMES = $derived([
-    { id: 'theme-default', name: i18n.t.themes.default, colors: ['#121212', '#262626', '#3b82f6'] },
-    { id: 'theme-oled', name: i18n.t.themes.oled, colors: ['#000000', '#0a0a0a', '#38bdf8'] },
-    { id: 'theme-midnight', name: i18n.t.themes.midnight, colors: ['#020617', '#0f172a', '#818cf8'] },
-    { id: 'theme-forest', name: i18n.t.themes.hacker, colors: ['#041f14', '#022c22', '#10b981'] },
-    { id: 'theme-sunset', name: i18n.t.themes.sunset, colors: ['#2a111a', '#3a1623', '#f43f5e'] },
+    { id: 'theme-default', name: i18n.t.themes.default, colors: ['#0e0e10', '#1c1c1f', '#3b82f6'] },
+    { id: 'theme-oled', name: i18n.t.themes.oled, colors: ['#000000', '#131316', '#38bdf8'] },
+    { id: 'theme-midnight', name: i18n.t.themes.midnight, colors: ['#020617', '#161e33', '#818cf8'] },
+    { id: 'theme-forest', name: i18n.t.themes.hacker, colors: ['#041f14', '#0a3d2b', '#10b981'] },
+    { id: 'theme-sunset', name: i18n.t.themes.sunset, colors: ['#2a111a', '#3f1b28', '#f43f5e'] },
     { id: 'theme-light', name: i18n.t.themes.light, colors: ['#f4f4f5', '#ffffff', '#2563eb'] },
-    { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#eee8d5', '#268bd2'] },
-    { id: 'theme-princess', name: i18n.t.themes.princess, colors: ['#fff0f5', '#ffffff', '#ff1493'] },
+    { id: 'theme-paper', name: i18n.t.themes.paper, colors: ['#fdf6e3', '#fffbf0', '#268bd2'] },
+    { id: 'theme-princess', name: i18n.t.themes.princess, colors: ['#ffe4e8', '#fff5f8', '#ff1493'] },
     ...customThemes.map(t => ({
       id: `custom_${t.id}`,
       name: t.name,
@@ -238,46 +238,50 @@
   }
 </script>
 
-<div class="h-screen overflow-hidden flex items-center justify-center p-4 font-sans text-white relative" style="background-color: var(--theme-body-bg, #121212);">
+<div class="relative flex h-screen items-center justify-center overflow-hidden bg-app p-4 text-primary">
   <!-- Subtle Dashboard Grid Background Pattern -->
-  <div class="absolute inset-0 z-0 pointer-events-none opacity-40" style="background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0); background-size: 32px 32px;"></div>
+  <div class="absolute inset-0 z-0 pointer-events-none opacity-40" style="background-image: radial-gradient(circle at 2px 2px, var(--ds-border-strong) 1px, transparent 0); background-size: 32px 32px;"></div>
 
-  <div class="w-full max-w-[1000px] h-[90vh] flex flex-col bg-neutral-800/80 backdrop-blur-xl border border-black/40 rounded-[24px] shadow-2xl p-6 md:p-8 relative z-10">
+  <div class="ds-panel relative z-10 flex h-[90vh] w-full max-w-[1000px] flex-col p-6 md:p-8">
 
     <div class="mb-8 shrink-0 flex flex-col md:flex-row md:items-start justify-between gap-6">
       <div>
-        <a href="/" class="inline-flex items-center text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white transition-colors mb-6">
+        <a href="/" class="ds-label mb-6 inline-flex items-center transition-colors hover:text-primary">
           <ArrowLeft size={14} class="mr-2" /> {i18n.t.accountSettings.backToDash}
         </a>
-        <h1 class="text-3xl font-bold">{i18n.currentLang === 'de' ? 'Einstellungen' : 'Settings'}</h1>
+        <h1 class="text-3xl font-semibold tracking-tight">{i18n.currentLang === 'de' ? 'Einstellungen' : 'Settings'}</h1>
       </div>
     </div>
 
     <div class="flex flex-col md:flex-row gap-4 md:gap-8 flex-1 min-h-0">
 
       <!-- Sidebar / Vertical Tabs (Desktop) & Segmented Control (Mobile) -->
-      <div class="w-full md:w-1/4 flex flex-row md:flex-col gap-1 md:gap-2 shrink-0 bg-black/40 md:bg-transparent p-1 md:p-0 rounded-xl md:rounded-none overflow-visible">
+      <div class="flex w-full shrink-0 flex-row gap-1 overflow-visible rounded-xl bg-fill p-1 md:w-1/4 md:flex-col md:gap-2 md:rounded-none md:bg-transparent md:p-0">
         <button
-          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'account' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
+          class="ds-nav-item flex-1 justify-center md:flex-none md:justify-start"
+          aria-pressed={activeTab === 'account'}
           onclick={() => activeTab = 'account'}
         >
           <User size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabAccount}
         </button>
         <button
-          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'appearance' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
+          class="ds-nav-item flex-1 justify-center md:flex-none md:justify-start"
+          aria-pressed={activeTab === 'appearance'}
           onclick={() => activeTab = 'appearance'}
         >
           <Palette size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabAppearance}
         </button>
         <button
-          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'data' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
+          class="ds-nav-item flex-1 justify-center md:flex-none md:justify-start"
+          aria-pressed={activeTab === 'data'}
           onclick={() => activeTab = 'data'}
         >
           <Database size={16} class="hidden md:block" /> {i18n.t.accountSettings.tabData}
         </button>
         {#if data.user}
         <button
-          class="flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2 md:gap-3 px-2 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all {activeTab === 'integrations' ? 'bg-neutral-700 md:bg-blue-500/10 text-white shadow-md md:shadow-[0_0_15px_rgba(59,130,246,0.15)] md:border md:border-blue-500/50' : 'text-neutral-400 hover:text-white md:hover:bg-white/5 border border-transparent'}"
+          class="ds-nav-item flex-1 justify-center md:flex-none md:justify-start"
+          aria-pressed={activeTab === 'integrations'}
           onclick={() => activeTab = 'integrations'}
         >
           <Link size={16} class="hidden md:block" /> {i18n.currentLang === 'de' ? 'Verbundene Konten' : 'Connected Accounts'}
@@ -286,33 +290,35 @@
       </div>
 
       <!-- Content Area -->
-      <div class="w-full md:w-3/4 space-y-8 overflow-y-auto pr-4 pb-8 custom-scrollbar">
+      <div class="ds-scroll w-full space-y-8 overflow-y-auto pr-4 pb-8 md:w-3/4">
 
         {#if activeTab === 'appearance'}
-          <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner">
-            <h2 class="text-lg font-bold mb-4">{i18n.t.accountSettings.language}</h2>
+          <div class="ds-section">
+            <h2 class="text-lg font-semibold mb-4">{i18n.t.accountSettings.language}</h2>
             <div class="grid grid-cols-2 gap-3 mb-8">
                 <button
-                    class="p-4 rounded-xl border text-left transition-all flex items-center gap-4 {i18n.currentLang === 'en' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                    class="ds-tile flex items-center gap-4 p-4 text-left"
+                    aria-pressed={i18n.currentLang === 'en'}
                     onclick={() => i18n.setLang('en')}
                 >
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-black/40 border border-black/40 text-xs font-black text-neutral-400">EN</div>
-                    <span class="font-bold text-base text-slate-200">English</span>
+                    <div class="ds-well flex h-8 w-8 items-center justify-center text-xs font-semibold text-secondary">EN</div>
+                    <span class="text-base font-semibold text-primary">English</span>
                 </button>
                 <button
-                    class="p-4 rounded-xl border text-left transition-all flex items-center gap-4 {i18n.currentLang === 'de' ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
+                    class="ds-tile flex items-center gap-4 p-4 text-left"
+                    aria-pressed={i18n.currentLang === 'de'}
                     onclick={() => i18n.setLang('de')}
                 >
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-black/40 border border-black/40 text-xs font-black text-neutral-400">DE</div>
-                    <span class="font-bold text-base text-slate-200">Deutsch</span>
+                    <div class="ds-well flex h-8 w-8 items-center justify-center text-xs font-semibold text-secondary">DE</div>
+                    <span class="text-base font-semibold text-primary">Deutsch</span>
                 </button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               <div>
-                <h2 class="text-sm font-bold mb-3">{i18n.t.accountSettings.dateFormat}</h2>
+                <h2 class="text-sm font-semibold mb-3">{i18n.t.accountSettings.dateFormat}</h2>
                 <select 
-                  class="w-full rounded-lg border border-neutral-700 bg-neutral-800/50 p-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
+                  class="ds-field cursor-pointer"
                   value={i18n.dateFormat}
                   onchange={(e) => i18n.setDateFormat(e.currentTarget.value as any)}
                 >
@@ -323,9 +329,9 @@
                 </select>
               </div>
               <div>
-                <h2 class="text-sm font-bold mb-3">{i18n.t.accountSettings.timeFormat}</h2>
+                <h2 class="text-sm font-semibold mb-3">{i18n.t.accountSettings.timeFormat}</h2>
                 <select 
-                  class="w-full rounded-lg border border-neutral-700 bg-neutral-800/50 p-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 cursor-pointer"
+                  class="ds-field cursor-pointer"
                   value={i18n.timeFormat}
                   onchange={(e) => i18n.setTimeFormat(e.currentTarget.value as any)}
                 >
@@ -337,11 +343,11 @@
             </div>
 
             <div class="flex items-center justify-between mb-4 mt-8">
-              <h2 class="text-lg font-bold">{i18n.t.dashboardSettings.theme}</h2>
+              <h2 class="text-lg font-semibold">{i18n.t.dashboardSettings.theme}</h2>
               {#if data.user}
                 <button 
                   onclick={() => { editingTheme = null; showThemeEditor = true; }}
-                  class="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/20 transition-colors"
+                  class="ds-btn ds-btn-secondary px-3 py-1.5 text-xs"
                 >
                   Create Custom Theme
                 </button>
@@ -350,34 +356,38 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {#each ALL_THEMES as theme}
-                    <button
-                        class="relative p-4 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[90px] gap-2 {globalTheme === theme.id ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-neutral-700 bg-neutral-800/50 hover:border-neutral-500 hover:bg-neutral-800'}"
-                        onclick={() => handleThemeChange(theme.id)}
-                    >
+                    <div class="relative">
+                        <button
+                            class="ds-tile flex h-full min-h-[90px] w-full flex-col justify-between gap-2 p-4 text-left"
+                            aria-pressed={globalTheme === theme.id}
+                            onclick={() => handleThemeChange(theme.id)}
+                        >
+                            <div class="pr-6 text-sm leading-tight font-semibold break-words text-primary">{theme.name}</div>
+                            <div class="ds-well mt-2 flex w-fit gap-1.5 p-2">
+                                {#each theme.colors as c}
+                                    <div class="h-4 w-4 rounded-full border border-line-strong" style="background-color: {c}"></div>
+                                {/each}
+                            </div>
+                        </button>
+
                         {#if theme.isCustom}
                           <button 
-                            class="absolute top-3 right-3 p-1.5 rounded-lg bg-black/40 text-neutral-400 hover:text-white hover:bg-blue-500 transition-colors"
-                            onclick={(e) => { e.stopPropagation(); editingTheme = theme.raw; showThemeEditor = true; }}
+                            class="ds-icon-btn absolute top-3 right-3 bg-fill-strong p-1.5"
+                            onclick={() => { editingTheme = theme.raw; showThemeEditor = true; }}
                             title="Edit Custom Theme"
                           >
                             <Palette size={14} />
                           </button>
                           
                           <button 
-                            class="absolute top-3 right-11 p-1.5 rounded-lg bg-black/40 text-neutral-400 hover:text-white hover:bg-red-500 transition-colors"
-                            onclick={(e) => { e.stopPropagation(); handleDeleteTheme(theme.id.replace('custom_', '')); }}
+                            class="ds-icon-btn absolute top-3 right-11 bg-fill-strong p-1.5 hover:bg-danger hover:text-on-accent"
+                            onclick={() => { handleDeleteTheme(theme.id.replace('custom_', '')); }}
                             title="Delete Custom Theme"
                           >
                             <Trash2 size={14} />
                           </button>
                         {/if}
-                        <div class="font-bold text-sm text-slate-200 break-words leading-tight pr-6">{theme.name}</div>
-                        <div class="flex gap-1.5 mt-2 bg-black/20 p-2 rounded-lg w-fit border border-black/20">
-                            {#each theme.colors as c}
-                                <div class="w-4 h-4 rounded-full border border-black/40 shadow-sm" style="background-color: {c}"></div>
-                            {/each}
-                        </div>
-                    </button>
+                    </div>
                 {/each}
             </div>
           </div>
@@ -392,12 +402,12 @@
           {/if}
 
         {:else if activeTab === 'integrations'}
-          <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner">
-            <h2 class="text-lg font-bold mb-4">{i18n.currentLang === 'de' ? 'Verbundene Konten' : 'Connected Accounts'}</h2>
+          <div class="ds-section">
+            <h2 class="text-lg font-semibold mb-4">{i18n.currentLang === 'de' ? 'Verbundene Konten' : 'Connected Accounts'}</h2>
 
-            <div class="bg-neutral-800/50 border border-neutral-700 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="ds-well flex flex-col items-center justify-between gap-4 p-5 sm:flex-row">
               <div class="flex items-center gap-4 w-full sm:w-auto">
-                <div class="w-12 h-12 bg-white/5 flex items-center justify-center rounded-lg shadow-inner shrink-0 border border-white/10">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-line bg-fill">
                   <svg width="24" height="24" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
                     <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
@@ -406,28 +416,28 @@
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-white">{i18n.t.integrations.microsoftServices}</h3>
+                  <h3 class="text-sm font-semibold text-primary">{i18n.t.integrations.microsoftServices}</h3>
                   {#if data.msConnected}
-                    <div class="flex items-center gap-1.5 text-xs font-semibold text-green-400 mt-0.5">
+                    <div class="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-success">
                       <Check size={12} strokeWidth={3} /> {i18n.t.integrations.connectedActive}
                     </div>
                   {:else}
-                    <div class="text-xs text-neutral-400 mt-0.5">{i18n.t.integrations.notConnected}</div>
+                    <div class="ds-caption mt-0.5">{i18n.t.integrations.notConnected}</div>
                   {/if}
                 </div>
               </div>
 
               {#if data.msConnected}
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                  <button onclick={unlinkMicrosoft} disabled={unlinkLoading} class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg font-bold text-xs transition-colors bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 disabled:opacity-50">
+                  <button onclick={unlinkMicrosoft} disabled={unlinkLoading} class="ds-btn ds-btn-danger flex-1 text-xs sm:flex-none">
                     {unlinkLoading ? i18n.t.integrations.unlinking : i18n.t.integrations.unlink}
                   </button>
-                  <a href="/auth/microsoft/login" data-sveltekit-reload class="flex-1 sm:flex-none text-center px-4 py-2.5 rounded-lg font-bold text-xs transition-colors bg-neutral-700 hover:bg-neutral-600 text-white">
+                  <a href="/auth/microsoft/login" data-sveltekit-reload class="ds-btn ds-btn-secondary flex-1 text-xs sm:flex-none">
                     {i18n.t.integrations.reauthorize}
                   </a>
                 </div>
               {:else}
-                <a href="/auth/microsoft/login" data-sveltekit-reload class="w-full sm:w-auto text-center px-6 py-2.5 rounded-lg font-bold text-xs transition-colors bg-white text-black hover:bg-neutral-200 shadow-md">
+                <a href="/auth/microsoft/login" data-sveltekit-reload class="ds-btn ds-btn-primary w-full px-6 text-xs sm:w-auto">
                   {i18n.t.integrations.loginWithMicrosoft}
                 </a>
               {/if}
@@ -435,20 +445,20 @@
           </div>
 
         {:else if activeTab === 'data'}
-          <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner">
-            <h2 class="text-lg font-bold mb-1">{i18n.t.dashboardSettings.dataBackup}</h2>
-            <p class="text-xs text-neutral-500 mb-6">Exporitiere dein Dashboard als Backup oder importiere ein bestehendes Backup (überschreibt aktuelles Dashboard).</p>
+          <div class="ds-section">
+            <h2 class="text-lg font-semibold mb-1">{i18n.t.dashboardSettings.dataBackup}</h2>
+            <p class="ds-caption mb-6">Exporitiere dein Dashboard als Backup oder importiere ein bestehendes Backup (überschreibt aktuelles Dashboard).</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label class="flex flex-col items-center justify-center p-6 rounded-xl border border-neutral-700 bg-neutral-800/50 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center group">
-                    <Download size={28} class="mb-3 text-neutral-400 group-hover:text-blue-400 transition-colors" />
-                    <span class="text-sm font-bold text-slate-200">{i18n.t.dashboardSettings.import}</span>
-                    <span class="text-xs text-neutral-500 mt-1">{i18n.t.dashboardSettings.importDesc}</span>
+                <label class="ds-tile group flex flex-col items-center justify-center p-6 text-center">
+                    <Download size={28} class="mb-3 text-secondary transition-colors group-hover:text-accent" />
+                    <span class="text-sm font-semibold text-primary">{i18n.t.dashboardSettings.import}</span>
+                    <span class="ds-caption mt-1">{i18n.t.dashboardSettings.importDesc}</span>
                     <input type="file" accept=".json" class="hidden" onchange={importConfig} />
                 </label>
-                <button onclick={exportConfig} class="flex flex-col items-center justify-center p-6 rounded-xl border border-neutral-700 bg-neutral-800/50 hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer transition-colors text-center group">
-                    <Upload size={28} class="mb-3 text-neutral-400 group-hover:text-blue-400 transition-colors" />
-                    <span class="text-sm font-bold text-slate-200">{i18n.t.dashboardSettings.export}</span>
-                    <span class="text-xs text-neutral-500 mt-1">{i18n.t.dashboardSettings.exportDesc}</span>
+                <button onclick={exportConfig} class="ds-tile group flex flex-col items-center justify-center p-6 text-center">
+                    <Upload size={28} class="mb-3 text-secondary transition-colors group-hover:text-accent" />
+                    <span class="text-sm font-semibold text-primary">{i18n.t.dashboardSettings.export}</span>
+                    <span class="ds-caption mt-1">{i18n.t.dashboardSettings.exportDesc}</span>
                 </button>
             </div>
           </div>
@@ -456,17 +466,17 @@
         {:else if activeTab === 'account'}
           {#if data.user}
             <!-- Email Update Section -->
-            <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner">
-              <h2 class="text-lg font-bold mb-1">{i18n.t.accountSettings.changeEmail}</h2>
-              <p class="text-xs text-neutral-500 mb-6">{i18n.t.accountSettings.currentEmail.replace('{email}', data.user?.email || '')}</p>
+            <div class="ds-section">
+              <h2 class="text-lg font-semibold mb-1">{i18n.t.accountSettings.changeEmail}</h2>
+              <p class="ds-caption mb-6">{i18n.t.accountSettings.currentEmail.replace('{email}', data.user?.email || '')}</p>
 
             {#if form?.emailError}
-              <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 font-medium" in:fade>
+              <div class="ds-alert ds-alert-error mb-6" in:fade>
                 {form.emailError}
               </div>
             {/if}
             {#if form?.emailSuccess}
-              <div class="bg-green-500/10 border border-green-500/20 text-green-400 text-xs p-3 rounded-xl mb-6 font-medium" in:fade>
+              <div class="ds-alert ds-alert-success mb-6" in:fade>
                 {form.emailSuccess}
               </div>
             {/if}
@@ -474,32 +484,32 @@
             <form method="POST" action="?/updateEmail" use:enhance={() => { emailLoading = true; return async ({ update }) => { emailLoading = false; update(); } }} class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label for="password_email" class="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 ml-1">{i18n.t.accountSettings.currentPassword}</label>
-                  <input type="password" id="password_email" name="password" required placeholder="••••••••" class="w-full bg-black/40 border border-black/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-neutral-600" />
+                  <label for="password_email" class="ds-label mb-1.5 ml-1 block">{i18n.t.accountSettings.currentPassword}</label>
+                  <input type="password" id="password_email" name="password" required placeholder="••••••••" class="ds-input" />
                 </div>
                 <div>
-                  <label for="email" class="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 ml-1">{i18n.t.accountSettings.newEmail}</label>
-                  <input type="email" id="email" name="email" required placeholder="new@example.com" class="w-full bg-black/40 border border-black/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-neutral-600" />
+                  <label for="email" class="ds-label mb-1.5 ml-1 block">{i18n.t.accountSettings.newEmail}</label>
+                  <input type="email" id="email" name="email" required placeholder="new@example.com" class="ds-input" />
                 </div>
               </div>
-              <button type="submit" disabled={emailLoading} class="bg-neutral-800 hover:bg-neutral-700 border border-black/40 text-white font-bold text-sm py-2 px-6 rounded-xl transition-all disabled:opacity-50 active:scale-[0.98]">
+              <button type="submit" disabled={emailLoading} class="ds-btn ds-btn-primary px-6 active:scale-[0.98]">
                 {emailLoading ? '...' : i18n.t.accountSettings.updateEmailBtn}
               </button>
             </form>
           </div>
 
           <!-- Password Update Section -->
-          <div class="bg-black/20 border border-black/40 rounded-[24px] p-6 shadow-inner mt-8">
-            <h2 class="text-lg font-bold mb-1">{i18n.t.accountSettings.changePassword}</h2>
-            <p class="text-xs text-neutral-500 mb-6">{i18n.t.accountSettings.passwordDesc}</p>
+          <div class="ds-section mt-8">
+            <h2 class="text-lg font-semibold mb-1">{i18n.t.accountSettings.changePassword}</h2>
+            <p class="ds-caption mb-6">{i18n.t.accountSettings.passwordDesc}</p>
 
             {#if form?.passwordError}
-              <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 font-medium" in:fade>
+              <div class="ds-alert ds-alert-error mb-6" in:fade>
                 {form.passwordError}
               </div>
             {/if}
             {#if form?.passwordSuccess}
-              <div class="bg-green-500/10 border border-green-500/20 text-green-400 text-xs p-3 rounded-xl mb-6 font-medium" in:fade>
+              <div class="ds-alert ds-alert-success mb-6" in:fade>
                 {form.passwordSuccess}
               </div>
             {/if}
@@ -507,65 +517,65 @@
             <form method="POST" action="?/updatePassword" use:enhance={() => { passwordLoading = true; return async ({ update }) => { passwordLoading = false; update(); } }} class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label for="oldPassword" class="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 ml-1">{i18n.t.accountSettings.currentPassword}</label>
-                  <input type="password" id="oldPassword" name="oldPassword" required placeholder="••••••••" class="w-full bg-black/40 border border-black/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-neutral-600" />
+                  <label for="oldPassword" class="ds-label mb-1.5 ml-1 block">{i18n.t.accountSettings.currentPassword}</label>
+                  <input type="password" id="oldPassword" name="oldPassword" required placeholder="••••••••" class="ds-input" />
                 </div>
                 <div>
-                  <label for="newPassword" class="block text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 ml-1">{i18n.t.accountSettings.newPassword}</label>
-                  <input type="password" id="newPassword" name="newPassword" required placeholder="••••••••" class="w-full bg-black/40 border border-black/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-neutral-600" />
+                  <label for="newPassword" class="ds-label mb-1.5 ml-1 block">{i18n.t.accountSettings.newPassword}</label>
+                  <input type="password" id="newPassword" name="newPassword" required placeholder="••••••••" class="ds-input" />
                 </div>
               </div>
 
-              <button type="submit" disabled={passwordLoading} class="bg-neutral-800 hover:bg-neutral-700 border border-black/40 text-white font-bold text-sm py-2 px-6 rounded-xl transition-all disabled:opacity-50 active:scale-[0.98]">
+              <button type="submit" disabled={passwordLoading} class="ds-btn ds-btn-primary px-6 active:scale-[0.98]">
                 {passwordLoading ? '...' : i18n.t.accountSettings.updatePasswordBtn}
               </button>
             </form>
           </div>
 
           <!-- Delete Account Section -->
-          <div class="bg-red-950/20 border border-red-900/30 rounded-[24px] p-6 shadow-inner mt-8">
-            <h2 class="text-lg font-bold mb-1 text-red-400 flex items-center gap-2">
+          <div class="ds-section-danger mt-8">
+            <h2 class="mb-1 flex items-center gap-2 text-lg font-semibold text-danger">
               <AlertTriangle size={18} /> {i18n.t.accountSettings.deleteAccount}
             </h2>
-            <p class="text-xs text-red-400/70 mb-6">{i18n.t.accountSettings.deleteAccountDesc}</p>
+            <p class="mb-6 text-xs text-danger/70">{i18n.t.accountSettings.deleteAccountDesc}</p>
 
             {#if form?.deleteError}
-              <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 font-medium" in:fade>
+              <div class="ds-alert ds-alert-error mb-6" in:fade>
                 {form.deleteError}
               </div>
             {/if}
 
             <form method="POST" action="?/deleteAccount" use:enhance={() => { deleteLoading = true; return async ({ update }) => { deleteLoading = false; update(); } }} class="space-y-4">
               <div>
-                <label for="delete_password" class="block text-[10px] font-black text-red-500/70 uppercase tracking-widest mb-1.5 ml-1">{i18n.t.accountSettings.passwordToConfirm}</label>
-                <input type="password" id="delete_password" name="password" required placeholder="••••••••" class="w-full bg-black/40 border border-red-900/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all placeholder:text-red-900/50 text-red-100" />
+                <label for="delete_password" class="ds-label mb-1.5 ml-1 block text-danger">{i18n.t.accountSettings.passwordToConfirm}</label>
+                <input type="password" id="delete_password" name="password" required placeholder="••••••••" class="ds-input border-danger/30 text-danger" />
               </div>
 
-              <button type="submit" disabled={deleteLoading} onclick={(e) => { if(!confirm(i18n.t.accountSettings.deleteAccountConfirm)) e.preventDefault(); }} class="bg-red-900/40 hover:bg-red-600/50 border border-red-900/50 text-red-200 font-bold text-sm py-2 px-6 rounded-xl transition-all disabled:opacity-50 active:scale-[0.98]">
+              <button type="submit" disabled={deleteLoading} onclick={(e) => { if(!confirm(i18n.t.accountSettings.deleteAccountConfirm)) e.preventDefault(); }} class="ds-btn ds-btn-danger px-6 active:scale-[0.98]">
                 {deleteLoading ? '...' : i18n.t.accountSettings.deleteAccountBtn}
               </button>
             </form>
           </div>
 
           <!-- Sign Out Section -->
-          <div class="mt-12 pt-8 border-t border-white/5 flex justify-center md:justify-start">
-              <button onclick={handleLogout} type="button" class="flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent">
+          <div class="mt-12 flex justify-center border-t border-line pt-8 md:justify-start">
+              <button onclick={handleLogout} type="button" class="ds-btn ds-btn-ghost px-6 py-3">
                 <LogOut size={18} /> {i18n.t.accountSettings.signOut}
               </button>
           </div>
 
           {:else}
           <!-- Not Logged In Section -->
-          <div class="bg-black/20 border border-blue-900/30 rounded-[24px] p-8 shadow-inner text-center">
-            <User size={48} class="mx-auto mb-4 text-neutral-500" />
-            <h2 class="text-2xl font-bold mb-2 text-white">{i18n.t.dashboardSettings.localMode}</h2>
-            <p class="text-sm text-neutral-400 mb-8 max-w-md mx-auto">{i18n.t.dashboardSettings.signInToSync}</p>
+          <div class="ds-section p-8 text-center">
+            <User size={48} class="mx-auto mb-4 text-muted" />
+            <h2 class="mb-2 text-2xl font-semibold tracking-tight text-primary">{i18n.t.dashboardSettings.localMode}</h2>
+            <p class="mx-auto mb-8 max-w-md text-sm text-secondary">{i18n.t.dashboardSettings.signInToSync}</p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href="/login?signup=true" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20">
+              <a href="/login?signup=true" class="ds-btn ds-btn-primary w-full px-8 py-3 sm:w-auto">
                 <UserPlus size={18} /> {i18n.t.login.signUpBtn}
               </a>
-              <a href="/login" class="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-black/20 hover:bg-black/40 border border-white/5 text-neutral-300 hover:text-white font-bold rounded-xl transition-all active:scale-[0.98]">
+              <a href="/login" class="ds-btn ds-btn-secondary w-full px-8 py-3 sm:w-auto">
                 <LogIn size={18} /> {i18n.t.login.signInBtn}
               </a>
             </div>
@@ -577,26 +587,10 @@
     </div>
 
     <!-- Legal Links -->
-    <div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-center gap-4 text-xs text-neutral-500 shrink-0">
+    <div class="mt-6 flex shrink-0 items-center justify-center gap-4 border-t border-line pt-6 text-xs text-muted">
         <LegalFooter />
     </div>
 
   </div>
 </div>
 
-<style>
-  /* Custom Scrollbar for Settings */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
-</style>

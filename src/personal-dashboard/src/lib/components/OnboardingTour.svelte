@@ -153,54 +153,56 @@
 
     <!-- Centered Fallback Overlay if no target -->
     {#if !targetRect}
-      <div class="absolute inset-0 bg-black/75"></div>
+      <div class="ds-scrim absolute inset-0"></div>
     {/if}
 
     <!-- Dialog Box -->
     <div 
-      class="absolute bg-neutral-900 border border-neutral-700/50 rounded-2xl shadow-2xl p-6 w-[350px] pointer-events-auto transition-all duration-500 ease-in-out z-[10000]"
+      class="ds-panel pointer-events-auto absolute z-[10000] w-[350px] p-6 transition-all duration-500 ease-in-out"
       style={getDialogStyle(targetRect)}
     >
-      <button onclick={finish} class="absolute top-4 right-4 text-neutral-500 hover:text-white transition-colors">
+      <button onclick={finish} class="ds-icon-btn absolute top-4 right-4 p-1">
         <X size={18} />
       </button>
 
       <div class="flex items-center gap-2 mb-4">
-        <span class="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-1 rounded-md">
+        <span class="rounded-md bg-accent-soft px-2 py-1 text-xs font-semibold text-accent">
           {currentStep + 1} / {steps.length}
         </span>
-        <h3 class="font-bold text-lg text-white m-0">{steps[currentStep].title}</h3>
+        <h3 class="m-0 text-lg font-semibold text-primary">{steps[currentStep].title}</h3>
       </div>
       
-      <p class="text-sm text-neutral-300 mb-6 leading-relaxed">
+      <p class="mb-6 text-sm leading-relaxed text-secondary">
         {steps[currentStep].content}
       </p>
 
       {#if currentStep === 0}
         <div class="flex gap-2 mb-6">
           <button
-            class="flex-1 py-2 px-3 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all {i18n.currentLang === 'en' ? 'bg-white/15 border-white/20 text-white shadow-md' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700'}"
+            class="ds-tile flex flex-1 items-center justify-center gap-2 px-3 py-2 text-sm font-semibold"
+            aria-pressed={i18n.currentLang === 'en'}
             onclick={() => i18n.setLang('en')}
           >
-            <span class="text-[10px] font-black uppercase tracking-widest text-neutral-500 bg-black/40 px-1.5 py-0.5 rounded mr-1 border border-black/40">EN</span> English
+            <span class="ds-label mr-1 rounded border border-line bg-fill px-1.5 py-0.5">EN</span> English
           </button>
           <button
-            class="flex-1 py-2 px-3 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all {i18n.currentLang === 'de' ? 'bg-white/15 border-white/20 text-white shadow-md' : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-700'}"
+            class="ds-tile flex flex-1 items-center justify-center gap-2 px-3 py-2 text-sm font-semibold"
+            aria-pressed={i18n.currentLang === 'de'}
             onclick={() => i18n.setLang('de')}
           >
-            <span class="text-[10px] font-black uppercase tracking-widest text-neutral-500 bg-black/40 px-1.5 py-0.5 rounded mr-1 border border-black/40">DE</span> Deutsch
+            <span class="ds-label mr-1 rounded border border-line bg-fill px-1.5 py-0.5">DE</span> Deutsch
           </button>
         </div>
       {/if}
 
       <div class="flex justify-between items-center mt-2">
-        <button onclick={finish} class="text-xs text-neutral-500 hover:text-white transition-colors">
+        <button onclick={finish} class="text-xs text-muted transition-colors hover:text-primary">
           {i18n.currentLang === 'de' ? 'Überspringen' : 'Skip'}
         </button>
         {#if !steps[currentStep].waitForAction}
           <button 
             onclick={nextStep}
-            class="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white font-medium px-4 py-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-black/20"
+            class="ds-btn ds-btn-primary active:scale-95"
           >
             {#if currentStep === steps.length - 1}
               <Check size={16} /> {i18n.currentLang === 'de' ? 'Fertig' : 'Finish'}
@@ -209,7 +211,7 @@
             {/if}
           </button>
         {:else}
-          <div class="text-xs font-bold text-blue-400 animate-pulse">{i18n.currentLang === 'de' ? 'Warte auf Aktion...' : 'Waiting for action...'}</div>
+          <div class="animate-pulse text-xs font-semibold text-accent">{i18n.currentLang === 'de' ? 'Warte auf Aktion...' : 'Waiting for action...'}</div>
         {/if}
       </div>
     </div>

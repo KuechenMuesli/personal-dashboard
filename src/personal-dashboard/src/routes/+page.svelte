@@ -830,7 +830,7 @@
 
 <div
 		id="grid-container"
-		class="relative h-screen w-screen overflow-x-hidden overflow-y-auto font-sans text-slate-200"
+		class="relative h-screen w-screen overflow-x-hidden overflow-y-auto text-primary"
 		bind:clientWidth={containerWidth}
 >
 	{#if isEditing}
@@ -839,7 +839,7 @@
 				style="grid-template-columns: repeat({columns}, 1fr);"
 		>
 			{#each Array(columns) as _}
-				<div class="h-full border-r border-white/5"></div>
+				<div class="h-full border-r border-line"></div>
 			{/each}
 		</div>
 	{/if}
@@ -860,14 +860,14 @@
         display: {isHidden ? 'none' : 'block'};
       "
 		>
-			<div class="relative flex h-full flex-col {sw.type === 'workspaces' ? 'overflow-visible z-50' : 'overflow-hidden'} rounded-lg {isEditing ? 'border border-dashed border-blue-500/40 bg-neutral-900/50' : ''}">
+			<div class="relative flex h-full flex-col {sw.type === 'workspaces' ? 'overflow-visible z-50' : 'overflow-hidden'} rounded-lg {isEditing ? 'border border-dashed border-accent/40 bg-sunken/50' : ''}">
         {#if !widgetDef}
-           <div class="flex h-full w-full flex-col items-center justify-center gap-2 text-red-500 text-sm p-4 text-center bg-red-900/10 border border-red-500/20 rounded-lg relative">
+           <div class="relative flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg border border-danger/25 bg-danger-soft p-4 text-center text-sm text-danger">
               <span class="font-bold">Unbekanntes Widget</span>
-              <span class="text-xs text-red-400 opacity-70">Das Widget '{sw.type}' existiert nicht mehr.</span>
+              <span class="text-xs text-danger opacity-70">Das Widget '{sw.type}' existiert nicht mehr.</span>
               {#if isEditing}
                 <button
-                    class="pointer-events-auto mt-2 flex h-8 px-3 items-center justify-center rounded bg-red-900/40 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                    class="ds-btn ds-btn-danger pointer-events-auto mt-2 h-8 px-3"
                     onclick={() => debounceAction(() => deleteWidget(sw.id))}
                 >
                   Löschen
@@ -876,11 +876,11 @@
            </div>
         {:else}
 				{#if isEditing}
-					<div class="absolute top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-white/5 bg-neutral-950/80 backdrop-blur-md px-2 py-1">
+					<div class="absolute top-0 right-0 left-0 z-50 flex items-center justify-between border-b border-line bg-app/80 px-2 py-1 backdrop-blur-md">
 						<div class="flex items-center gap-1 relative z-10 min-w-[24px]">
                             {#if widgetDef.hasSettings}
                             <button
-                                    class="widget-settings-btn pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-lg leading-none text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                                    class="widget-settings-btn ds-icon-btn pointer-events-auto h-6 w-6"
                                     onclick={() => debounceAction(() => toggleSettings(sw.id))}
                             >
                                 <Settings size={16} strokeWidth={1} />
@@ -892,11 +892,11 @@
 								ontouchstart={(e) => startInteraction(e, sw.id, 'drag')}
 								class="absolute inset-0 flex h-full w-full cursor-grab touch-none items-center justify-center pointer-events-auto z-0"
 						>
-                            <GripHorizontal size={16} strokeWidth={1} class="text-neutral-500 select-none active:cursor-grabbing" />
+                            <GripHorizontal size={16} strokeWidth={1} class="text-muted select-none active:cursor-grabbing" />
                         </div>
             {#if !(widgetDef as any).unremovable}
 						<button
-								class="pointer-events-auto flex h-6 w-6 items-center justify-center rounded text-neutral-400 hover:bg-red-900/40 hover:text-red-400 relative z-10"
+								class="ds-icon-btn pointer-events-auto relative z-10 h-6 w-6 hover:bg-danger-soft hover:text-danger"
 								onclick={() => debounceAction(() => deleteWidget(sw.id))}
 						>
 							<X size={16} />
@@ -908,7 +908,7 @@
 
           {#if !(widgetDef as any).fixedSize}
 					<div
-							class="absolute bottom-0 right-0 z-50 h-5 w-5 cursor-nwse-resize touch-none rounded-br-lg bg-gradient-to-br from-transparent from-50% to-blue-500/40 to-50%"
+							class="absolute right-0 bottom-0 z-50 h-5 w-5 cursor-nwse-resize touch-none rounded-br-lg bg-gradient-to-br from-transparent from-50% to-accent/40 to-50%"
 							onmousedown={(e) => startInteraction(e, sw.id, 'resize')}
 							ontouchstart={(e) => startInteraction(e, sw.id, 'resize')}
 							role="presentation"
@@ -936,9 +936,9 @@
            }}
 						/>
 					{:catch error}
-						<div class="flex h-full w-full flex-col items-center justify-center gap-2 text-red-500 text-sm p-4 text-center bg-red-900/10">
+						<div class="flex h-full w-full flex-col items-center justify-center gap-2 bg-danger-soft p-4 text-center text-sm text-danger">
 							<span class="font-bold">Fehler</span>
-							<span class="text-xs text-red-400">Widget konnte nicht geladen werden.</span>
+							<span class="text-xs text-danger">Widget konnte nicht geladen werden.</span>
 						</div>
 					{/await}
 				</div>
@@ -952,7 +952,7 @@
 		<a
 				href="/settings"
         id="settings-btn"
-				class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
+				class="ds-fab h-12 w-12 md:h-14 md:w-14"
 				title="Settings"
 		>
 			<Settings class="w-5 h-5 md:w-6 md:h-6" />
@@ -962,14 +962,14 @@
 			<button
           id="add-widget-btn"
 					transition:scale={{ duration: 200, start: 0.5 }}
-					class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-white shadow-2xl transition-transform hover:scale-105"
+					class="ds-fab h-12 w-12 md:h-14 md:w-14"
 					onclick={() => debounceAction(() => showPickerDialog = true)}
 			><Plus class="w-5 h-5 md:w-6 md:h-6" /></button>
 		{/if}
 
 		<button
         id="edit-mode-btn"
-				class="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-full text-white shadow-2xl transition-all hover:scale-105 bg-neutral-800"
+				class="ds-fab h-12 w-12 md:h-14 md:w-14"
 				onclick={() => debounceAction(() => isEditing = !isEditing)}
 		>
 			{#if isEditing}
@@ -982,13 +982,13 @@
 
 <SettingsDialog title={i18n.t.dashboardSettings.addWidget} bind:show={showPickerDialog} maxWidth="max-w-[900px]" fixedHeight={true}>
 	<div class="mb-6 relative shrink-0">
-		<Search class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
+		<Search class="absolute top-1/2 left-3 -translate-y-1/2 text-muted" size={16} />
 		<input
 			type="text"
 			bind:value={widgetSearchQuery}
 			onkeydown={handleWidgetSearchKeydown}
 			placeholder={i18n.t.dashboardSettings.searchWidget}
-			class="w-full bg-black/40 border border-neutral-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50"
+			class="ds-input py-3 pr-4 pl-10"
 		/>
 	</div>
 
@@ -998,25 +998,26 @@
       {@const maxCount = (config as any).maxCount}
       {@const disabled = maxCount !== undefined && maxCount !== null && count >= maxCount}
 			<button
-					class="flex h-[140px] flex-col items-center justify-between rounded-xl border p-4 transition-all {disabled ? 'border-neutral-800/30 bg-neutral-900/30 opacity-50 cursor-not-allowed' : index === selectedWidgetIndex ? 'border-blue-500 bg-neutral-800 shadow-[0_0_15px_rgba(59,130,246,0.15)] scale-[1.02]' : 'border-neutral-800 bg-neutral-800/50 hover:border-blue-500 active:bg-neutral-800'}"
+					class="ds-tile flex h-[140px] flex-col items-center justify-between p-4"
+					aria-pressed={index === selectedWidgetIndex && !disabled}
 					onclick={() => { if (!disabled) debounceAction(() => addWidget(type)) }}
           disabled={disabled}
 			>
 				<div class="pointer-events-none flex flex-1 items-center justify-center w-full">
 					<div
-							class="rounded-md border-2 border-blue-500/50 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)] flex items-center justify-center overflow-hidden"
+							class="flex items-center justify-center overflow-hidden rounded-md border-2 border-accent/50 bg-accent-soft"
 							style="width: {config.defaultSize.width * PREVIEW_UNIT_W}px; height: {config.defaultSize.height * PREVIEW_UNIT_H}px;"
 					>
           </div>
 				</div>
 				<div class="pointer-events-none mt-3 text-center flex flex-col items-center">
-            <span class="text-sm font-medium {index === selectedWidgetIndex && !disabled ? 'text-white' : 'text-neutral-300'}">{config.name}</span>
+            <span class="text-sm font-medium {index === selectedWidgetIndex && !disabled ? 'text-primary' : 'text-secondary'}">{config.name}</span>
             {#if disabled}
-               <span class="text-[10px] text-red-400 font-bold uppercase tracking-widest mt-0.5 whitespace-nowrap">Max ({count}/{maxCount})</span>
+               <span class="ds-label mt-0.5 whitespace-nowrap text-danger">Max ({count}/{maxCount})</span>
             {:else if maxCount !== undefined && maxCount !== null}
-               <span class="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-0.5 whitespace-nowrap">{count}/{maxCount}</span>
+               <span class="ds-label mt-0.5 whitespace-nowrap text-muted">{count}/{maxCount}</span>
             {:else if (config as any).fixedSize}
-               <span class="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-0.5 whitespace-nowrap">Feste Größe</span>
+               <span class="ds-label mt-0.5 whitespace-nowrap text-muted">Feste Größe</span>
             {/if}
         </div>
 			</button>

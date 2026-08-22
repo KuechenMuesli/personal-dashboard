@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { marked } from 'marked';
+    import { renderMarkdown } from '$lib/markdown';
     import { DownloadCloud, Check, X, FileText, Image as ImageIcon, File as FileIcon, Copy, Maximize, Minimize, Link } from 'lucide-svelte';
     import LegalFooter from '$lib/components/LegalFooter.svelte';
     let { data } = $props<{ data: import('./$types').PageData }>();
@@ -63,7 +63,7 @@
 
     let htmlContent = $derived.by(() => {
         if (isMarkdown && decodedText) {
-            return marked.parse(decodedText);
+            return renderMarkdown(decodedText);
         }
         return "";
     });

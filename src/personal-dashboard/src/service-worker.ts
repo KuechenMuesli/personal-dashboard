@@ -7,28 +7,18 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `cache-${version}`;
 
 /**
- * Nur die App-Shell wird vorab geladen: der statische Ordner und die
- * vorgerenderten Seiten. Zusammen sind das wenige Kilobyte.
- *
- * Bewusst NICHT vorab geladen wird `build` — das sind alle generierten
- * JS/CSS-Chunks inklusive jedes Lazy-Widgets (~1,8 MB). Ein `addAll` darueber
- * konkurriert beim ersten Besuch direkt mit dem Seitenaufbau um die
- * Verbindungen. Weil alle Dateien unter `/_app/immutable/` einen Hash im Namen
- * tragen, koennen wir sie stattdessen gefahrlos beim ersten echten Zugriff
- * cachen (siehe `handleFetch`).
+ * `build` gehoert bewusst NICHT hierher: ~1,8 MB Chunks, deren Precache beim
+ * ersten Besuch mit dem Seitenaufbau um Verbindungen konkurriert. Gehashte
+ * Namen erlauben es, sie erst beim tatsaechlichen Zugriff zu cachen.
  */
 const SHELL = [...files, ...prerendered];
 
-/** Content-Hash im Dateinamen: darf unbegrenzt aus dem Cache kommen. */
 const IMMUTABLE_PREFIX = '/_app/immutable/';
 
 /**
- * Nur Dateien mit unveraenderlichem Namen duerfen ohne Rueckfrage aus dem Cache
- * kommen. Vorgerenderte Seiten (`prerendered`) gehoeren ausdruecklich NICHT dazu:
- * ihr Pfad bleibt gleich, ihr Inhalt aendert sich mit jedem Deployment. Wuerden
- * wir sie cache-first ausliefern, zeigte die Seite nach einem Release weiterhin
- * die alten Chunk-Namen — und deren Nachladen scheitert mit
- * "Importing a module script failed", weil es die Dateien nicht mehr gibt.
+ * `prerendered` gehoert hier NICHT hinein: gleicher Pfad, wechselnder Inhalt.
+ * Cache-first darauf liefert nach einem Release die alten Chunk-Namen aus und
+ * bricht die Seite mit "Importing a module script failed". War schon mal so.
  */
 const IMMUTABLE_ASSETS = new Set([...build, ...files]);
 
@@ -36,13 +26,9 @@ sw.addEventListener('install', (event) => {
 	event.waitUntil(
 		(async () => {
 			const cache = await caches.open(CACHE);
-			// Einzeln statt `addAll`: eine fehlende Datei soll nicht die
-			// komplette Installation scheitern lassen.
-			//
-			// `cache: 'reload'` ist hier entscheidend: ohne das bedient sich
-			// `cache.add` am HTTP-Cache des Browsers und legt womoeglich ein
-			// veraltetes Dokument ab — das dann auf Chunk-Namen zeigt, die es
-			// nach dem Deployment nicht mehr gibt.
+			// Einzeln, damit eine fehlende Datei nicht die ganze Installation kippt.
+			// `cache: 'reload'` umgeht den HTTP-Cache — sonst landet womoeglich ein
+			// veraltetes Dokument im Precache, dessen Chunks es nicht mehr gibt.
 			await Promise.allSettled(
 				SHELL.map((asset) => cache.add(new Request(asset, { cache: 'reload' })))
 			);
@@ -54,9 +40,7 @@ sw.addEventListener('install', (event) => {
 sw.addEventListener('activate', (event) => {
 	event.waitUntil(
 		(async () => {
-			// Navigation Preload startet die Netzwerkanfrage fuer einen Seitenaufruf
-			// parallel zum Hochfahren des Service Workers statt danach. Bei
-			// Network-First ist genau dieser Startup sonst reine Wartezeit.
+			// Ohne Preload wartet die Navigation erst auf den Worker-Start.
 			if (sw.registration.navigationPreload) {
 				await sw.registration.navigationPreload.enable();
 			}
@@ -76,8 +60,6 @@ async function handleFetch(
 ): Promise<Response> {
 	const cache = await caches.open(CACHE);
 
-	// 1. Gehashte Build-Assets und statische Dateien: immer zuerst aus dem Cache,
-	//    bei Bedarf einmalig nachladen und dann behalten.
 	const isImmutable =
 		request.mode !== 'navigate' &&
 		(url.pathname.startsWith(IMMUTABLE_PREFIX) || IMMUTABLE_ASSETS.has(url.pathname));
@@ -91,12 +73,10 @@ async function handleFetch(
 		return response;
 	}
 
-	// 2. Seitenaufrufe — auch die vorgerenderten: Netzwerk zuerst, damit nach
-	//    einem Deployment sofort das neue Dokument mit den neuen Chunk-Namen
-	//    ankommt. Der Cache ist hier nur Offline-Fallback.
+	// Netzwerk zuerst, damit nach einem Deployment sofort das Dokument mit den
+	// neuen Chunk-Namen ankommt. Cache nur als Offline-Fallback.
 	if (request.mode === 'navigate') {
 		try {
-			// Die vorab gestartete Anfrage nutzen, falls der Browser sie liefert.
 			const response = (await preloadResponse) ?? (await fetch(request));
 			if (response.ok) cache.put(request, response.clone());
 			return response;
@@ -107,9 +87,7 @@ async function handleFetch(
 		}
 	}
 
-	// 3. Alles andere (eigene API-Routen, Quickshare-Daten): nie cachen.
-	//    Diese Antworten sind nutzerbezogen und haben in einem geteilten
-	//    Cache nichts verloren.
+	// Nutzerbezogene Antworten haben in einem geteilten Cache nichts verloren.
 	return fetch(request);
 }
 

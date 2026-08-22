@@ -9,10 +9,9 @@ import {
 } from '$lib/server/proxyTargets';
 
 const CACHE_DURATION_MS = 5 * 60 * 1000;
-/** Der Cache lebt im Worker-Isolate — ohne Obergrenze waechst er unbegrenzt. */
+/** Der Cache lebt im Worker-Isolate und waechst sonst unbegrenzt. */
 const CACHE_MAX_ENTRIES = 200;
 const CACHE_MAX_BYTES = 8 * 1024 * 1024;
-/** Kalender-Feeds sind Textdateien; alles Groessere ist kein Feed. */
 const FEED_MAX_BYTES = 5 * 1024 * 1024;
 const MAX_REDIRECTS = 3;
 
@@ -32,7 +31,7 @@ function cacheStore(key: string, entry: CacheEntry) {
 	cache.set(key, entry);
 	cacheBytes += entry.body.byteLength;
 
-	// Map behaelt die Einfuegereihenfolge — der erste Schluessel ist der aelteste.
+	// Map behaelt die Einfuegereihenfolge: erster Schluessel = aeltester Eintrag.
 	while (cache.size > CACHE_MAX_ENTRIES || cacheBytes > CACHE_MAX_BYTES) {
 		const oldest = cache.keys().next();
 		if (oldest.done) break;
@@ -42,7 +41,6 @@ function cacheStore(key: string, entry: CacheEntry) {
 	}
 }
 
-/** Header, die niemals an ein fremdes Ziel gehen duerfen, ausser es ist ausdruecklich erlaubt. */
 const CREDENTIAL_HEADERS = ['authorization', 'api-key', 'x-api-key', 'access-token'];
 const SAFE_HEADERS = ['content-type', 'user-agent', 'accept', 'accept-language'];
 
@@ -64,10 +62,7 @@ function buildHeaders(request: Request, forwardCredentials: boolean): Headers {
 	return headers;
 }
 
-/**
- * Folgt Weiterleitungen von Hand und prueft jedes Ziel erneut.
- * Ohne das koennte ein erlaubter Host per 302 auf eine interne Adresse zeigen.
- */
+/** Von Hand, weil ein erlaubter Host sonst per 302 nach innen zeigen koennte. */
 async function fetchFollowingRedirects(
 	url: URL,
 	init: RequestInit,
@@ -113,8 +108,7 @@ async function handleProxy(request: Request, url: URL, fetchFn: typeof fetch) {
 	const { kind, url: target, forwardCredentials } = decision;
 	const headers = buildHeaders(request, forwardCredentials);
 
-	// Antworten mit Zugangsdaten sind nutzerbezogen und duerfen einen von allen
-	// Nutzern geteilten Cache nie sehen.
+	// Ein vom Isolate geteilter Cache darf nutzerbezogene Antworten nie sehen.
 	const sentCredentials = CREDENTIAL_HEADERS.some((name) => headers.has(name));
 	const cacheable = request.method === 'GET' && !sentCredentials;
 
@@ -151,8 +145,7 @@ async function handleProxy(request: Request, url: URL, fetchFn: typeof fetch) {
 
 	const contentType = response.headers.get('Content-Type') || 'application/json';
 
-	// Kalender-Feeds: Groesse begrenzen und pruefen, dass wirklich ein Kalender
-	// zurueckkommt. Sonst waere der Proxy ein allgemeiner Umleitungsdienst.
+	// Ohne diese Pruefung waere der Proxy ein allgemeiner Umleitungsdienst.
 	if (kind === 'feed') {
 		if (!response.ok) throw error(response.status, 'Calendar feed is not reachable');
 
@@ -193,8 +186,7 @@ async function handleProxy(request: Request, url: URL, fetchFn: typeof fetch) {
 		});
 	}
 
-	// Nicht cachebar (POST oder mit Zugangsdaten): unveraendert durchreichen,
-	// damit auch gestreamte Antworten wie die des AI-Assistenten funktionieren.
+	// Unveraendert durchreichen, damit gestreamte Antworten (AI-Assistent) laufen.
 	return new Response(response.body, {
 		status: response.status,
 		headers: {

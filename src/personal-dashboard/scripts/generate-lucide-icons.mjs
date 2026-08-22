@@ -1,18 +1,10 @@
 /**
- * Erzeugt aus dem installierten `lucide-svelte`-Paket eine Datei mit den reinen
- * SVG-Pfaddaten aller Icons.
+ * Erzeugt `src/lib/icons/iconData.ts` aus dem installierten `lucide-svelte`.
  *
- * Hintergrund: `import * as icons from "lucide-svelte"` ist fuer Rollup nicht
- * tree-shakebar, sobald der Namespace dynamisch indiziert wird — dabei landen
- * alle ~1.700 Icon-Komponenten (843 KB) in einem einzigen Chunk.
+ * Grund: `import * as icons from "lucide-svelte"` ist nicht tree-shakebar,
+ * sobald der Namespace dynamisch indiziert wird — 843 KB in einem Chunk.
  *
- * Diese Datei wird NICHT beim Rendern des Dashboards gebraucht: die Pfaddaten
- * eines ausgewaehlten Icons (~180 Bytes) werden beim Auswaehlen direkt im
- * Favoriten gespeichert. Geladen wird sie nur vom Icon-Browser und einmalig
- * fuer die Migration alter Favoriten.
- *
- * Aufruf:  npm run icons:generate
- * Noetig:  nach jedem Update von `lucide-svelte`.
+ * Nach jedem Update von `lucide-svelte` neu laufen lassen: npm run icons:generate
  */
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -23,7 +15,7 @@ const SOURCE_DIR = join(root, 'node_modules', 'lucide-svelte', 'dist', 'icons');
 const OUT_DIR = join(root, 'src', 'lib', 'icons');
 const OUT_FILE = join(OUT_DIR, 'iconData.ts');
 
-/** `a-arrow-down` -> `AArrowDown` (entspricht dem Exportnamen von lucide-svelte). */
+/** `a-arrow-down` -> `AArrowDown`, wie lucide-svelte exportiert. */
 function toPascalCase(kebab) {
 	return kebab
 		.split('-')

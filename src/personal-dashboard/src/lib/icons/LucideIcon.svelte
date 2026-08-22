@@ -9,7 +9,6 @@
 		class: className = '',
 		fallback
 	}: {
-		/** Pfaddaten des Icons. Fehlen sie, wird `fallback` gerendert. */
 		node?: IconNode | null;
 		size?: number;
 		strokeWidth?: number;

@@ -1,19 +1,9 @@
 /**
- * Zielpruefung fuer `/api/proxy`.
+ * Zielpruefung fuer `/api/proxy`. Eigenes Modul, damit die Regeln testbar sind.
  *
- * Bewusst als eigenes Modul mit reinen Funktionen: die Regeln hier entscheiden,
- * ob eine fremde URL abgerufen werden darf und ob dabei Zugangsdaten des
- * Nutzers mitgehen. Das ist testbar zu halten ist wichtiger als es kurz zu halten.
- *
- * Zwei Klassen von Zielen:
- *
- *   `api`  — bekannte Dienste aus der Liste unten. Nur diese duerfen die
- *            Zugangsdaten des Clients (Authorization, api-key, …) sehen.
- *
- *   `feed` — beliebige Kalender-URLs, die Nutzer selbst eintragen. Erlaubt,
- *            aber stark eingeschraenkt: nur GET, niemals Zugangsdaten, keine
- *            internen Adressen, Groessenlimit, und die Antwort muss wirklich
- *            ein iCalendar-Dokument sein.
+ *   `api`  — bekannte Dienste. Nur diese duerfen Zugangsdaten des Clients sehen.
+ *   `feed` — beliebige Kalender-URLs der Nutzer: nur GET, nie Zugangsdaten,
+ *            keine internen Adressen, Groessenlimit, Antwort muss iCalendar sein.
  */
 
 export type TargetKind = 'api' | 'feed';
@@ -21,7 +11,6 @@ export type TargetKind = 'api' | 'feed';
 export interface TargetDecision {
 	kind: TargetKind;
 	url: URL;
-	/** Darf der Proxy Zugangsdaten des Clients an dieses Ziel weiterreichen? */
 	forwardCredentials: boolean;
 }
 
@@ -36,11 +25,7 @@ export class TargetRejected extends Error {
 }
 
 interface ApiTarget {
-	/**
-	 * Exakter Hostname, oder ein Suffix beginnend mit `.` (alle Subdomains)
-	 * bzw. `-` (Praefix-Schema von Google Vertex AI).
-	 * Geprueft wird immer der geparste Hostname — nie die URL als Zeichenkette.
-	 */
+	/** Exakter Hostname, `.suffix` fuer Subdomains oder `-suffix` (Vertex-AI-Schema). */
 	host: string;
 	forwardCredentials: boolean;
 }
@@ -62,19 +47,15 @@ const API_TARGETS: readonly ApiTarget[] = [
 const BLOCKED_HOST_SUFFIXES = ['.local', '.internal', '.home.arpa', '.localhost'];
 
 /**
- * Adressen, die niemals von aussen angesprochen werden sollen — privates
- * Netz, Loopback und vor allem 169.254.169.254 (Cloud-Metadata).
- *
- * Achtung: Namen, die erst per DNS auf eine interne Adresse zeigen, lassen
- * sich hier nicht abfangen (Workers koennen nicht aufloesen). Cloudflare
- * leitet `fetch` ueber das oeffentliche Netz, wodurch dieser Rest abgedeckt
- * ist — die Pruefung hier schuetzt zusaetzlich beim lokalen Entwickeln.
+ * Namen, die erst per DNS intern aufloesen, faengt das nicht ab — Workers koennen
+ * nicht aufloesen. Cloudflare routet `fetch` ohnehin uebers oeffentliche Netz;
+ * diese Pruefung deckt zusaetzlich die lokale Entwicklung ab.
  */
 export function isPrivateAddress(hostname: string): boolean {
 	const host = hostname.toLowerCase().replace(/^\[/, '').replace(/\]$/, '');
 	if (!host) return true;
 
-	// Bare Namen ohne Punkt: localhost, router, metadata, …
+	// localhost, router, metadata, …
 	if (!host.includes('.') && !host.includes(':')) return true;
 	if (BLOCKED_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))) return true;
 
@@ -83,7 +64,7 @@ export function isPrivateAddress(hostname: string): boolean {
 		const a = Number(ipv4[1]);
 		const b = Number(ipv4[2]);
 		if (a === 0 || a === 10 || a === 127) return true;
-		if (a === 169 && b === 254) return true; // Link-local inkl. Cloud-Metadata
+		if (a === 169 && b === 254) return true; // Cloud-Metadata
 		if (a === 172 && b >= 16 && b <= 31) return true;
 		if (a === 192 && b === 168) return true;
 		if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
@@ -114,14 +95,10 @@ function matchApiTarget(hostname: string): ApiTarget | null {
 	return null;
 }
 
-/**
- * Prueft eine Ziel-URL und entscheidet, wie sie behandelt wird.
- * Wirft `TargetRejected`, wenn sie gar nicht abgerufen werden darf.
- */
 export function classifyTarget(rawTarget: string, method: string): TargetDecision {
 	if (!rawTarget) throw new TargetRejected(400, 'Missing target URL');
 
-	// webcal:// ist das uebliche Schema fuer Kalender-Abos und meint https.
+	// webcal:// meint https.
 	const normalized = rawTarget.replace(/^webcal:\/\//i, 'https://');
 
 	let url: URL;
@@ -144,7 +121,6 @@ export function classifyTarget(rawTarget: string, method: string): TargetDecisio
 		return { kind: 'api', url, forwardCredentials: apiTarget.forwardCredentials };
 	}
 
-	// Unbekannter Host: nur als Kalender-Feed, nur lesend, nie mit Zugangsdaten.
 	if (method !== 'GET') {
 		throw new TargetRejected(403, 'Target URL is not permitted by proxy rules');
 	}
@@ -152,7 +128,6 @@ export function classifyTarget(rawTarget: string, method: string): TargetDecisio
 	return { kind: 'feed', url, forwardCredentials: false };
 }
 
-/** Sieht die Antwort wie ein iCalendar-Dokument aus? */
 export function looksLikeCalendar(body: string): boolean {
 	return /^﻿?\s*BEGIN:VCALENDAR/i.test(body.slice(0, 512));
 }

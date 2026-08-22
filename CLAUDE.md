@@ -52,6 +52,16 @@ von `lucide-svelte` neu), `LucideIcon.svelte` rendert Pfaddaten synchron, `iconS
 die Sammlung nur für den Icon-Browser und die Migration. Marken-Icons wie `Github` gibt es
 in lucide v1 nicht mehr.
 
+**Markdown.** `marked` gibt rohes HTML unverändert durch und lässt `javascript:`-URLs stehen —
+auf fremden Inhalten war das gespeichertes XSS. Gerendert wird ausschließlich über
+`renderMarkdown()` aus `src/lib/markdown.ts`; ein direkter `marked.parse`-Aufruf in einem
+`{@html}` ist ein Fehler. Das Modul schaltet die HTML-Tokenizer ab und lässt nur http/https/
+mailto sowie data:image (ohne SVG) als URL-Schema durch. Falle beim Anfassen: Renderer und
+Tokenizer dürfen nur per `setOptions` gesetzt werden — `new Marked({renderer})` und `.use()`
+kopieren nur eigene Objekt-Eigenschaften, Klassenmethoden liegen auf dem Prototyp und kommen
+nie an; marked rendert dann still mit den Standardklassen weiter. `npm run test:markdown`
+prüft 33 Angriffsvektoren und 16 Regressionsfälle.
+
 **Proxy (`/api/proxy`).** Zielprüfung liegt in `src/lib/server/proxyTargets.ts` und arbeitet
 auf der geparsten URL, nie auf der Zeichenkette — eine Substring-Allowlist hat vorher
 `http://169.254.169.254/?calendar` durchgelassen. Zwei Klassen: bekannte API-Hosts dürfen
@@ -119,9 +129,9 @@ zweimal passiert, dass generierte Dateien ohne die Module committet wurden, die 
 Das Audit vom 21.08.2026 liegt als Artifact vor:
 https://claude.ai/code/artifact/578cfead-0f9b-4cb6-959f-84b5133d72cf
 
-Erledigt: L-01 (Icons), L-02 (Precache), S-01/S-02 (Proxy), R-01 (Service-Worker-Regression).
-Offen und nach Schwere sortiert: S-03 gespeichertes XSS in `/s/[id]` (`{@html marked.parse(…)}`
-auf fremdem Inhalt), S-04 `/post-reminders/[id]` ohne jede Authentifizierung les- und schreibbar,
+Erledigt: L-01 (Icons), L-02 (Precache), S-01/S-02 (Proxy), S-03 (Markdown-Rendering),
+R-01 (Service-Worker-Regression).
+Offen und nach Schwere sortiert: S-04 `/post-reminders/[id]` ohne jede Authentifizierung les- und schreibbar,
 S-05 `csrf.checkOrigin: false`, S-06 Open Redirect in beiden Auth-Callbacks, U-01
 `localStorage.clear()` löscht anonymen Nutzern bei jedem Reload das Layout, L-03 supabase-js
 (57 KB gzip) auf dem kritischen Pfad jeder Route, L-04 beide Sprachwörterbücher im

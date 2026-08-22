@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getContext, onMount } from 'svelte';
   import { i18n } from '$lib/i18n/i18n.svelte';
-  import { marked } from 'marked';
+  import { renderMarkdown } from '$lib/markdown';
   import { Plus, X, GripHorizontal, PenLine, Eye } from 'lucide-svelte';
   import WidgetCard from '$lib/components/WidgetCard.svelte';
 
@@ -129,7 +129,7 @@
     return null;
   }
 
-  const renderedMarkdown = $derived(marked.parse(content));
+  const renderedMarkdown = $derived(renderMarkdown(content));
 </script>
 
 <WidgetCard isConfigured={true} padding={false}>

@@ -23,11 +23,7 @@
     url: string;
     color: string;
     lucideIcon?: string;
-    /**
-     * Die SVG-Pfaddaten des gewaehlten Icons (~180 Bytes), direkt am Favoriten.
-     * Dadurch braucht das Rendern des Dashboards keinerlei Nachladen — die Icons
-     * kommen synchron aus dem localStorage, genau wie Name, URL und Farbe.
-     */
+    /** ~180 Bytes am Favoriten, damit das Rendern nichts nachladen muss. */
     iconNode?: IconNode;
   }
 
@@ -55,8 +51,7 @@
     }
   });
 
-  // Die vollstaendige Sammlung (~76 KB gzip) wird ausschliesslich vom Icon-Browser
-  // und von der einmaligen Migration alter Favoriten gebraucht — nie beim Rendern.
+  // Nur fuer den Browser und die Migration — nie beim Rendern.
   let iconSet = $state<Record<string, IconNode> | null>(null);
   let availableIcons = $state<readonly string[]>([]);
   let iconSetRequested = false;
@@ -77,11 +72,7 @@
     ensureIconSet();
   });
 
-  /**
-   * Favoriten aus aelteren Versionen kennen nur den Icon-Namen. Einmalig die
-   * Sammlung laden, die Pfaddaten eintragen und lokal sichern — danach laeuft
-   * das Rendern wieder ohne jeden Ladevorgang.
-   */
+  // Favoriten aus aelteren Versionen kennen nur den Icon-Namen.
   $effect(() => {
     if (!favorites.some((f) => f.lucideIcon && !f.iconNode)) return;
 
@@ -96,7 +87,7 @@
         if (node) {
           fav.iconNode = node;
         } else {
-          // Name existiert in dieser lucide-Version nicht mehr -> Favicon nutzen.
+          // In dieser lucide-Version nicht mehr vorhanden.
           fav.lucideIcon = '';
         }
         changed = true;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getContext } from 'svelte';
   import { Bot, Send, User } from "lucide-svelte";
-  import { marked } from 'marked';
+  import { renderMarkdown } from '$lib/markdown';
   import WidgetCard from "$lib/components/WidgetCard.svelte";
   import SettingsDialog from "$lib/components/SettingsDialog.svelte";
   import CustomDropdown from "$lib/components/CustomDropdown.svelte";
@@ -439,7 +439,7 @@ The current date and time is: ${new Date().toISOString()}.
                         {#if msg.role === 'user'}
                            {part.text}
                         {:else}
-                           {@html marked.parse(part.text)}
+                           {@html renderMarkdown(part.text)}
                         {/if}
                      </div>
                   {/if}

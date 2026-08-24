@@ -119,6 +119,29 @@ muss `BEGIN:VCALENDAR` sein). Antworten, die mit Zugangsdaten geholt wurden, wer
 gecacht — der Isolate-Cache ist zwischen allen Nutzern geteilt. Weiterleitungen werden von
 Hand verfolgt und bei jedem Sprung neu geprüft.
 
+**GitHub-Widget (`GitHub.svelte`).** Die Advanced Search (`advanced_search=true`, seit
+September 2025 der einzige Weg) verlangt in **jeder** Anfrage `is:issue` oder
+`is:pull-request` — beides zugleich gibt es nicht. „Issues und PRs zusammen" sind deshalb
+zwei Anfragen, die im Widget zusammenlaufen. Dabei drei Regeln: nach `id` entdoppeln, sonst
+wirft der keyed each-Block `each_key_duplicate` und die Karte bleibt leer; **seriell** stellen,
+weil GitHub gleichzeitige Anfragen desselben Nutzers mit dem Secondary Rate Limit (403)
+beantwortet; und eine gescheiterte Teilanfrage darf die Treffer der anderen nicht loeschen —
+sonst sieht ein 403 auf der PR-Suche aus, als gaebe es ueberhaupt keine Issues.
+
+Die Verknuepfung Issue<->PR kennt die REST-Suche nicht; sie steht nur als Timeline-Ereignis
+in der GraphQL-API (`CONNECTED_EVENT`/`CROSS_REFERENCED_EVENT`). Das Widget holt sie in
+**einer** gebuendelten Anfrage per Alias nach dem Laden. Scheitert sie, fehlen nur die
+PR-Chips — eine Zusatzinformation darf die Liste nie blockieren.
+
+Zwei weitere Dinge, die zusammen eine Endlosschleife ergaben:
+`assignee:@me` beantwortet die Such-API ohne gueltige Authentifizierung nicht mit 401, sondern
+mit 422 „listed users cannot be searched" — deshalb loest das Widget den Login einmal ueber
+`/user` auf und sucht danach mit dem echten Namen. Und der Lade-Effekt darf seine Sperren
+(`attemptedQuery`, `blockedQuery`, `inFlight`) nicht als `$state` halten: schreibt der Abruf
+Zustand, den derselbe Effekt liest, laeuft er sofort wieder an. Der Merker fuer „schon
+versucht" wird vor der Anfrage gesetzt, nicht nach dem Erfolg, sonst wiederholt sich jede
+fehlgeschlagene Anfrage endlos. Aufruf des Effekts steht in `untrack`.
+
 **Widget-Einstellungen.** Jedes Widget implementiert „erst Cloud-Secrets, sonst localStorage"
 selbst, und jedes anders. Daraus stammen mehrere „lädt nicht"-Bugs der Historie. `Todo.svelte`
 prüft `secretsLoaded` korrekt, `ClockWeatherDate.svelte` nicht (Wetter lädt für neue anonyme

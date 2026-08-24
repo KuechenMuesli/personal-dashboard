@@ -40,6 +40,7 @@ const API_TARGETS: readonly ApiTarget[] = [
 	{ host: 'trmnl.com', forwardCredentials: false },
 	{ host: 'generativelanguage.googleapis.com', forwardCredentials: true },
 	{ host: '-aiplatform.googleapis.com', forwardCredentials: true },
+	{ host: 'api.github.com', forwardCredentials: true },
 	{ host: 'api.parcel.app', forwardCredentials: true },
 	{ host: 'api.17track.net', forwardCredentials: true }
 ];

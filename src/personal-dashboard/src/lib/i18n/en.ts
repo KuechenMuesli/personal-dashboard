@@ -171,7 +171,8 @@ legal: {
     calendar: 'Calendar',
     stockTicker: 'Stocks',
     todo: 'To-Do List',
-    clipboardSync: 'Clipboard Sync'
+    clipboardSync: 'Clipboard Sync',
+    github: 'GitHub Issues'
   },
 
   // Theme names
@@ -289,6 +290,42 @@ common: {
       urlPlaceholder: 'https://...',
       namePlaceholder: 'Name',
       edit: 'Edit Favorites'
+    },
+    github: {
+      title: 'GitHub Issues',
+      settings: 'GitHub Settings',
+      token: 'Personal Access Token',
+      tokenHelp: 'For your own repositories a fine-grained token with issue read access is enough: ',
+      tokenHelpClassic: 'Repositories owned by an organisation usually stay invisible to fine-grained tokens without approval. A classic token with the "repo" scope sees everything you can see yourself: ',
+      tokenHelpSso: 'If the organisation uses SAML single sign-on, authorise the token for it afterwards via "Configure SSO" next to the token.',
+      scope: 'Source',
+      scopeMine: 'My issues',
+      scopeRepos: 'Repositories',
+      scopeQuery: 'Search query',
+      filter: 'Involvement',
+      filterAssigned: 'Assigned',
+      filterCreated: 'Created',
+      filterMentioned: 'Mentioned',
+      repos: 'Repositories',
+      reposPlaceholder: 'owner/repo, one per line',
+      query: 'GitHub search query',
+      queryHelp: 'Uses the GitHub search syntax, e.g. is:open is:issue label:bug.',
+      sort: 'Sort by',
+      sortUpdated: 'Recently updated',
+      sortCreated: 'Newest',
+      sortComments: 'Most comments',
+      includePrs: 'Include pull requests',
+      noIssues: 'No open issues.',
+      asUser: 'searched as {user}',
+      noIssuesHint: 'Private repositories only show up if the token has access to them. For repositories owned by an organisation, a classic token with the "repo" scope usually works without approval.',
+      comments: 'Comments',
+      milestone: 'Milestone',
+      linkedPr: 'Linked pull request',
+      openedBy: 'by {user},',
+      errorAuth: 'GitHub rejected the token. Check that it is valid and has issue read access.',
+      errorRate: 'GitHub rate limit reached. Try again in a few minutes.',
+      errorQuery: 'GitHub could not process this search query.',
+      errorGeneric: 'Could not load issues.'
     },
     parcel: {
       deliveries: 'Deliveries',

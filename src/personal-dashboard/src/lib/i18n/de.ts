@@ -173,7 +173,8 @@ legal: {
     calendar: 'Kalender',
     stockTicker: 'Aktienkurse',
     todo: 'Todos & Tasks',
-    clipboardSync: 'Zwischenablage'
+    clipboardSync: 'Zwischenablage',
+    github: 'GitHub Issues'
   },
 
   // Theme names
@@ -292,6 +293,42 @@ common: {
       urlPlaceholder: 'https://...',
       namePlaceholder: 'Name',
       edit: 'Favoriten bearbeiten'
+    },
+    github: {
+      title: 'GitHub Issues',
+      settings: 'GitHub Einstellungen',
+      token: 'Personal Access Token',
+      tokenHelp: 'Für eigene Repositories genügt ein Fine-grained-Token mit Lesezugriff auf Issues: ',
+      tokenHelpClassic: 'Repositories einer Organisation bleiben für Fine-grained-Tokens ohne Freigabe unsichtbar. Ein klassisches Token mit dem Scope „repo" sieht alles, was du selbst sehen kannst: ',
+      tokenHelpSso: 'Nutzt die Organisation SAML-Single-Sign-on, das Token danach über „Configure SSO" neben dem Token dafür freischalten.',
+      scope: 'Quelle',
+      scopeMine: 'Meine Issues',
+      scopeRepos: 'Repositories',
+      scopeQuery: 'Suchanfrage',
+      filter: 'Bezug',
+      filterAssigned: 'Zugewiesen',
+      filterCreated: 'Erstellt',
+      filterMentioned: 'Erwähnt',
+      repos: 'Repositories',
+      reposPlaceholder: 'owner/repo, eines pro Zeile',
+      query: 'GitHub-Suchanfrage',
+      queryHelp: 'Nutzt die GitHub-Suchsyntax, z. B. is:open is:issue label:bug.',
+      sort: 'Sortierung',
+      sortUpdated: 'Zuletzt aktualisiert',
+      sortCreated: 'Neueste',
+      sortComments: 'Meiste Kommentare',
+      includePrs: 'Pull Requests einbeziehen',
+      noIssues: 'Keine offenen Issues.',
+      asUser: 'gesucht als {user}',
+      noIssuesHint: 'Private Repositories erscheinen nur, wenn das Token Zugriff darauf hat. Für Repositories einer Organisation funktioniert meist ein klassisches Token mit dem Scope „repo" ohne Freigabe.',
+      comments: 'Kommentare',
+      milestone: 'Meilenstein',
+      linkedPr: 'Verknüpfter Pull Request',
+      openedBy: 'von {user},',
+      errorAuth: 'GitHub hat das Token abgelehnt. Prüfe Gültigkeit und Leserechte für Issues.',
+      errorRate: 'GitHub-Limit erreicht. In ein paar Minuten erneut versuchen.',
+      errorQuery: 'GitHub konnte diese Suchanfrage nicht verarbeiten.',
+      errorGeneric: 'Issues konnten nicht geladen werden.'
     },
     parcel: {
       deliveries: 'Lieferungen',

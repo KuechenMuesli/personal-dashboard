@@ -314,6 +314,8 @@ common: {
       sortUpdated: 'Recently updated',
       sortCreated: 'Newest',
       sortComments: 'Most comments',
+      sortDiscussion: 'Latest comment activity',
+      prComments: 'Comments on this pull request',
       includePrs: 'Include pull requests',
       noIssues: 'No open issues.',
       asUser: 'searched as {user}',

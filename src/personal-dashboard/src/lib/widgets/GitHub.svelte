@@ -34,7 +34,7 @@
 
   type Scope = 'mine' | 'repos' | 'query';
   type Involvement = 'assignee' | 'author' | 'mentions';
-  type SortKey = 'updated' | 'created' | 'comments';
+  type SortKey = 'updated' | 'created' | 'comments' | 'discussion';
 
   interface Label {
     name: string;
@@ -46,6 +46,8 @@
     url: string;
     title: string;
     state: 'OPEN' | 'CLOSED' | 'MERGED';
+    comments: number;
+    lastCommentAt: string | null;
   }
 
   interface Issue {
@@ -66,6 +68,7 @@
     isPr: boolean;
     isDraft: boolean;
     linkedPrs: LinkedPr[];
+    lastCommentAt: string | null;
   }
 
   let token = $state('');
@@ -246,7 +249,8 @@
         // Aelterer Cache kennt `linkedPrs` nicht -- ohne Vorgabe stolpert das Template.
         issues = (parsed.issues || []).map((issue: Issue) => ({
           ...issue,
-          linkedPrs: issue.linkedPrs || []
+          linkedPrs: issue.linkedPrs || [],
+          lastCommentAt: issue.lastCommentAt ?? null
         }));
         lastSync = parsed.timestamp || 0;
         attemptedQuery = parsed.query || '';
@@ -320,7 +324,8 @@
       milestone: item.milestone?.title || null,
       isPr: !!item.pull_request,
       isDraft: !!item.draft,
-      linkedPrs: []
+      linkedPrs: [],
+      lastCommentAt: null
     };
   }
 
@@ -351,10 +356,26 @@
     return detail ? `${headline} (${detail})` : headline;
   }
 
+  /** Juengster Kommentar am Issue selbst oder an einem verknuepften PR. Ohne
+      jeden Kommentar bleibt die letzte Aenderung als Ersatzwert. */
+  function lastDiscussionAt(issue: Issue): number {
+    const stamps = [issue.lastCommentAt, ...issue.linkedPrs.map((pr) => pr.lastCommentAt)]
+      .filter((stamp): stamp is string => !!stamp)
+      .map((stamp) => new Date(stamp).getTime())
+      .filter((value) => !isNaN(value));
+
+    return stamps.length ? Math.max(...stamps) : new Date(issue.updatedAt).getTime();
+  }
+
   function sortValue(issue: Issue): number {
     if (sortKey === 'comments') return issue.comments;
+    if (sortKey === 'discussion') return lastDiscussionAt(issue);
     return new Date(sortKey === 'created' ? issue.createdAt : issue.updatedAt).getTime();
   }
+
+  // Die Reihenfolge steht erst nach der GraphQL-Abfrage fest -- als $derived
+  // sortiert sie sich neu, sobald die Kommentardaten nachtroepfeln.
+  const sortedIssues = $derived([...issues].sort((a, b) => sortValue(b) - sortValue(a)));
 
   async function fetchIssues(query = searchQuery, force = false) {
     const parts = query === searchQuery ? queries : [query];
@@ -376,7 +397,10 @@
       for (const part of parts) {
         const res = await request(
           `${SEARCH_ENDPOINT}?q=${encodeURIComponent(part)}` +
-            `&sort=${sortKey}&order=desc&per_page=${PER_PAGE}&advanced_search=true`,
+            // Die Suche kann nicht nach Kommentarzeitpunkt sortieren; die
+            // Feinsortierung passiert nach der GraphQL-Abfrage im Client.
+            `&sort=${sortKey === 'discussion' ? 'updated' : sortKey}` +
+            `&order=desc&per_page=${PER_PAGE}&advanced_search=true`,
           token,
           force
         );
@@ -447,13 +471,15 @@
     const targets = list.filter((issue) => !issue.isPr && issue.repo.includes('/'));
     if (!targets.length) return;
 
-    const fields =
-      'number url title state';
+    // `comments(last: 1)` liefert beides in einem Rutsch: die Gesamtzahl und den
+    // Zeitpunkt des juengsten Kommentars -- ohne die Kommentare selbst zu laden.
+    const commentFields = 'comments(last: 1) { totalCount nodes { createdAt } }';
+    const fields = `number url title state ${commentFields}`;
     const selection = targets.slice(0, LINKED_PR_LOOKUP_MAX).map((issue, index) => {
       const [owner, name] = issue.repo.split('/');
       return (
         `i${index}: repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(name)}) ` +
-        `{ issue(number: ${issue.number}) { timelineItems(first: 8, ` +
+        `{ issue(number: ${issue.number}) { ${commentFields} timelineItems(first: 8, ` +
         `itemTypes: [CONNECTED_EVENT, CROSS_REFERENCED_EVENT]) { nodes { ` +
         `... on ConnectedEvent { subject { ... on PullRequest { ${fields} } } } ` +
         `... on CrossReferencedEvent { source { ... on PullRequest { ${fields} } } } ` +
@@ -478,7 +504,8 @@
 
       const withLinks = list.map((issue) => ({ ...issue }));
       targets.slice(0, LINKED_PR_LOOKUP_MAX).forEach((issue, index) => {
-        const nodes = body.data[`i${index}`]?.issue?.timelineItems?.nodes || [];
+        const payload = body.data[`i${index}`]?.issue;
+        const nodes = payload?.timelineItems?.nodes || [];
         const found = new Map<string, LinkedPr>();
 
         for (const node of nodes) {
@@ -489,13 +516,18 @@
               number: pr.number,
               url: pr.url,
               title: pr.title || '',
-              state: pr.state || 'OPEN'
+              state: pr.state || 'OPEN',
+              comments: pr.comments?.totalCount ?? 0,
+              lastCommentAt: pr.comments?.nodes?.[0]?.createdAt ?? null
             });
           }
         }
 
         const slot = withLinks.find((candidate) => candidate.key === issue.key);
-        if (slot) slot.linkedPrs = [...found.values()].sort((a, b) => a.number - b.number);
+        if (slot) {
+          slot.linkedPrs = [...found.values()].sort((a, b) => a.number - b.number);
+          slot.lastCommentAt = payload?.comments?.nodes?.[0]?.createdAt ?? null;
+        }
       });
 
       issues = withLinks;
@@ -604,7 +636,7 @@
     </div>
   {:else}
     <div class="flex flex-col gap-1.5">
-      {#each issues as issue (issue.key)}
+      {#each sortedIssues as issue (issue.key)}
         <div
           class="relative flex flex-col gap-1 rounded-lg border border-transparent bg-fill p-2 transition-colors hover:border-line hover:bg-fill-strong"
         >
@@ -695,6 +727,12 @@
                 >
                   <GitPullRequest size={9} />
                   <span class="ds-numeric">#{pr.number}</span>
+                  {#if pr.comments}
+                    <span class="flex items-center gap-0.5 text-muted" title={i18n.t.w.github.prComments}>
+                      <MessageSquare size={9} />
+                      <span class="ds-numeric">{pr.comments}</span>
+                    </span>
+                  {/if}
                 </a>
               {/each}
             </div>
@@ -805,6 +843,7 @@
         <option value="updated">{i18n.t.w.github.sortUpdated}</option>
         <option value="created">{i18n.t.w.github.sortCreated}</option>
         <option value="comments">{i18n.t.w.github.sortComments}</option>
+        <option value="discussion">{i18n.t.w.github.sortDiscussion}</option>
       </select>
     </div>
 

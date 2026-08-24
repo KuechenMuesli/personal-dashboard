@@ -317,6 +317,8 @@ common: {
       sortUpdated: 'Zuletzt aktualisiert',
       sortCreated: 'Neueste',
       sortComments: 'Meiste Kommentare',
+      sortDiscussion: 'Zuletzt kommentiert',
+      prComments: 'Kommentare in diesem Pull Request',
       includePrs: 'Pull Requests einbeziehen',
       noIssues: 'Keine offenen Issues.',
       asUser: 'gesucht als {user}',

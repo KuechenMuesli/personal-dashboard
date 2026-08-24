@@ -130,7 +130,9 @@ sonst sieht ein 403 auf der PR-Suche aus, als gaebe es ueberhaupt keine Issues.
 
 Die Verknuepfung Issue<->PR kennt die REST-Suche nicht; sie steht nur als Timeline-Ereignis
 in der GraphQL-API (`CONNECTED_EVENT`/`CROSS_REFERENCED_EVENT`). Das Widget holt sie in
-**einer** gebuendelten Anfrage per Alias nach dem Laden. Scheitert sie, fehlen nur die
+**einer** gebuendelten Anfrage per Alias nach dem Laden -- zusammen mit `comments(last: 1)`,
+das Kommentarzahl und Zeitpunkt des juengsten Kommentars liefert, ohne die Kommentare selbst
+zu laden. Achtung: das zaehlt nur die Konversation, keine Review-Kommentare am Code. Scheitert sie, fehlen nur die
 PR-Chips — eine Zusatzinformation darf die Liste nie blockieren.
 
 Zwei weitere Dinge, die zusammen eine Endlosschleife ergaben:

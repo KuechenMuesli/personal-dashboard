@@ -8,6 +8,14 @@ export const dictionaries = {
   de
 };
 
+function detectBrowserLanguage(): SupportedLanguage {
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    const lang = navigator.language.toLowerCase();
+    if (lang.startsWith('de')) return 'de';
+  }
+  return 'en';
+}
+
 class I18nState {
   currentLang = $state<SupportedLanguage>('en');
   dateFormat = $state<'auto' | 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'>('auto');
@@ -21,26 +29,74 @@ class I18nState {
     return dictionaries[this.currentLang];
   }
 
-  setLang(lang: SupportedLanguage) {
+  async setLang(lang: SupportedLanguage, syncToCloud = true) {
     if (dictionaries[lang]) {
       this.currentLang = lang;
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('dashboard-lang', lang);
       }
+      if (syncToCloud && typeof fetch !== 'undefined') {
+        try {
+          await fetch('/api/secrets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              service: 'user-preferences',
+              key: {
+                lang: this.currentLang,
+                dateFormat: this.dateFormat,
+                timeFormat: this.timeFormat
+              }
+            })
+          });
+        } catch {}
+      }
     }
   }
 
-  setDateFormat(format: 'auto' | 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD') {
+  async setDateFormat(format: 'auto' | 'DD.MM.YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD') {
     this.dateFormat = format;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('dashboard-date-format', format);
     }
+    if (typeof fetch !== 'undefined') {
+      try {
+        await fetch('/api/secrets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service: 'user-preferences',
+            key: {
+              lang: this.currentLang,
+              dateFormat: this.dateFormat,
+              timeFormat: this.timeFormat
+            }
+          })
+        });
+      } catch {}
+    }
   }
 
-  setTimeFormat(format: 'auto' | '24h' | '12h') {
+  async setTimeFormat(format: 'auto' | '24h' | '12h') {
     this.timeFormat = format;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('dashboard-time-format', format);
+    }
+    if (typeof fetch !== 'undefined') {
+      try {
+        await fetch('/api/secrets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service: 'user-preferences',
+            key: {
+              lang: this.currentLang,
+              dateFormat: this.dateFormat,
+              timeFormat: this.timeFormat
+            }
+          })
+        });
+      } catch {}
     }
   }
 
@@ -50,7 +106,7 @@ class I18nState {
       if (savedLang && dictionaries[savedLang]) {
         this.currentLang = savedLang;
       } else {
-        this.currentLang = 'en';
+        this.currentLang = detectBrowserLanguage();
       }
 
       const savedDateFormat = localStorage.getItem('dashboard-date-format') as any;
@@ -58,6 +114,8 @@ class I18nState {
 
       const savedTimeFormat = localStorage.getItem('dashboard-time-format') as any;
       if (savedTimeFormat) this.timeFormat = savedTimeFormat;
+    } else {
+      this.currentLang = detectBrowserLanguage();
     }
   }
 
@@ -98,7 +156,7 @@ class I18nState {
     } else if (style === 'year') {
       options = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' };
     } else {
-      options = { weekday: 'short', month: 'short', day: 'numeric' }; // Fallback
+      options = { weekday: 'short', month: 'short', day: 'numeric' };
     }
 
     const formatter = this.getFormatter(this.dateLocale, options);
@@ -117,5 +175,4 @@ class I18nState {
   }
 }
 
-// Global i18n singleton
 export const i18n = new I18nState();

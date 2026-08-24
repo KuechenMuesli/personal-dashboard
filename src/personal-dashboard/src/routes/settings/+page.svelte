@@ -162,7 +162,11 @@
   }
 
   async function handleLogout() {
+    const lang = localStorage.getItem('dashboard-lang');
+    const theme = localStorage.getItem('dashboard-theme');
     localStorage.clear();
+    if (lang) localStorage.setItem('dashboard-lang', lang);
+    if (theme) localStorage.setItem('dashboard-theme', theme);
     if (data.supabase) await data.supabase.auth.signOut();
     window.location.href = '/';
   }

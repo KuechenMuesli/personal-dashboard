@@ -5,7 +5,7 @@
   import OnboardingTour from "$lib/components/OnboardingTour.svelte";
   import type { StoredWidget } from '../types/stored-widget';
   import {Check, Download, GripHorizontal, Pencil, Plus, Settings, Upload, X, Palette, LogIn, LogOut, Search} from "lucide-svelte";
-  import { i18n } from '$lib/i18n/i18n.svelte';
+  import { i18n, dictionaries, type SupportedLanguage } from '$lib/i18n/i18n.svelte';
 
   let { data } = $props();
   let session = $derived(data.session);
@@ -268,6 +268,17 @@
              globalObj[row.service][row.secret_key] = val;
          }
          globalSecrets = globalObj;
+
+         const userPrefs = globalObj['user-preferences'];
+         if (userPrefs?.lang && dictionaries[userPrefs.lang as SupportedLanguage]) {
+             i18n.setLang(userPrefs.lang as SupportedLanguage, false);
+         }
+         if (userPrefs?.dateFormat) {
+             i18n.setDateFormat(userPrefs.dateFormat);
+         }
+         if (userPrefs?.timeFormat) {
+             i18n.setTimeFormat(userPrefs.timeFormat);
+         }
       }
       secretsLoaded = true;
 
@@ -326,13 +337,6 @@
         localStorage.setItem('dashboard-user', session.user.id);
       }
     } else {
-      // User is offline or login failed
-      // Clear local state if it's not the default layout to prevent data leaks
-      if (hasLocal && !isDefault) {
-          localStorage.clear();
-          window.location.reload();
-          return;
-      }
       if (!hasLocal) {
         generateWelcomeLayout();
         showOnboarding = true;
@@ -566,7 +570,11 @@
   // Remove the effect that forces isEditing = false on mobile
 
   async function handleLogout() {
+    const lang = localStorage.getItem('dashboard-lang');
+    const theme = localStorage.getItem('dashboard-theme');
     localStorage.clear();
+    if (lang) localStorage.setItem('dashboard-lang', lang);
+    if (theme) localStorage.setItem('dashboard-theme', theme);
     if (supabase) await supabase.auth.signOut();
     window.location.reload();
   }

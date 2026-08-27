@@ -475,9 +475,6 @@ network: {
         thunderstorm: 'Gewitter'
       }
     },
-    sketch: {
-      openSketch: 'Zeichnen'
-    },
     reminders: {
       title: 'Erinnerungen',
       overdue: 'Überfällig',

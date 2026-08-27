@@ -936,6 +936,7 @@
 								isEditing={isEditing}
 								bind:showSettings={sw.showSettings}
 								onDelete={() => deleteWidget(sw.id)}
+								onAddNote={() => debounceAction(() => addWidget(sw.type))}
 								onHeightChange={(newHeight) => updateWidgetHeight(sw.id, newHeight)}
 								onDragStart={(e) => startInteraction(e, sw.id, 'drag')}
 								onResizeStart={(e) => startInteraction(e, sw.id, 'resize')}

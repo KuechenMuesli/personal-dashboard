@@ -301,6 +301,7 @@
 
   function deleteCalendar(calId: string) {
     storedConfigs = storedConfigs.filter(c => c.id !== calId);
+    if (editingCalId === calId) resetForm();
     saveConfigsToCloud();
     fetchAllCalendars(true);
   }
@@ -590,7 +591,7 @@
 								</button>
 								{#if config.type !== 'microsoft'}
 									<button
-											onclick={() => removeCalendar(config.id)}
+											onclick={() => deleteCalendar(config.id)}
 											class="shrink-0 h-6 w-6 flex items-center justify-center rounded bg-black/30 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
 											title="{i18n.t.w.calendar.remove}"
 									>

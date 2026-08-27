@@ -178,7 +178,7 @@
 		</div>
 		<div class="relative flex-grow overflow-hidden">
 			{#if isMarkdownMode}
-				<div class="prose prose-invert h-full w-full overflow-auto p-3.5 text-[13px] leading-relaxed text-slate-200
+				<div class="prose prose-invert max-w-none h-full w-full overflow-auto p-3.5 text-[13px] leading-relaxed text-slate-200
                    scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
 					{@html renderedMarkdown}
 				</div>

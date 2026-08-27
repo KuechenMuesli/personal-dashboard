@@ -472,9 +472,6 @@ network: {
         thunderstorm: 'Thunderstorm'
       }
     },
-    sketch: {
-      openSketch: 'Draw'
-    },
     reminders: {
       title: 'Reminders',
       overdue: 'Overdue',
